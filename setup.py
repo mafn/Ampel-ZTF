@@ -8,6 +8,7 @@ setup(name='Ampel-ZTF',
           'ampel.pipeline.t0',
           'ampel.pipeline.t0.alerts',
           'ampel.pipeline.t0.ingesters',
+          'ampel.pipeline.t3.sergeant',
       ],
       entry_points = {
       }
