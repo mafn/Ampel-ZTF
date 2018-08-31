@@ -5,6 +5,7 @@ setup(name='Ampel-ZTF',
       package_data = {'': ['*.json']},
       packages=[
           'ampel.archive',
+          'ampel.pipeline.common',
           'ampel.pipeline.t0',
           'ampel.pipeline.t0.alerts',
           'ampel.pipeline.t0.ingesters',
