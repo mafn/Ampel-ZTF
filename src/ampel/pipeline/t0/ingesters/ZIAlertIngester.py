@@ -116,14 +116,15 @@ class ZIAlertIngester(AbsAlertIngester):
 
 	def set_log_id(self, log_id):
 		"""
+		:param log_id: int
 		An ingester class creates/updates several documents in the DB for each alert.
 		Among other things, it updates the main transient document, 
-		which contains a list of logIds associated with the processing of the given transient.
+		which contains a list of log run ids associated with the processing of the given transient.
 		We thus need to know what is the current job_id to perform this update.
 		The provided parameter should be a bson ObjectId.
 		"""
-		if type(log_id) is not ObjectId:
-			raise ValueError("Illegal argument")
+		#if type(log_id) is not int:
+		#	raise ValueError("Illegal argument type: %s" % type(log_id))
 
 		self.job_id = log_id
 
@@ -755,11 +756,9 @@ class ZIAlertIngester(AbsAlertIngester):
 
 					# Should not throw pymongo.errors.DuplicateKeyError
 					col.update_one(
-						UpdateOne(
-							err_dict['op']['q'], 
-							err_dict['op']['u'], 
-							upsert=err_dict['op']['upsert']
-						)
+						err_dict['op']['q'], 
+						err_dict['op']['u'], 
+						upsert=err_dict['op']['upsert']
 					)
 
 					self.logger.info("Error recovered")
