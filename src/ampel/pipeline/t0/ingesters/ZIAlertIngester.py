@@ -765,6 +765,7 @@ class ZIAlertIngester(AbsAlertIngester):
 
 					# DB insertion time is measured
 					if self.count_dict is not None:
+						time_delta = time.time() - start
 						self.time_dict['dbBulkTime%s' % col.name.title()].append(time_delta)
 						self.time_dict['dbPerOpMeanTime%s' % col.name.title()].append(
 							time_delta / len(ops)
