@@ -12,5 +12,8 @@ setup(name='Ampel-ZTF',
           'ampel.pipeline.t3.sergeant',
       ],
       entry_points = {
+			'ampel.pipeline.t0.sources' : {
+				'ZIDataSource = ampel.pipeline.config.ZIDataSource:ZIDataSource',
+			}
       }
 )
