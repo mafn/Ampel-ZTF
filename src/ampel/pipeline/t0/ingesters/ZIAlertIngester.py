@@ -50,10 +50,12 @@ class ZIAlertIngester(AbsAlertIngester):
 	)
 
 
-	def __init__(self, channels, logger=None):
+	def __init__(self, channels, logger=None, check_reprocessing=True, alert_history_length=30):
 		"""
-		channels: list of ampel.pipeline.config.Channel instances
-		logger: None or instance of logging.Logger
+		:param channels: list of ampel.pipeline.config.Channel instances
+		:param logger: None or instance of logging.Logger
+		:param check_reprocessing: bool
+		:param alert_history_length: int
 		"""
 
 		if type(channels) not in (list, tuple) or not channels:
@@ -69,7 +71,7 @@ class ZIAlertIngester(AbsAlertIngester):
 
 		# T2 unit making use of upper limits
 		self.t2_units_using_uls = tuple(
-			getattr(T2Controller.load_unit(t2_unit, self.logger), 'upperLimits', False) 
+			getattr(T2Controller.load_unit(t2_unit, self.logger), 'upperLimits', False)
 			for t2_unit in t2_units
 		)
 
@@ -95,23 +97,13 @@ class ZIAlertIngester(AbsAlertIngester):
 		}
 
 		# Global config whether to check for IPAC PPS reprocessing
-		self.check_reproc = AmpelConfig.get_config(
-			'%s.ingestion.checkReprocessing' % 
-			ZIAlertIngester.config_path
-		)
+		self.check_reprocessing = check_reprocessing
 
 		# Global config defining the std IPAC alert history length. As of June 2018: 30 days
-		self.al_hist_len = AmpelConfig.get_config(
-			'%s.alerts.alertHistoryLength' % 
-			ZIAlertIngester.config_path
-		)
+		self.alert_history_length = alert_history_length
 
 		# Feedback
 		self.logger.info("ZIAlertIngester setup using completed")
-
-
-	def flush_report(self):
-		pass
 
 
 	def set_log_id(self, log_id):
@@ -347,12 +339,12 @@ class ZIAlertIngester(AbsAlertIngester):
 		# Difference between candids from db and candids from alert
 		ids_in_db_not_in_alert = (ids_pps_db | ids_uls_db) - (ids_pps_alert | ids_uls_alert)
 
-		# If the set is not empty, either some transient info is older that al_hist_len days
+		# If the set is not empty, either some transient info is older that alert_history_length days
 		# or some photopoints were reprocessed
-		if self.check_reproc and ids_in_db_not_in_alert:
+		if self.check_reprocessing and ids_in_db_not_in_alert:
 
-			# Ignore ppts in db older than al_hist_len days  
-			min_jd = pps_alert[0]["jd"] - self.al_hist_len
+			# Ignore ppts in db older than alert_history_length days  
+			min_jd = pps_alert[0]["jd"] - self.alert_history_length
 			ids_in_db_older_than_xx_days = {el["_id"] for el in pps_db + uls_db if el["jd"] < min_jd}
 			ids_superseeded = ids_in_db_not_in_alert - ids_in_db_older_than_xx_days
 
