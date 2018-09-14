@@ -1,6 +1,6 @@
 from setuptools import setup
 setup(name='Ampel-ZTF',
-      version='0.4.0',
+      version='0.5.0',
       package_dir={'':'src'},
       package_data = {'': ['*.json']},
       packages=[
@@ -12,8 +12,8 @@ setup(name='Ampel-ZTF',
           'ampel.pipeline.t3.sergeant',
       ],
       entry_points = {
-			'ampel.pipeline.t0.sources' : {
-				'ZIDataSource = ampel.pipeline.config.ZIDataSource:ZIDataSource',
+			'ampel.pipeline.t0.streams' : {
+				'ztf = ampel.pipeline.t0.ZIStreamSetup:ZIStreamSetup',
 			}
       }
 )
