@@ -10,16 +10,15 @@
 from ampel.base.AmpelAlert import AmpelAlert
 from ampel.core.flags.AlertFlags import AlertFlags
 from ampel.core.abstract.AbsInputStreamSetup import AbsInputStreamSetup
-from ampel.pipeline.t0.ZIAlertShaper import ZIAlertShaper
+from ampel.pipeline.t0.alerts.ZIAlertShaper import ZIAlertShaper
 from ampel.pipeline.t0.ingesters.ZIAlertIngester import ZIAlertIngester
-
 
 class ZIStreamSetup(AbsInputStreamSetup):
 	"""
 	"""
 
-	def __init__(self, serialization="avro", check_reprocessing=True, 
-		alert_history_length=30, archive_updater=None
+	def __init__(self, serialization="avro", check_reprocessing=True,
+		alert_history_length=30, update_archive=False
 	):
 		"""
 		"""
@@ -40,17 +39,23 @@ class ZIStreamSetup(AbsInputStreamSetup):
 			}
 		)
 
-		self.alert_history_length = alert_history_length 
+		self.alert_history_length = alert_history_length
 
 		# Global config whether to check for IPAC PPS reprocessing
 		self.check_reprocessing = check_reprocessing
 
-		# Global config defining the std IPAC alert history length. 
+		# Global config defining the std IPAC alert history length.
 		# As of June 2018: 30 days
 		self.alert_history_length = alert_history_length
 
 		self.serialization = serialization
-		self.archive_updater = archive_updater
+
+		if update_archive:
+			from ampel.pipeline.config.AmpelConfig import AmpelConfig
+			from ampel.pipeline.t0.ArchiveUpdater import ArchiveUpdater
+			self.archive_updater = ArchiveUpdater(
+				AmpelConfig.get_config('resources.archive.writer')
+			)
 
 
 	def get_alert_supplier(self, alert_loader):
@@ -59,15 +64,15 @@ class ZIStreamSetup(AbsInputStreamSetup):
 
 		if self.archive_updater is None:
 
-			if self.serizalization == "avro":
+			if self.serialization == "avro":
 				from ampel.pipeline.t0.alerts.ZIAlertSupplier import ZIAlertSupplier
 				return ZIAlertSupplier(alert_loader)
 
 			else:
 				from ampel.pipeline.t0.alerts.AlertSupplier import AlertSupplier
 				return AlertSupplier(
-					alert_loader, 
-					ZIAlertShaper.shape, 
+					alert_loader,
+					ZIAlertShaper.shape,
 					serialization=self.serialization
 				)
 		else:
@@ -80,10 +85,12 @@ class ZIStreamSetup(AbsInputStreamSetup):
 
 
 	def get_alert_ingester(self, channels, logger):
-		""" 
+		"""
+		:param channels:
+		:param logger: logger instance (python module 'logging')
 		"""
 		return ZIAlertIngester(
-			channels, logger=logger, 
+			channels, logger=logger,
 			check_reprocessing=self.check_reprocessing,
 			alert_history_length=self.alert_history_length
 		)
