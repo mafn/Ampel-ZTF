@@ -1,32 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/pipeline/config/ZIDataSource.py
+# File              : ampel/pipeline/t0/ZIStreamSetup.py
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 02.09.2018
-# Last Modified Date: 06.09.2018
+# Last Modified Date: 14.09.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from ampel.base.AmpelAlert import AmpelAlert
 from ampel.core.flags.AlertFlags import AlertFlags
-from ampel.pipeline.config.AmpelDataSource import AmpelDataSource
-from ampel.pipeline.t0.alerts.ZIAlertShaper import ZIAlertShaper
+from ampel.core.abstract.AbsInputStreamSetup import AbsInputStreamSetup
+from ampel.pipeline.t0.ZIAlertShaper import ZIAlertShaper
 from ampel.pipeline.t0.ingesters.ZIAlertIngester import ZIAlertIngester
 
-class ZIDataSource(AmpelDataSource):
+
+class ZIStreamSetup(AbsInputStreamSetup):
 	"""
 	"""
 
-	def __init__(self, 
-		serialization="avro", 
-		check_reprocessing=True, 
-		alert_history_length=30
+	def __init__(self, serialization="avro", check_reprocessing=True, 
+		alert_history_length=30, archive_updater=None
 	):
 		"""
 		"""
 
 		# Set static AmpelAlert alert flags
-		AmpelAlert.add_class_flags(
+		AmpelAlert.set_class_flags(
 			AlertFlags.INST_ZTF|AlertFlags.SRC_IPAC
 		)
 
@@ -43,22 +42,6 @@ class ZIDataSource(AmpelDataSource):
 
 		self.alert_history_length = alert_history_length 
 
-		if serialization == "json":
-			import json
-			self.deserialize = lambda f: (json.load(f), {})
-
-		elif serialization == "avro":
-			import fastavro
-			def deserialize(f):
-				reader = fastavro.reader(f)
-				return next(reader, None), reader.schema
-			self.deserialize = deserialize
-
-		else:
-			raise NotImplementedError(
-				"Deserialization format %s not implemented" % serialization
-			)
-
 		# Global config whether to check for IPAC PPS reprocessing
 		self.check_reprocessing = check_reprocessing
 
@@ -66,22 +49,41 @@ class ZIDataSource(AmpelDataSource):
 		# As of June 2018: 30 days
 		self.alert_history_length = alert_history_length
 
-
-	def get_shape_func(self):
-		""" """
-		return ZIAlertShaper().shape
+		self.serialization = serialization
+		self.archive_updater = archive_updater
 
 
-	def get_deserialize_func(self):
-		""" """
-		return self.deserialize
+	def get_alert_supplier(self, alert_loader):
+		""" 
+		"""
+
+		if self.archive_updater is None:
+
+			if self.serizalization == "avro":
+				from ampel.pipeline.t0.alerts.ZIAlertSupplier import ZIAlertSupplier
+				return ZIAlertSupplier(alert_loader)
+
+			else:
+				from ampel.pipeline.t0.alerts.AlertSupplier import AlertSupplier
+				return AlertSupplier(
+					alert_loader, 
+					ZIAlertShaper.shape, 
+					serialization=self.serialization
+				)
+		else:
+
+			if self.serialization != "avro":
+				raise ValueError("Serialization must be 'avro' when archive_updater is provided")
+
+			from ampel.pipeline.t0.alerts.ZIAlertArchiverSupplier import ZIAlertArchiverSupplier
+			return ZIAlertArchiverSupplier(alert_loader, self.archive_updater)
 
 
-	def get_ingester(self, channels, logger):
+	def get_alert_ingester(self, channels, logger):
 		""" 
 		"""
 		return ZIAlertIngester(
 			channels, logger=logger, 
-			check_reprocessing = self.check_reprocessing,
-			alert_history_length = self.alert_history_length
+			check_reprocessing=self.check_reprocessing,
+			alert_history_length=self.alert_history_length
 		)
