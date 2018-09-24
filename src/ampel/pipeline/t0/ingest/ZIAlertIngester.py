@@ -15,10 +15,10 @@ from pymongo.errors import BulkWriteError
 from pymongo import MongoClient, UpdateOne
 
 from ampel.core.abstract.AbsAlertIngester import AbsAlertIngester
-from ampel.pipeline.t0.ingesters.CompoundBluePrintGenerator import CompoundBluePrintGenerator
-from ampel.pipeline.t0.ingesters.ZIPhotoDictShaper import ZIPhotoDictShaper
-from ampel.pipeline.t0.ingesters.ZICompoundShaper import ZICompoundShaper
-from ampel.pipeline.t0.ingesters.T2DocsBluePrint import T2DocsBluePrint
+from ampel.pipeline.t0.ingest.CompoundBluePrintGenerator import CompoundBluePrintGenerator
+from ampel.pipeline.t0.ingest.ZIPhotoDictShaper import ZIPhotoDictShaper
+from ampel.pipeline.t0.ingest.ZICompoundShaper import ZICompoundShaper
+from ampel.pipeline.t0.ingest.T2DocsBluePrint import T2DocsBluePrint
 from ampel.pipeline.logging.LoggingUtils import LoggingUtils
 from ampel.base.flags.AmpelFlags import AmpelFlags
 from ampel.base.flags.PhotoFlags import PhotoFlags
@@ -43,7 +43,6 @@ class ZIAlertIngester(AbsAlertIngester):
 	"""
 
 	# Static vars
-	version = 1.0
 	config_path = 'global.sources.ZTFIPAC'
 	std_dbflag = FlagUtils.enumflag_to_dbflag(
 		AmpelFlags.INST_ZTF|AmpelFlags.SRC_IPAC
