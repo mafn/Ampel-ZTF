@@ -7,13 +7,13 @@ setup(name='Ampel-ZTF',
           'ampel.archive',
           'ampel.pipeline.common',
           'ampel.pipeline.t0',
-          'ampel.pipeline.t0.alerts',
-          'ampel.pipeline.t0.ingesters',
+          'ampel.pipeline.t0.load',
+          'ampel.pipeline.t0.ingest',
           'ampel.pipeline.t3.sergeant',
       ],
       entry_points = {
-			'ampel.pipeline.t0.streams' : {
-				'ztf = ampel.pipeline.t0.ZIStreamSetup:ZIStreamSetup',
+			'ampel.pipeline.t0.sources' : {
+				'ZTFIPAC = ampel.pipeline.t0.ZISetup:ZISetup',
 			}
       }
 )
