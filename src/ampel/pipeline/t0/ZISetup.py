@@ -17,10 +17,17 @@ from ampel.pipeline.t0.ingest.ZIAlertIngester import ZIAlertIngester
 class ZISetup(AbsT0Setup):
 	"""
 	ZI: Shortcut for ZTFIPAC
+	Class that sets up various static fields in AmpelAlert and 
+	provides an alert supplier and an alert ingester that 
+	work with the stream of alerts provided by ZTF/IPAC
 	"""
 
 	def __init__(self, serialization="avro", check_reprocessing=True, alert_history_length=30):
 		"""
+		:param str serialization: for now: 'avro' and 'json' are supported
+		:param bool check_reprocessing: whether the ingester should check if photopoints were reprocessed
+		(costs an additional DB request per transient). Default is (and should be) True.
+		:param int alert_history_length: IPAC currently provides us with a photometric history of 30 days.
 		"""
 		
 		# Set static AmpelAlert alert flags
@@ -53,6 +60,8 @@ class ZISetup(AbsT0Setup):
 
 	def get_alert_supplier(self, alert_loader):
 		""" 
+		:param alert_loader: iterable instance that returns the content of alerts
+		:returns: instance of ampel.pipeline.t0.load.AlertSupplier
 		"""
 		return AlertSupplier(
 			alert_loader, ZIAlertShaper.shape, serialization=self.serialization
@@ -61,7 +70,7 @@ class ZISetup(AbsT0Setup):
 
 	def get_alert_ingester(self, channels, logger):
 		"""
-		:param channels:
+		:param channels: list of ampel.pipeline.config.Channel instances
 		:param logger: logger instance (python module 'logging')
 		"""
 		return ZIAlertIngester(
