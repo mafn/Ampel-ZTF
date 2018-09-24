@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/pipeline/t0/ZIStreamSetup.py
+# File              : ampel/pipeline/t0/ZISetup.py
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 02.09.2018
@@ -9,20 +9,20 @@
 
 from ampel.base.AmpelAlert import AmpelAlert
 from ampel.core.flags.AlertFlags import AlertFlags
-from ampel.core.abstract.AbsInputStreamSetup import AbsInputStreamSetup
-from ampel.pipeline.t0.alerts.ZIAlertShaper import ZIAlertShaper
-from ampel.pipeline.t0.ingesters.ZIAlertIngester import ZIAlertIngester
+from ampel.core.abstract.AbsT0Setup import AbsT0Setup
+from ampel.pipeline.t0.load.AlertSupplier import AlertSupplier
+from ampel.pipeline.t0.load.ZIAlertShaper import ZIAlertShaper
+from ampel.pipeline.t0.ingest.ZIAlertIngester import ZIAlertIngester
 
-class ZIStreamSetup(AbsInputStreamSetup):
+class ZISetup(AbsT0Setup):
 	"""
+	ZI: Shortcut for ZTFIPAC
 	"""
 
-	def __init__(self, serialization="avro", check_reprocessing=True,
-		alert_history_length=30, update_archive=False
-	):
+	def __init__(self, serialization="avro", check_reprocessing=True, alert_history_length=30):
 		"""
 		"""
-
+		
 		# Set static AmpelAlert alert flags
 		AmpelAlert.set_class_flags(
 			AlertFlags.INST_ZTF|AlertFlags.SRC_IPAC
@@ -50,38 +50,13 @@ class ZIStreamSetup(AbsInputStreamSetup):
 
 		self.serialization = serialization
 
-		if update_archive:
-			from ampel.pipeline.config.AmpelConfig import AmpelConfig
-			from ampel.pipeline.t0.ArchiveUpdater import ArchiveUpdater
-			self.archive_updater = ArchiveUpdater(
-				AmpelConfig.get_config('resources.archive.writer')
-			)
-
 
 	def get_alert_supplier(self, alert_loader):
 		""" 
 		"""
-
-		if self.archive_updater is None:
-
-			if self.serialization == "avro":
-				from ampel.pipeline.t0.alerts.ZIAlertSupplier import ZIAlertSupplier
-				return ZIAlertSupplier(alert_loader)
-
-			else:
-				from ampel.pipeline.t0.alerts.AlertSupplier import AlertSupplier
-				return AlertSupplier(
-					alert_loader,
-					ZIAlertShaper.shape,
-					serialization=self.serialization
-				)
-		else:
-
-			if self.serialization != "avro":
-				raise ValueError("Serialization must be 'avro' when archive_updater is provided")
-
-			from ampel.pipeline.t0.alerts.ZIAlertArchiverSupplier import ZIAlertArchiverSupplier
-			return ZIAlertArchiverSupplier(alert_loader, self.archive_updater)
+		return AlertSupplier(
+			alert_loader, ZIAlertShaper.shape, serialization=self.serialization
+		)
 
 
 	def get_alert_ingester(self, channels, logger):
