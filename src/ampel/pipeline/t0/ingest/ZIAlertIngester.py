@@ -53,8 +53,10 @@ class ZIAlertIngester(AbsAlertIngester):
 		"""
 		:param channels: list of ampel.pipeline.config.Channel instances
 		:param logger: None or instance of logging.Logger
-		:param check_reprocessing: bool
-		:param alert_history_length: int
+		:param bool check_reprocessing: whether the ingester should check if photopoints were reprocessed
+		(costs an additional DB request per transient). Default is (and should be) True.
+		:param int alert_history_length: IPAC currently provides us with a photometric history of 30 days.
+		Although this number is unlikely to change, there is no reason to use a constant in code.
 		"""
 
 		if type(channels) not in (list, tuple) or not channels:
