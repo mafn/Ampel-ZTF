@@ -165,16 +165,16 @@ class Sergeant(object):
 		if self.cutprogramidx is None:
 			log.error('first fix program_name upon init')
 			return []
-		self.scan_soup = soup_obj(scanning_url + "?cutprogramidx=%s&startdate=%s&enddate=%s&HARDLIMIT=%s" %\
-				(self.cutprogramidx, self.start_date, self.end_date, hardlimit),marshalusr=self.marshalusr,marshalpwd=self.marshalpwd)
+		self.scan_soup = soup_obj(scanning_url + "?startdate=%s&enddate=%s&scienceprogram=%s&showSaved=all&nshow=%s&sortop=timeStamp" %\
+				(self.start_date, self.end_date, self.cutprogramidx,hardlimit),marshalusr=self.marshalusr,marshalpwd=self.marshalpwd)
 
 		
 		table = self.scan_soup.findAll('table')
-		table_rows = table[1].findAll('tr')[1:]
+		table_rows = table[4].findAll('tr')[1:]
 		
 		# this fails if no sources are present on the scanning page...
 		if len(table_rows)>0:
-			for x in table_rows[0].findAll('td')[5].findAll('select')[0].findAll('option'):
+			for x in table_rows[0].findAll('td')[6].findAll('select')[0].findAll('option'):
 				if self.program_name in x.text:
 					self.program = x["value"]
 		else:
@@ -183,9 +183,12 @@ class Sergeant(object):
 
 		sources = []
 		for source in table_rows:
+			candinfo = source.findAll('td')[6].findAll('input', {"name":'candid'})
+			if len(candinfo)==0:
+				continue
 			sources.append({})
-			sources[-1]["candid"] = source.findAll('td')[5].findAll('input', {"name":'candid'})[0]["value"]
-			for x in source.findAll('td')[5].findAll('b'):
+			sources[-1]["candid"] = source.findAll('td')[6].findAll('input', {"name":'candid'})[0]["value"]
+			for x in source.findAll('td')[6].findAll('b'):
 				if x.text.strip() == 'ID:':
 					sources[-1]["name"] = x.next_sibling.strip()
 				elif x.text.strip() == 'Coordinate:':
