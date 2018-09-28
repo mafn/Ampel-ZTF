@@ -19,7 +19,7 @@ from ampel.pipeline.t0.ingest.CompoundBluePrintGenerator import CompoundBluePrin
 from ampel.pipeline.t0.ingest.ZIPhotoDictShaper import ZIPhotoDictShaper
 from ampel.pipeline.t0.ingest.ZICompoundShaper import ZICompoundShaper
 from ampel.pipeline.t0.ingest.T2DocsBluePrint import T2DocsBluePrint
-from ampel.pipeline.logging.LoggingUtils import LoggingUtils
+from ampel.pipeline.logging.AmpelLogger import AmpelLogger
 from ampel.base.flags.AmpelFlags import AmpelFlags
 from ampel.base.flags.PhotoFlags import PhotoFlags
 from ampel.core.flags.T2RunStates import T2RunStates
@@ -63,7 +63,7 @@ class ZIAlertIngester(AbsAlertIngester):
 			raise ValueError("Parameter channels must be a non-empty sequence")
 
 		self.channel_names = tuple(channel.name for channel in channels)
-		self.logger = LoggingUtils.get_logger() if logger is None else logger
+		self.logger = AmpelLogger.get_logger() if logger is None else logger
 		self.logger.info("Configuring ZIAlertIngester for channels %s" % repr(self.channel_names))
 
 		t2_units = set()

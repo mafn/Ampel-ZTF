@@ -8,7 +8,6 @@
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 
-from ampel.pipeline.logging.LoggingUtils import LoggingUtils
 from ampel.pipeline.common.ZTFUtils import ZTFUtils
 from types import MappingProxyType
 
