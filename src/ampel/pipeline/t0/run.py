@@ -2,10 +2,10 @@ import os, time, uuid, logging
 from astropy.time import Time
 from ampel.archive.ArchiveDB import ArchiveDB
 from ampel.pipeline.t0.AlertProcessor import AlertProcessor
-from ampel.pipeline.t0.alerts.ZIAlertShaper import ZIAlertShaper
-from ampel.pipeline.t0.alerts.TarAlertLoader import TarAlertLoader
-from ampel.pipeline.t0.alerts.UWAlertLoader import UWAlertLoader
-from ampel.pipeline.t0.alerts.AlertSupplier import AlertSupplier
+from ampel.pipeline.t0.load.ZIAlertShaper import ZIAlertShaper
+from ampel.pipeline.t0.load.TarAlertLoader import TarAlertLoader
+from ampel.pipeline.t0.load.UWAlertLoader import UWAlertLoader
+from ampel.pipeline.t0.load.AlertSupplier import AlertSupplier
 from ampel.pipeline.config.ConfigLoader import AmpelArgumentParser
 from ampel.pipeline.config.AmpelConfig import AmpelConfig
 from ampel.pipeline.config.ChannelLoader import ChannelLoader
