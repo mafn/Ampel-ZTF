@@ -12,6 +12,9 @@ setup(name='Ampel-ZTF',
           'ampel.pipeline.t3.sergeant',
       ],
       entry_points = {
+			'console_scripts' : {
+				'ampel-ztf-alertprocessor = ampel.pipeline.t0.ZIAlertProcessor:run_alertprocessor'
+			},
 			'ampel.pipeline.t0.sources' : {
 				'ZTFIPAC = ampel.pipeline.t0.ZISetup:ZISetup',
 			}
