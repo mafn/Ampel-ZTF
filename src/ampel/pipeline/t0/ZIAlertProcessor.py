@@ -6,11 +6,32 @@ from ampel.pipeline.t0.load.ZIAlertShaper import ZIAlertShaper
 from ampel.pipeline.t0.load.TarAlertLoader import TarAlertLoader
 from ampel.pipeline.t0.load.UWAlertLoader import UWAlertLoader
 from ampel.pipeline.t0.load.AlertSupplier import AlertSupplier
-from ampel.pipeline.config.ConfigLoader import AmpelArgumentParser
+from ampel.pipeline.config.ArgumentParser import AmpelArgumentParser
 from ampel.pipeline.config.AmpelConfig import AmpelConfig
-from ampel.pipeline.config.ChannelLoader import ChannelLoader
-from ampel.pipeline.t0.ZIStreamSetup import ZIStreamSetup
+from ampel.pipeline.config.channel.ChannelConfig import ChannelConfig
+from ampel.pipeline.t0.ZISetup import ZISetup
+import pkg_resources
 
+def get_required_resources(config, channels=None):
+	units = set()
+	for name, channel_config in config['channels'].items():
+		channel = ChannelConfig.parse_obj(channel_config)
+		if not channel.active or (channels is not None and name not in channels):
+			continue
+		for source in channel.sources:
+			units.add(source.t0Filter.unitId)
+	resources = set()
+	for filter_id in units:
+		filter_entry_point = next(
+			pkg_resources.iter_entry_points('ampel.pipeline.t0', filter_id), 
+			None
+		)
+		if filter_entry_point is None:
+			raise ValueError("Unknown unit {}".format(filter_id))
+		unit = filter_entry_point.resolve()
+		for resource in unit.resources:
+			resources.add(resource)
+	return resources
 
 def run_alertprocessor():
 
@@ -36,8 +57,7 @@ def run_alertprocessor():
 	# partially parse command line to get config
 	opts, argv = parser.parse_known_args()
 	# flesh out parser with resources required by t0 units
-	loader = ChannelLoader(source="ZTFIPAC", tier=0)
-	parser.require_resources(*loader.get_required_resources())
+	parser.require_resources(*get_required_resources(opts.config, opts.channels))
 	# parse again
 	opts = parser.parse_args()
 
@@ -84,6 +104,8 @@ def run_alertprocessor():
 		)
 
 	else:
+		# insert loaded alerts into the archive only if 
+		# they didn't come from the archive in the first place
 		infile = '{} group {}'.format(opts.broker, opts.group)
 		loader = UWAlertLoader(
 			opts.broker, 
@@ -94,14 +116,12 @@ def run_alertprocessor():
 		)
 
 	processor = AlertProcessor(
-		# insert loaded alerts into the archive only if 
-		# they didn't come from the archive in the first place
-		ZIStreamSetup(), 
+		"ZTFIPAC", 
 		publish_stats=["jobs", "graphite"], 
 		channels=channels
 	)
 
-	log = logging.getLogger('ampel-alertprocessor')
+	log = logging.getLogger('ampel-ztf-alertprocessor')
 
 	while alert_processed == AlertProcessor.iter_max:
 
