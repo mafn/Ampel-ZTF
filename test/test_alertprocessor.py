@@ -84,6 +84,10 @@ def test_required_resources():
 	resources = get_required_resources(config)
 	assert len(resources) > 0
 
+def test_setup():
+	from ampel.pipeline.t0.ZISetup import ZISetup
+	ZISetup()
+
 def test_ingestion_from_archive(empty_archive, alert_generator, minimal_ingestion_config):
 	from ampel.pipeline.config.AmpelConfig import AmpelConfig
 	from ampel.archive import ArchiveDB

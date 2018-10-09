@@ -23,7 +23,7 @@ from ampel.pipeline.logging.AmpelLogger import AmpelLogger
 from ampel.base.flags.AmpelFlags import AmpelFlags
 from ampel.base.flags.PhotoFlags import PhotoFlags
 from ampel.core.flags.T2RunStates import T2RunStates
-from ampel.core.flags.AlDocTypes import AlDocTypes
+from ampel.core.flags.AlDocType import AlDocType
 from ampel.core.flags.FlagUtils import FlagUtils
 from ampel.pipeline.common.AmpelUtils import AmpelUtils
 from ampel.pipeline.config.AmpelConfig import AmpelConfig
@@ -146,7 +146,7 @@ class ZIAlertIngester(AbsAlertIngester):
 		For exmample, in the case of ZIPhotoDictShaper:
 			* The field candid is renamed in _id 
 			* A new field 'alFlags' (AmpelFlags) is created (integer value of ampel.base.flags.PhotoFlags)
-			* A new field 'alDocType' is created (integer value of ampel.core.flags.AlDocTypes.PHOTOPOINT/UPPERLIMIT)
+			* A new field 'alDocType' is created (integer value of ampel.core.flags.AlDocType.PHOTOPOINT/UPPERLIMIT)
 		A photopoint shaper class (t0.pipeline.ingesters...) performs these operations.
 		This method enables the customization of the PhotoDictShaper instance to be used.
 		By default, ZIPhotoDictStamper is used.
@@ -441,7 +441,7 @@ class ZIAlertIngester(AbsAlertIngester):
 			d_set_on_insert =  {
 				"_id": bson_eff_comp_id,
 				"tranId": tran_id,
-				"alDocType": AlDocTypes.COMPOUND,
+				"alDocType": AlDocType.COMPOUND,
 				"alFlags": FlagUtils.enumflag_to_dbflag(
 					comp_bp.get_comp_flags(eff_comp_id)
 				),
@@ -504,7 +504,7 @@ class ZIAlertIngester(AbsAlertIngester):
 					# Matching search criteria
 					match_dict = {
 						"tranId": tran_id,
-						"alDocType": AlDocTypes.T2RECORD,
+						"alDocType": AlDocType.T2RECORD,
 						"t2Unit": t2_id, 
 						"runConfig": run_config
 					}
@@ -512,7 +512,7 @@ class ZIAlertIngester(AbsAlertIngester):
 					# Attributes set if no previous doc exists
 					d_set_on_insert = {
 						"tranId": tran_id,
-						"alDocType": AlDocTypes.T2RECORD,
+						"alDocType": AlDocType.T2RECORD,
 						"alFlags": ZIAlertIngester.std_dbflag,
 						"t2Unit": t2_id, 
 						"runConfig": run_config, 
@@ -622,12 +622,12 @@ class ZIAlertIngester(AbsAlertIngester):
 			UpdateOne(
 				{
 					"tranId": tran_id,
-					"alDocType": AlDocTypes.TRANSIENT
+					"alDocType": AlDocType.TRANSIENT
 				},
 				{
 					"$setOnInsert": {
 						"tranId": tran_id,
-						"alDocType": AlDocTypes.TRANSIENT,
+						"alDocType": AlDocType.TRANSIENT,
 					},
 					'$addToSet': {
 						"alFlags": {

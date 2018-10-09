@@ -9,7 +9,7 @@
 
 from ampel.base.flags.PhotoFlags import PhotoFlags
 from ampel.core.flags.FlagUtils import FlagUtils
-from ampel.core.flags.AlDocTypes import AlDocTypes
+from ampel.core.flags.AlDocType import AlDocType
 import bson
 
 class ZIPhotoDictShaper:
