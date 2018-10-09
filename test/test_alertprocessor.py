@@ -60,7 +60,7 @@ def test_alertprocessor_entrypoint(alert_tarball, empty_mongod, postgres, graphi
 
 @pytest.fixture
 def live_config():
-	from ampel.pipeline.config.ConfigLoader import AmpelArgumentParser
+	from ampel.pipeline.config.ArgumentParser import AmpelArgumentParser
 	from ampel.pipeline.config.AmpelConfig import AmpelConfig
 	AmpelConfig.reset()
 	AmpelArgumentParser().parse_args(args=[])
@@ -68,12 +68,11 @@ def live_config():
 	AmpelConfig.reset()
 
 def test_private_channel_split(live_config):
-	from ampel.pipeline.config.ChannelLoader import ChannelLoader
+	from ampel.pipeline.t0.ZIAlertProcessor import split_private_channels
+	from ampel.pipeline.config.ConfigLoader import ConfigLoader
 	
-	loader = ChannelLoader(source="ZTFIPAC", tier=0)
-	params = loader.get_source_parameters()
-	private = {k for k,v in params.items() if v.get('ZTFPartner', False)}
-	public = set(params.keys()).difference(private)
+	config = ConfigLoader.load_config()
+	public, private = split_private_channels(config)
 	assert len(public) == 1
 
 def test_required_resources():
@@ -89,21 +88,21 @@ def test_setup():
 	ZISetup()
 
 def test_ingestion_from_archive(empty_archive, alert_generator, minimal_ingestion_config):
-	from ampel.pipeline.config.AmpelConfig import AmpelConfig
-	from ampel.archive import ArchiveDB
+	from ampel.archive.ArchiveDB import ArchiveDB
+	from ampel.pipeline.t0.ArchiveUpdater import ArchiveUpdater
 	from ampel.pipeline.t0.AlertProcessor import AlertProcessor
-	from ampel.pipeline.t0.alerts.AlertSupplier import AlertSupplier
-	from ampel.pipeline.t0.alerts.ZIAlertShaper import ZIAlertShaper
+	from ampel.pipeline.t0.ZISetup import ZISetup
 	from itertools import islice
 
-	db = ArchiveDB(empty_archive)
+	updater = ArchiveUpdater(empty_archive)
 	for idx, (alert, schema) in enumerate(islice(alert_generator(with_schema=True), 100)):
-		db.insert_alert(alert, schema, idx%16, 0)
+		updater.insert_alert(alert, schema, idx%16, 0)
+	del updater
 
+	db = ArchiveDB(empty_archive)
 	alerts = db.get_alerts_in_time_range(-float('inf'), float('inf'), programid=1)
-	supplier = AlertSupplier(alerts, alert_shaper=ZIAlertShaper())
 
-	ap = AlertProcessor(publish_stats=[])
-	iter_count = ap.run(supplier)
+	ap = AlertProcessor(ZISetup(serialization=None), publish_stats=[])
+	iter_count = ap.run(alerts)
 	assert iter_count == idx+1
 

@@ -22,6 +22,8 @@ class ZISetup(AbsT0Setup):
 	work with the stream of alerts provided by ZTF/IPAC
 	"""
 
+	survey_id = "ZTFIPAC"
+
 	def __init__(self, serialization="avro", check_reprocessing=True, alert_history_length=30):
 		"""
 		:param str serialization: for now: 'avro' and 'json' are supported

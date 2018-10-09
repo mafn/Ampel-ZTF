@@ -33,6 +33,22 @@ def get_required_resources(config, channels=None):
 			resources.add(resource)
 	return resources
 
+def split_private_channels(config, channels=None):
+	public = []
+	private = []
+	for name, channel_config in config['channels'].items():
+		channel = ChannelConfig.parse_obj(channel_config)
+		if not channel.active or (channels is not None and name not in channels):
+			continue
+		for source in channel.sources:
+			if source.stream == "ZTFIPAC":
+				if source.parameters.get('ZTFPartner', False):
+					private.append(name)
+				else:
+					public.append(name)
+	
+	return public, private
+
 def run_alertprocessor():
 
 	parser = AmpelArgumentParser()
@@ -63,13 +79,12 @@ def run_alertprocessor():
 
 	partnership = True
 	if opts.private is not None:
-		params = loader.get_source_parameters()
-		private = {k for k,v in params.items() if v.get('ZTFPartner', False)}
+		public, private = split_private_channels(opts.config)
 		if opts.private:
 			channels = private
 			opts.group += "-partnership"
 		else:
-			channels = set(params.keys()).difference(private)
+			channels = public
 			opts.group += "-public"
 			partnership = False
 	else:
@@ -116,7 +131,7 @@ def run_alertprocessor():
 		)
 
 	processor = AlertProcessor(
-		"ZTFIPAC", 
+		ZISetup(serialization=None if opts.archive else "avro"), 
 		publish_stats=["jobs", "graphite"], 
 		channels=channels
 	)
