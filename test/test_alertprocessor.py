@@ -34,22 +34,42 @@ def empty_mongod(mongod):
 	yield mongod
 	mc.drop_database('Ampel_logs')
 
-@pytest.mark.parametrize("config_source,alert_source", [("env", "tarball"), ("env", "archive"), ("cmdline", "tarball"), ("cmdline", "archive")])
-def test_alertprocessor_entrypoint(alert_tarball, empty_mongod, postgres, graphite, config_source, alert_source):
+def populate_archive(alert_generator, empty_archive):
+	from itertools import islice
+	from ampel.pipeline.t0.ArchiveUpdater import ArchiveUpdater
+
+	updater = ArchiveUpdater(empty_archive)
+	for idx, (alert, schema) in enumerate(islice(alert_generator(with_schema=True), 100)):
+		updater.insert_alert(alert, schema, idx%16, 0)
+
+@pytest.mark.parametrize("config_source,alert_source", [("env", "tarball"), ("env", "archive"), ("cmdline", "tarball"), ("cmdline", "archive"), ("cmdline", "kafka")])
+def test_alertprocessor_entrypoint(alert_tarball, alert_generator, empty_mongod, empty_archive, graphite, kafka_stream, config_source, alert_source):
+	from ampel.archive.ArchiveDB import ArchiveDB
 	if alert_source == "tarball":
 		cmd = ['ampel-ztf-alertprocessor', '--tarfile', alert_tarball, '--channels', 'HU_RANDOM']
+
 	elif alert_source == "archive":
+		populate_archive(alert_generator, empty_archive)
+		db = ArchiveDB(empty_archive)
+		assert db.get_statistics()['alert']['rows'] > 0
+		del db
 		cmd = ['ampel-ztf-alertprocessor', '--archive', '2000-01-01', '2099-01-01', '--channels', 'HU_RANDOM']
+	elif alert_source == "kafka":
+		db = ArchiveDB(empty_archive)
+		assert db.get_statistics()['alert']['rows'] == 0
+		del db
+		cmd = ['ampel-ztf-alertprocessor', '--broker', kafka_stream, '--timeout=10', '--channels', 'HU_RANDOM']
+		
 	if config_source == "env":
 		env = {**resource_env(empty_mongod, 'mongo', 'writer'),
-		       **resource_env(postgres, 'archive', 'writer'),
+		       **resource_env(empty_archive, 'archive', 'writer'),
 		       **resource_env(graphite, 'graphite'),
 		       'SLOT': '1'}
 		env.update(os.environ)
 	elif config_source == "cmdline":
 		env = os.environ
 		cmd += resource_args(empty_mongod, 'mongo', 'writer') \
-		    + resource_args(postgres, 'archive', 'writer') \
+		    + resource_args(empty_archive, 'archive', 'writer') \
 		    + resource_args(graphite, 'graphite')
 		if alert_source == "archive":
 			cmd += ['--slot', '1']
@@ -57,6 +77,21 @@ def test_alertprocessor_entrypoint(alert_tarball, empty_mongod, postgres, graphi
 	from pymongo import MongoClient
 	mc = MongoClient(empty_mongod)
 	assert mc['Ampel_logs']['troubles'].count({}) == 0
+	if alert_source == "kafka":
+		db = ArchiveDB(empty_archive)
+		assert db.get_statistics()['alert']['rows'] == 30
+
+def test_kafka_stream(kafka_stream):
+	"""Does the Kafka stream itself work?"""
+	from ampel.pipeline.t0.load.UWAlertLoader import UWAlertLoader
+	
+	loader = UWAlertLoader(partnership=True, bootstrap=kafka_stream, timeout=10)
+	count = 0
+	for alert in loader:
+		count += 1
+		if count == 30:
+			break
+	assert count == 30
 
 @pytest.fixture
 def live_config():
@@ -89,15 +124,10 @@ def test_setup():
 
 def test_ingestion_from_archive(empty_archive, alert_generator, minimal_ingestion_config):
 	from ampel.archive.ArchiveDB import ArchiveDB
-	from ampel.pipeline.t0.ArchiveUpdater import ArchiveUpdater
 	from ampel.pipeline.t0.AlertProcessor import AlertProcessor
 	from ampel.pipeline.t0.ZISetup import ZISetup
-	from itertools import islice
 
-	updater = ArchiveUpdater(empty_archive)
-	for idx, (alert, schema) in enumerate(islice(alert_generator(with_schema=True), 100)):
-		updater.insert_alert(alert, schema, idx%16, 0)
-	del updater
+	populate_archive(alert_generator, empty_archive)
 
 	db = ArchiveDB(empty_archive)
 	alerts = db.get_alerts_in_time_range(-float('inf'), float('inf'), programid=1)
@@ -105,4 +135,3 @@ def test_ingestion_from_archive(empty_archive, alert_generator, minimal_ingestio
 	ap = AlertProcessor(ZISetup(serialization=None), publish_stats=[])
 	iter_count = ap.run(alerts)
 	assert iter_count == idx+1
-

@@ -62,6 +62,7 @@ def run_alertprocessor():
 	parser.add_argument('--slot', env_var='SLOT', type=int, 
 		default=None, help="Index of archive reader worker")
 	parser.add_argument('--group', default=uuid.uuid1().hex, help="Kafka consumer group name")
+	parser.add_argument('--timeout', default=3600, type=int, help='Kafka timeout')
 	action = parser.add_mutually_exclusive_group(required=False)
 	action.add_argument('--channels', default=None, nargs="+", 
 		help="Run only these filters on all ZTF alerts")
@@ -122,16 +123,16 @@ def run_alertprocessor():
 		# insert loaded alerts into the archive only if 
 		# they didn't come from the archive in the first place
 		infile = '{} group {}'.format(opts.broker, opts.group)
-		loader = UWAlertLoader(
-			opts.broker, 
+		loader = iter(UWAlertLoader(
+			bootstrap=opts.broker, 
 			group_name=opts.group, 
 			partnership=partnership, 
             update_archive=True,
-			timeout=3600
-		)
+			timeout=opts.timeout
+		))
 
 	processor = AlertProcessor(
-		ZISetup(serialization=None if opts.archive else "avro"), 
+		ZISetup(serialization="avro" if opts.tarfile else None), 
 		publish_stats=["jobs", "graphite"], 
 		channels=channels
 	)
