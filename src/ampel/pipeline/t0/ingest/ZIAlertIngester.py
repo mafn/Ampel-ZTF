@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/pipeline/t0/ingesters/ZIAlertIngester.py
+# File              : ampel/pipeline/t0/ingest/ZIAlertIngester.py
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 14.12.2017
-# Last Modified Date: 15.08.2018
+# Last Modified Date: 16.10.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 import logging, time
@@ -555,7 +555,7 @@ class ZIAlertIngester(AbsAlertIngester):
 							{
 								"tier": 0,
 								"dt": now,
-								"channel(s)": chan_name,
+								"channels": chan_name,
 								"effId": comp_bp.get_effid_of_chan(chan_name)
 							}
 							for chan_name in eff_chan_names
@@ -566,7 +566,7 @@ class ZIAlertIngester(AbsAlertIngester):
 							{
 								"tier": 0,
 								"dt": now,
-								"channel(s)": AmpelUtils.try_reduce(eff_chan_names),
+								"channels": AmpelUtils.try_reduce(eff_chan_names),
 								"ppId": bson_bifold_comp_id
 							}
 						)
@@ -587,7 +587,7 @@ class ZIAlertIngester(AbsAlertIngester):
 						d_addtoset["journal"] = {
 							"tier": 0,
 							"dt": now,
-							"channel(s)": AmpelUtils.try_reduce(eff_chan_names)
+							"channels": AmpelUtils.try_reduce(eff_chan_names)
 						}
 
 					t2_upserts += 1
@@ -646,7 +646,7 @@ class ZIAlertIngester(AbsAlertIngester):
 						"journal": {
 							'tier': 0,
 							'dt': now,
-							'channel(s)': AmpelUtils.try_reduce(chan_names),
+							'channels': AmpelUtils.try_reduce(chan_names),
 							'alertId': alert_id,
 							'runId': self.job_id
 						}
