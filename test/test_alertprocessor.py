@@ -41,6 +41,7 @@ def populate_archive(alert_generator, empty_archive):
 	updater = ArchiveUpdater(empty_archive)
 	for idx, (alert, schema) in enumerate(islice(alert_generator(with_schema=True), 100)):
 		updater.insert_alert(alert, schema, idx%16, 0)
+	return idx+1
 
 @pytest.mark.parametrize("config_source,alert_source", [("env", "tarball"), ("env", "archive"), ("cmdline", "tarball"), ("cmdline", "archive"), ("cmdline", "kafka")])
 def test_alertprocessor_entrypoint(alert_tarball, alert_generator, empty_mongod, empty_archive, graphite, kafka_stream, config_source, alert_source):
@@ -127,11 +128,11 @@ def test_ingestion_from_archive(empty_archive, alert_generator, minimal_ingestio
 	from ampel.pipeline.t0.AlertProcessor import AlertProcessor
 	from ampel.pipeline.t0.ZISetup import ZISetup
 
-	populate_archive(alert_generator, empty_archive)
+	count = populate_archive(alert_generator, empty_archive)
 
 	db = ArchiveDB(empty_archive)
 	alerts = db.get_alerts_in_time_range(-float('inf'), float('inf'), programid=1)
 
 	ap = AlertProcessor(ZISetup(serialization=None), publish_stats=[])
 	iter_count = ap.run(alerts)
-	assert iter_count == idx+1
+	assert iter_count == count
