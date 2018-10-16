@@ -648,7 +648,7 @@ class ZIAlertIngester(AbsAlertIngester):
 							'dt': now,
 							'channel(s)': AmpelUtils.try_reduce(chan_names),
 							'alertId': alert_id,
-							'logs': self.job_id
+							'runId': self.job_id
 						}
 					}
 				},
