@@ -6,7 +6,7 @@ from ampel.pipeline.t0.load.ZIAlertShaper import ZIAlertShaper
 from ampel.pipeline.t0.load.TarAlertLoader import TarAlertLoader
 from ampel.pipeline.t0.load.UWAlertLoader import UWAlertLoader
 from ampel.pipeline.t0.load.AlertSupplier import AlertSupplier
-from ampel.pipeline.config.ArgumentParser import AmpelArgumentParser
+from ampel.pipeline.config.AmpelArgumentParser import AmpelArgumentParser
 from ampel.pipeline.config.AmpelConfig import AmpelConfig
 from ampel.pipeline.config.channel.ChannelConfig import ChannelConfig
 from ampel.pipeline.t0.ZISetup import ZISetup

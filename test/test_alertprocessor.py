@@ -95,7 +95,7 @@ def test_kafka_stream(kafka_stream):
 
 @pytest.fixture
 def live_config():
-	from ampel.pipeline.config.ArgumentParser import AmpelArgumentParser
+	from ampel.pipeline.config.AmpelArgumentParser import AmpelArgumentParser
 	from ampel.pipeline.config.AmpelConfig import AmpelConfig
 	AmpelConfig.reset()
 	AmpelArgumentParser().parse_args(args=[])
