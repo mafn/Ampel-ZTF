@@ -6,6 +6,7 @@ from ampel.pipeline.t0.load.ZIAlertShaper import ZIAlertShaper
 from ampel.pipeline.t0.load.TarAlertLoader import TarAlertLoader
 from ampel.pipeline.t0.load.UWAlertLoader import UWAlertLoader
 from ampel.pipeline.t0.load.AlertSupplier import AlertSupplier
+from ampel.pipeline.common.AmpelUnitLoader import AmpelUnitLoader
 from ampel.pipeline.config.AmpelArgumentParser import AmpelArgumentParser
 from ampel.pipeline.config.AmpelConfig import AmpelConfig
 from ampel.pipeline.config.channel.ChannelConfig import ChannelConfig
@@ -21,15 +22,8 @@ def get_required_resources(config, channels=None):
 		for source in channel.sources:
 			units.add(source.t0Filter.unitId)
 	resources = set()
-	for filter_id in units:
-		filter_entry_point = next(
-			pkg_resources.iter_entry_points('ampel.pipeline.t0', filter_id), 
-			None
-		)
-		if filter_entry_point is None:
-			raise ValueError("Unknown unit {}".format(filter_id))
-		unit = filter_entry_point.resolve()
-		for resource in unit.resources:
+	for unit in units:
+		for resource in AmpelUnitLoader.get_class(0, unit).resources:
 			resources.add(resource)
 	return resources
 
