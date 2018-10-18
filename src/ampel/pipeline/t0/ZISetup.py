@@ -4,11 +4,12 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 02.09.2018
-# Last Modified Date: 14.09.2018
+# Last Modified Date: 18.10.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from ampel.base.AmpelAlert import AmpelAlert
 from ampel.core.flags.AlertFlags import AlertFlags
+from ampel.core.flags.LogRecordFlags import LogRecordFlags
 from ampel.core.abstract.AbsT0Setup import AbsT0Setup
 from ampel.pipeline.t0.load.AlertSupplier import AlertSupplier
 from ampel.pipeline.t0.load.ZIAlertShaper import ZIAlertShaper
@@ -58,6 +59,12 @@ class ZISetup(AbsT0Setup):
 		self.alert_history_length = alert_history_length
 
 		self.serialization = serialization
+
+
+	def get_log_flags(self):
+		""" """
+		# pylint: disable=no-member
+		return LogRecordFlags.INST_ZTF|LogRecordFlags.SRC_IPAC
 
 
 	def get_alert_supplier(self, alert_loader):
