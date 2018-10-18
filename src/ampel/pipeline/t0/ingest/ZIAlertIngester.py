@@ -4,7 +4,7 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 14.12.2017
-# Last Modified Date: 16.10.2018
+# Last Modified Date: 18.10.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 import logging, time
@@ -26,7 +26,6 @@ from ampel.core.flags.T2RunStates import T2RunStates
 from ampel.core.flags.AlDocType import AlDocType
 from ampel.core.flags.FlagUtils import FlagUtils
 from ampel.pipeline.common.AmpelUtils import AmpelUtils
-from ampel.pipeline.config.AmpelConfig import AmpelConfig
 from ampel.pipeline.db.AmpelDB import AmpelDB
 from ampel.pipeline.t2.T2Controller import T2Controller
 
@@ -52,7 +51,8 @@ class ZIAlertIngester(AbsAlertIngester):
 	def __init__(self, channels, logger=None, check_reprocessing=True, alert_history_length=30):
 		"""
 		:param channels: list of ampel.pipeline.config.Channel instances
-		:param logger: None or instance of logging.Logger
+		:param logger: None or instance of :py:class: `AmpelLogger <ampel.pipeline.logging.AmpelLogger>`
+		:type logger: :py:class: `AmpelLogger <ampel.pipeline.logging.AmpelLogger>`
 		:param bool check_reprocessing: whether the ingester should check if photopoints were reprocessed
 		(costs an additional DB request per transient). Default is (and should be) True.
 		:param int alert_history_length: IPAC currently provides us with a photometric history of 30 days.
@@ -64,7 +64,10 @@ class ZIAlertIngester(AbsAlertIngester):
 
 		self.channel_names = tuple(channel.name for channel in channels)
 		self.logger = AmpelLogger.get_logger() if logger is None else logger
-		self.logger.info("Configuring ZIAlertIngester for channels %s" % repr(self.channel_names))
+		self.logger.info(
+			"ZIAlertIngester setup",
+			extra={'channels': self.channel_names}
+		)
 
 		t2_units = set()
 		for channel in channels:
@@ -102,9 +105,6 @@ class ZIAlertIngester(AbsAlertIngester):
 
 		# Global config defining the std IPAC alert history length. As of June 2018: 30 days
 		self.alert_history_length = alert_history_length
-
-		# Feedback
-		self.logger.info("ZIAlertIngester setup using completed")
 
 
 	def set_log_id(self, log_id):
@@ -186,8 +186,9 @@ class ZIAlertIngester(AbsAlertIngester):
 		compound_upserts = 0
 		start = time.time()
 
+		logs = []
+
 		# Load existing photopoint and upper limits from DB if any
-		self.logger.info("Checking DB for existing pps/uls")
 		meas_db = self.photo_col.find(
 			{
 				# tranId should be specific to one instrument
@@ -257,7 +258,7 @@ class ZIAlertIngester(AbsAlertIngester):
 
 		# If no photopoint exists in the DB, then this is a new transient 
 		if not ids_pps_db:
-			self.logger.info("Transient is new")
+			logs.append("New transient")
 
 
 
@@ -274,11 +275,6 @@ class ZIAlertIngester(AbsAlertIngester):
 		# PHOTO POINTS
 		if ids_pps_to_insert:
 
-			self.logger.info(
-				"%i new photo point(s) will be upserted: %s" % 
-				(len(ids_pps_to_insert), ids_pps_to_insert)
-			)
-
 			# ForEach photopoint not existing in DB: 
 			# Rename candid into _id, add tranId, alDocType (PHOTOPOINT) and alFlags
 			# Attention: ampelize *modifies* dict instances loaded by fastavro
@@ -294,16 +290,9 @@ class ZIAlertIngester(AbsAlertIngester):
 						upsert=True
 					)
 				)
-		else:
-			self.logger.info("No photopoint db update required")
 
 		# UPPER LIMITS
 		if ids_uls_to_insert:
-
-			self.logger.info(
-				"%i upper limit(s) will be inserted/updated: %s" % 
-				(len(ids_uls_to_insert), ids_uls_to_insert)
-			)
 
 			# For each upper limit not existing in DB: 
 			# Add tranId, alDocType (UPPER_LIMIT) and alFlags
@@ -324,8 +313,6 @@ class ZIAlertIngester(AbsAlertIngester):
 						upsert=True
 					)
 				)
-		else:
-			self.logger.info("No upper limit db update required")
 
 
 
@@ -365,10 +352,11 @@ class ZIAlertIngester(AbsAlertIngester):
 						pps_to_insert + uls_to_insert
 					):
 
-						self.logger.info(
-							"Marking measurement %s as superseeded by %s",
-							photod_db_superseeded["_id"], 
-							new_meas['_id']
+						logs.append(
+							"Marking photodata %s as superseeded by %s" % (
+								photod_db_superseeded["_id"], 
+								new_meas['_id']
+							)
 						)
 
 						# Update flags in dict loaded by fastavro
@@ -390,7 +378,7 @@ class ZIAlertIngester(AbsAlertIngester):
 							)
 						)
 			else:
-				self.logger.info("Transient data older than 30 days exist in DB")
+				logs.append("Transient data older than 30 days exist in DB")
 
 
 
@@ -475,7 +463,6 @@ class ZIAlertIngester(AbsAlertIngester):
 		##   Part 5: Generate t2 documents ##
 		#####################################
 
-		self.logger.info("Generating T2 docs")
 		t2docs_blueprint = self.t2_blueprint_creator.create_blueprint(
 			comp_bp, list_of_t2_units
 		)
@@ -605,19 +592,12 @@ class ZIAlertIngester(AbsAlertIngester):
 					)
 
 
-		# Insert generated t2 docs into collection
-		self.logger.info("%i T2 docs will be inserted into DB", t2_upserts)
-
-
 
 		############################################
 		##   Part 6: Update transient documents   ##
 		############################################
 
 		# Insert/Update transient document into 'transients' collection
-		self.logger.info("Updating transient document")
-
-		# TODO add alFlags
 		db_main_ops.append(
 			UpdateOne(
 				{
@@ -656,16 +636,42 @@ class ZIAlertIngester(AbsAlertIngester):
 			)
 		)
 
+
+		###########################
+		##   Part 7:  feedback   ##
+		###########################
+
+		extra = {'tranId': tran_id}
+
+		if ids_pps_to_insert:
+			extra['pp'] = list(ids_pps_to_insert)
+
+		if ids_uls_to_insert:
+			extra['ul'] = list(ids_uls_to_insert)
+
+		for el in logs:
+			self.logger.info(el, extra=extra)
+
+		self.logger.info(
+			"upserts: pp: %i, ul: %i, tr: 1, cp: %i, t2: %i" % (
+				len(ids_pps_to_insert), len(ids_uls_to_insert), 
+				compound_upserts, t2_upserts
+			), extra=extra
+		)
+
+
+
+
 		# Save time required by python for this method so far
 		self.time_dict['preIngestTime'].append(time.time() - start)
 
 		# Perform 'photo' DB operations
 		if db_photo_ops:
-			self.update_db(self.photo_col, db_photo_ops)
+			self.update_db(self.photo_col, db_photo_ops, extra)
 
 		# Perform 'main' DB operations
 		if db_main_ops:
-			self.update_db(self.main_col, db_main_ops)
+			self.update_db(self.main_col, db_main_ops, extra)
 
 		# Update counter metrics
 		if self.count_dict is not None:
@@ -676,7 +682,7 @@ class ZIAlertIngester(AbsAlertIngester):
 			self.count_dict['ppReprocs'] += pps_reprocs
 
 
-	def update_db(self, col, ops):
+	def update_db(self, col, ops, extra=None):
 		"""
 		Regarding the handling of BulkWriteError:
 		Concurent upserts triggers a DuplicateKeyError exception.
@@ -726,11 +732,12 @@ class ZIAlertIngester(AbsAlertIngester):
 				db_res = col.bulk_write(ops, ordered=False)
 
 			self.logger.info(
-				"DB %s feeback: %i upserted, %i modified" % (
+				"%s: inserted: %i, upserted: %i, modified: %i" % (
 					col.name,
+					db_res.bulk_api_result['nInserted'],
 					db_res.bulk_api_result['nUpserted'],
 					db_res.bulk_api_result['nModified']
-				)
+				), extra=extra
 			)
 
 		# Catch BulkWriteError only, other exceptions are caught in AlertProcessor
@@ -769,10 +776,11 @@ class ZIAlertIngester(AbsAlertIngester):
 					raise bwe
 
 			self.logger.info(
-				"DB %s feeback: %i upserted, %i modified, %i race condition(s) recovered" % (
+				"%s: inserted: %i, upserted: %i, modified: %i, race condition(s) recovered: %i" % (
 					col.name,
+					bwe.details['nInserted'],
 					bwe.details['nUpserted'],
 					bwe.details['nModified'],
 					len(bwe.details.get('writeErrors'))
-				)
+				), extra=extra
 			)
