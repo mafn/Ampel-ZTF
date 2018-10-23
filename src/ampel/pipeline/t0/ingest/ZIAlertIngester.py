@@ -256,9 +256,6 @@ class ZIAlertIngester(AbsAlertIngester):
 		# python set of ids of upper limits from DB
 		ids_uls_db = {el['_id'] for el in uls_db}
 
-		# If no photopoint exists in the DB, then this is a new transient 
-		if not ids_pps_db:
-			logs.append("New transient")
 
 
 
@@ -601,8 +598,8 @@ class ZIAlertIngester(AbsAlertIngester):
 		db_main_ops.append(
 			UpdateOne(
 				{
-					"tranId": tran_id,
-					"alDocType": AlDocType.TRANSIENT
+					'tranId': tran_id,
+					'alDocType': AlDocType.TRANSIENT
 				},
 				{
 					"$setOnInsert": {
@@ -643,11 +640,15 @@ class ZIAlertIngester(AbsAlertIngester):
 
 		extra = {'tranId': tran_id}
 
+		# If no photopoint exists in the DB, then this is a new transient 
+		if not ids_pps_db:
+			extra['new'] = True
+
 		if ids_pps_to_insert:
-			extra['pp'] = list(ids_pps_to_insert)
+			extra['pp'] = next(iter(ids_pps_to_insert)) if len(ids_pps_to_insert) == 1 else list(ids_pps_to_insert)
 
 		if ids_uls_to_insert:
-			extra['ul'] = list(ids_uls_to_insert)
+			extra['ul'] = next(iter(ids_uls_to_insert)) if len(ids_uls_to_insert) == 1 else list(ids_uls_to_insert)
 
 		for el in logs:
 			self.logger.info(el, extra=extra)
