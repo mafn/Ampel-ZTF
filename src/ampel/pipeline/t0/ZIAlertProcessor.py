@@ -113,6 +113,10 @@ def run_alertprocessor():
 			programid=(None if partnership else 1)
 		)
 
+		# Quieten sqlalchemy logger
+		import logging
+		logging.getLogger('sqlalchemy').setLevel(logging.ERROR)
+
 	else:
 		# insert loaded alerts into the archive only if 
 		# they didn't come from the archive in the first place
