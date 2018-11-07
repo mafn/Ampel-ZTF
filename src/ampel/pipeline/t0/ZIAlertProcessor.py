@@ -48,7 +48,6 @@ def run_alertprocessor():
 
 	parser = AmpelArgumentParser()
 	parser.require_resource('mongo', ['writer', 'logger'])
-	parser.require_resource('archive', ['writer'])
 	parser.add_argument('--publish-stats', nargs='*', default=['jobs', 'graphite'])
 	action = parser.add_mutually_exclusive_group(required=True)
 	action.add_argument('--broker', default='epyc.astro.washington.edu:9092')
@@ -70,6 +69,10 @@ def run_alertprocessor():
 	opts, argv = parser.parse_known_args()
 	if 'graphite' in opts.publish_stats:
 		parser.require_resource('graphite')
+	if opts.archive:
+		parser.require_resource('archive', ['reader'])
+	elif not opts.tarfile:
+		parser.require_resource('archive', ['writer'])
 	# flesh out parser with resources required by t0 units
 	parser.require_resources(*get_required_resources(opts.config, opts.channels))
 	# parse again
@@ -110,7 +113,7 @@ def run_alertprocessor():
 
 		infile = 'archive'
 		archive = ArchiveDB(
-			AmpelConfig.get_config('resources.archive.writer')
+			AmpelConfig.get_config('resources.archive.reader')
 		)
 		loader = archive.get_alerts_in_time_range(
 			opts.archive[0].jd, 
