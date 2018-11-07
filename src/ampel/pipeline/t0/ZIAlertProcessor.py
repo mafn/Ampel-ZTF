@@ -44,6 +44,7 @@ def split_private_channels(config, channels=None):
 	return public, private
 
 def run_alertprocessor():
+	import logging
 
 	parser = AmpelArgumentParser()
 	parser.require_resource('mongo', ['writer', 'logger'])
@@ -102,6 +103,9 @@ def run_alertprocessor():
 		elif opts.slot < 1 or opts.slot > 16:
 			parser.error("Slot number must be between 1 and 16 (got {})".format(opts.slot))
 
+		# Quieten sqlalchemy logger
+		logging.getLogger('sqlalchemy').setLevel(logging.ERROR)
+
 		infile = 'archive'
 		archive = ArchiveDB(
 			AmpelConfig.get_config('resources.archive.writer')
@@ -113,14 +117,13 @@ def run_alertprocessor():
 			programid=(None if partnership else 1)
 		)
 
-		# Quieten sqlalchemy logger
-		import logging
-		logging.getLogger('sqlalchemy').setLevel(logging.ERROR)
-
 	else:
 		# insert loaded alerts into the archive only if 
 		# they didn't come from the archive in the first place
 		infile = '{} group {}'.format(opts.broker, opts.group)
+		# Quieten sqlalchemy logger
+		logging.getLogger('sqlalchemy').setLevel(logging.ERROR)
+
 		loader = iter(UWAlertLoader(
 			bootstrap=opts.broker, 
 			group_name=opts.group, 
