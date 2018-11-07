@@ -49,7 +49,7 @@ def run_alertprocessor():
 	parser = AmpelArgumentParser()
 	parser.require_resource('mongo', ['writer', 'logger'])
 	parser.require_resource('archive', ['writer'])
-	parser.require_resource('graphite')
+	parser.add_argument('--publish-stats', nargs='*', default=['jobs', 'graphite'])
 	action = parser.add_mutually_exclusive_group(required=True)
 	action.add_argument('--broker', default='epyc.astro.washington.edu:9092')
 	action.add_argument('--tarfile', default=None)
@@ -68,6 +68,8 @@ def run_alertprocessor():
 	
 	# partially parse command line to get config
 	opts, argv = parser.parse_known_args()
+	if 'graphite' in opts.publish_stats:
+		parser.require_resource('graphite')
 	# flesh out parser with resources required by t0 units
 	parser.require_resources(*get_required_resources(opts.config, opts.channels))
 	# parse again
@@ -134,7 +136,7 @@ def run_alertprocessor():
 
 	processor = AlertProcessor(
 		ZISetup(serialization="avro" if opts.tarfile else None), 
-		publish_stats=["jobs", "graphite"], 
+		publish_stats=opts.publish_stats, 
 		channels=channels
 	)
 
