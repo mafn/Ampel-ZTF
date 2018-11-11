@@ -637,27 +637,43 @@ class ZIAlertIngester(AbsAlertIngester):
 		self.count_dict['comps'] += compound_upserts
 		self.count_dict['ppReprocs'] += pps_reprocs
 
-		extra = {'tranId': tran_id}
+		extra = {
+			'tranId': tran_id,
+			'channels': AmpelUtils.try_reduce(chan_names),
+			'upserts': {
+				'cp': compound_upserts,
+				't2': t2_upserts
+			}
+		}
+
+		if ids_pps_to_insert:
+			extra['upserts']['pp'] = next(iter(ids_pps_to_insert)) if len(ids_pps_to_insert) == 1 else list(ids_pps_to_insert)
+		if ids_uls_to_insert:
+			extra['upserts']['ul'] = next(iter(ids_uls_to_insert)) if len(ids_uls_to_insert) == 1 else list(ids_uls_to_insert)
 
 		# If no photopoint exists in the DB, then this is a new transient 
 		if not ids_pps_db:
 			extra['new'] = True
 
-		if ids_pps_to_insert:
-			extra['pp'] = next(iter(ids_pps_to_insert)) if len(ids_pps_to_insert) == 1 else list(ids_pps_to_insert)
-
-		if ids_uls_to_insert:
-			extra['ul'] = next(iter(ids_uls_to_insert)) if len(ids_uls_to_insert) == 1 else list(ids_uls_to_insert)
-
 		for el in logs:
 			self.logger.info(el, extra=extra)
 
-		self.logger.info(
-			"upserts: pp: %i, ul: %i, tr: 1, cp: %i, t2: %i" % (
-				len(ids_pps_to_insert), len(ids_uls_to_insert), 
-				compound_upserts, t2_upserts
-			), extra=extra
-		)
+		if len(comp_bp.d_eid_chnames) == 1:
+			extra['compId'] = Binary(next(iter(comp_bp.d_eid_chnames.keys())), 5)
+		else:
+
+			# Feedback
+			for eff_id, chans in comp_bp.d_eid_chnames.items():
+				self.logger.info(
+					None, extra={
+						'tranId': tran_id,
+						'channels': next(iter(chans)) if len(chans) == 1 else list(chans),
+						'compId': Binary(eff_id, 5)
+					}
+				)
+
+
+		self.logger.info(None, extra=extra)
 
 		return {
 			'tran': [tran_update],
