@@ -99,7 +99,7 @@ class ZIPhotoDictShaper:
 
 				# Rename 'candid' into '_id'
 				photo_dict['_id'] = photo_dict[id_field_name]
-				del photo_dict[id_field_name]
+				del photo_dict[id_field_name], photo_dict['programpi']
 
 				# update list of dicts
 				ret_list.append(photo_dict)
