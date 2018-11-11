@@ -630,6 +630,13 @@ class ZIAlertIngester(AbsAlertIngester):
 		##   Part 7:  feedback   ##
 		###########################
 
+		# Update counter metrics
+		self.count_dict['pps'] += len(pps_to_insert)
+		self.count_dict['uls'] += len(uls_to_insert)
+		self.count_dict['t2s'] += t2_upserts
+		self.count_dict['comps'] += compound_upserts
+		self.count_dict['ppReprocs'] += pps_reprocs
+
 		extra = {'tranId': tran_id}
 
 		# If no photopoint exists in the DB, then this is a new transient 
@@ -657,10 +664,3 @@ class ZIAlertIngester(AbsAlertIngester):
 			'photo': db_photo_ops,
 			'blend': db_main_ops,
 		}
-
-		# Update counter metrics
-		self.count_dict['pps'] += len(pps_to_insert)
-		self.count_dict['uls'] += len(uls_to_insert)
-		self.count_dict['t2s'] += t2_upserts
-		self.count_dict['comps'] += compound_upserts
-		self.count_dict['ppReprocs'] += pps_reprocs
