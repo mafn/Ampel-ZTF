@@ -4,10 +4,11 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 02.09.2018
-# Last Modified Date: 18.10.2018
+# Last Modified Date: 11.11.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from ampel.base.AmpelAlert import AmpelAlert
+from ampel.base.flags.TransientFlags import TransientFlags
 from ampel.core.flags.AlertFlags import AlertFlags
 from ampel.core.flags.LogRecordFlags import LogRecordFlags
 from ampel.core.abstract.AbsT0Setup import AbsT0Setup
@@ -61,12 +62,6 @@ class ZISetup(AbsT0Setup):
 		self.serialization = serialization
 
 
-	def get_log_flags(self):
-		""" """
-		# pylint: disable=no-member
-		return LogRecordFlags.INST_ZTF|LogRecordFlags.SRC_IPAC
-
-
 	def get_alert_supplier(self, alert_loader):
 		""" 
 		:param alert_loader: iterable instance that returns the content of alerts
@@ -87,3 +82,24 @@ class ZISetup(AbsT0Setup):
 			check_reprocessing=self.check_reprocessing,
 			alert_history_length=self.alert_history_length
 		)
+
+
+	@staticmethod
+	def get_log_flags():
+		""" """
+		# pylint: disable=no-member
+		return LogRecordFlags.INST_ZTF|LogRecordFlags.SRC_IPAC
+
+
+	@staticmethod
+	def get_instrument_flag_names():
+		""" """
+		return ["INST_ZTF", "SRC_IPAC"]
+
+
+	@staticmethod
+	def get_instrument_flags():
+		""" """
+		# pylint: disable=no-member
+		return TransientFlags.INST_ZTF|TransientFlags.SRC_IPAC
+
