@@ -1,11 +1,19 @@
-import os, time, uuid, logging
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# File              : ampel/pipeline/t0/ZIAlertProcessor.py
+# License           : BSD-3-Clause
+# Author            : jvs
+# Date              : Unspecified
+# Last Modified Date: 11.11.2018
+# Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
+
+import sys, time, uuid, logging
 from astropy.time import Time
 from ampel.archive.ArchiveDB import ArchiveDB
+from ampel.pipeline.logging.AmpelLogger import AmpelLogger
 from ampel.pipeline.t0.AlertProcessor import AlertProcessor
-from ampel.pipeline.t0.load.ZIAlertShaper import ZIAlertShaper
 from ampel.pipeline.t0.load.TarAlertLoader import TarAlertLoader
 from ampel.pipeline.t0.load.UWAlertLoader import UWAlertLoader
-from ampel.pipeline.t0.load.AlertSupplier import AlertSupplier
 from ampel.pipeline.common.AmpelUnitLoader import AmpelUnitLoader
 from ampel.pipeline.config.AmpelArgumentParser import AmpelArgumentParser
 from ampel.pipeline.config.AmpelConfig import AmpelConfig
@@ -44,7 +52,9 @@ def split_private_channels(config, channels=None):
 	return public, private
 
 def run_alertprocessor():
-	import logging
+
+	# Apparently, this is wished
+	AmpelLogger.default_stream = sys.stderr
 
 	parser = AmpelArgumentParser()
 	parser.require_resource('mongo', ['writer', 'logger'])
