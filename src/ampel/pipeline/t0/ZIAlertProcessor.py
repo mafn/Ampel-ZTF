@@ -54,7 +54,7 @@ def split_private_channels(config, channels=None):
 def run_alertprocessor():
 
 	# Apparently, this is wished
-	AmpelLogger.default_stream = sys.stderr
+	AmpelLogger.set_default_stream(sys.stderr)
 
 	parser = AmpelArgumentParser()
 	parser.require_resource('mongo', ['writer', 'logger'])
