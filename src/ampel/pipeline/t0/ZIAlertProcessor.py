@@ -17,16 +17,13 @@ from ampel.pipeline.t0.load.UWAlertLoader import UWAlertLoader
 from ampel.pipeline.common.AmpelUnitLoader import AmpelUnitLoader
 from ampel.pipeline.config.AmpelArgumentParser import AmpelArgumentParser
 from ampel.pipeline.config.AmpelConfig import AmpelConfig
-from ampel.pipeline.config.channel.ChannelConfig import ChannelConfig
+from ampel.pipeline.config.channel.ChannelConfigLoader import ChannelConfigLoader
 from ampel.pipeline.t0.ZISetup import ZISetup
 import pkg_resources
 
-def get_required_resources(config, channels=None):
+def get_required_resources(channels=None):
 	units = set()
-	for name, channel_config in config['channels'].items():
-		channel = ChannelConfig.parse_obj(channel_config)
-		if not channel.active or (channels is not None and name not in channels):
-			continue
+	for channel in ChannelConfigLoader.load_configurations(channels, 0):
 		for source in channel.sources:
 			units.add(source.t0Filter.unitId)
 	resources = set()
@@ -35,19 +32,16 @@ def get_required_resources(config, channels=None):
 			resources.add(resource)
 	return resources
 
-def split_private_channels(config, channels=None):
+def split_private_channels(channels=None):
 	public = []
 	private = []
-	for name, channel_config in config['channels'].items():
-		channel = ChannelConfig.parse_obj(channel_config)
-		if not channel.active or (channels is not None and name not in channels):
-			continue
+	for channel in ChannelConfigLoader.load_configurations(channels, 0):
 		for source in channel.sources:
 			if source.stream == "ZTFIPAC":
 				if source.parameters.get('ZTFPartner', False):
-					private.append(name)
+					private.append(channel.channel)
 				else:
-					public.append(name)
+					public.append(channel.channel)
 	
 	return public, private
 
@@ -84,13 +78,14 @@ def run_alertprocessor():
 	elif not opts.tarfile:
 		parser.require_resource('archive', ['writer'])
 	# flesh out parser with resources required by t0 units
-	parser.require_resources(*get_required_resources(opts.config, opts.channels))
+	AmpelConfig.set_config(opts.config)
+	parser.require_resources(*get_required_resources(opts.channels))
 	# parse again
 	opts = parser.parse_args()
 
 	partnership = True
 	if opts.private is not None:
-		public, private = split_private_channels(opts.config)
+		public, private = split_private_channels()
 		if opts.private:
 			channels = private
 			opts.group += "-partnership"
