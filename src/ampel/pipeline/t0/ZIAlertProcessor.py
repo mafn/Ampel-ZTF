@@ -70,7 +70,7 @@ def run_alertprocessor():
 		help="Run partnership filters on all ZTF alerts")
 	action.add_argument('--public', dest="private", default=None, action="store_false", 
 		help="Run public filters on public ZTF alerts only")
-	parser.add_argument('--skip-channels', default=None, nargs="+", 
+	parser.add_argument('--skip-channels', default=[], nargs="+", 
 		help="Do not run these filters")
 	
 	# partially parse command line to get config
