@@ -4,7 +4,7 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 14.12.2017
-# Last Modified Date: 18.10.2018
+# Last Modified Date: 13.11.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 import logging
@@ -594,7 +594,7 @@ class ZIAlertIngester(AbsAlertIngester):
 			},
 			{
 				'$setOnInsert': {
-					'ztfName': ZTFUtils.to_ztf_id(tran_id)
+					'tranNames': [ZTFUtils.to_ztf_id(tran_id)]
 				},
 				"$min": {
 					"created.%s" % chan_name: now 
