@@ -32,10 +32,12 @@ def get_required_resources(channels=None):
 			resources.add(resource)
 	return resources
 
-def split_private_channels(channels=None):
+def split_private_channels(channels=None, skip_channels=set()):
 	public = []
 	private = []
 	for channel in ChannelConfigLoader.load_configurations(channels, 0):
+		if channel.channel in skip_channels:
+			continue
 		for source in channel.sources:
 			if source.stream == "ZTFIPAC":
 				if source.parameters.get('ZTFPartner', False):
@@ -68,6 +70,8 @@ def run_alertprocessor():
 		help="Run partnership filters on all ZTF alerts")
 	action.add_argument('--public', dest="private", default=None, action="store_false", 
 		help="Run public filters on public ZTF alerts only")
+	parser.add_argument('--skip-channels', default=None, nargs="+", 
+		help="Do not run these filters")
 	
 	# partially parse command line to get config
 	opts, argv = parser.parse_known_args()
@@ -85,7 +89,7 @@ def run_alertprocessor():
 
 	partnership = True
 	if opts.private is not None:
-		public, private = split_private_channels()
+		public, private = split_private_channels(skip_channels=opts.skip_channels)
 		if opts.private:
 			channels = private
 			opts.group += "-partnership"
@@ -94,7 +98,7 @@ def run_alertprocessor():
 			opts.group += "-public"
 			partnership = False
 	else:
-		channels = opts.channels
+		channels = set(opts.channels) - set(opts.skip_channels)
 
 	count = 0
 	#AlertProcessor.iter_max = 100
