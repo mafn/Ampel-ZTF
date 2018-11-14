@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/pipeline/t0/ZIAlertProcessor.py
+# File              : ampel/ztf/pipeline/t0/run.py
 # License           : BSD-3-Clause
 # Author            : jvs
 # Date              : Unspecified
-# Last Modified Date: 11.11.2018
+# Last Modified Date: 14.11.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 import sys, time, uuid, logging
