@@ -9,16 +9,17 @@
 
 import sys, time, uuid, logging
 from astropy.time import Time
-from ampel.archive.ArchiveDB import ArchiveDB
+from ampel.ztf.archive.ArchiveDB import ArchiveDB
+from ampel.ztf.pipeline.t0.load.UWAlertLoader import UWAlertLoader
+from ampel.ztf.pipeline.t0.ZISetup import ZISetup
 from ampel.pipeline.logging.AmpelLogger import AmpelLogger
 from ampel.pipeline.t0.AlertProcessor import AlertProcessor
 from ampel.pipeline.t0.load.TarAlertLoader import TarAlertLoader
-from ampel.pipeline.t0.load.UWAlertLoader import UWAlertLoader
 from ampel.pipeline.common.AmpelUnitLoader import AmpelUnitLoader
 from ampel.pipeline.config.AmpelArgumentParser import AmpelArgumentParser
 from ampel.pipeline.config.AmpelConfig import AmpelConfig
 from ampel.pipeline.config.channel.ChannelConfigLoader import ChannelConfigLoader
-from ampel.pipeline.t0.ZISetup import ZISetup
+
 import pkg_resources
 
 def get_required_resources(channels=None):

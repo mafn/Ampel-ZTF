@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/pipeline/t0/ZISetup.py
+# File              : ampel/ztf/pipeline/t0/ZISetup.py
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 02.09.2018
-# Last Modified Date: 11.11.2018
+# Last Modified Date: 14.11.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from ampel.base.AmpelAlert import AmpelAlert
@@ -13,8 +13,8 @@ from ampel.core.flags.AlertFlags import AlertFlags
 from ampel.core.flags.LogRecordFlags import LogRecordFlags
 from ampel.core.abstract.AbsT0Setup import AbsT0Setup
 from ampel.pipeline.t0.load.AlertSupplier import AlertSupplier
-from ampel.pipeline.t0.load.ZIAlertShaper import ZIAlertShaper
-from ampel.pipeline.t0.ingest.ZIAlertIngester import ZIAlertIngester
+from ampel.ztf.pipeline.t0.load.ZIAlertShaper import ZIAlertShaper
+from ampel.ztf.pipeline.t0.ingest.ZIAlertIngester import ZIAlertIngester
 
 class ZISetup(AbsT0Setup):
 	"""

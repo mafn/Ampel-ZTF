@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/pipeline/t0/alerts/fetcherutils.py
+# File              : ampel/ztf/pipeline/t0/load/fetcherutils.py
 # License           : BSD-3-Clause
 # Author            : Jakob van Santen <jakob.van.santen@desy.de>
 # Date              : Unspecified
-# Last Modified Date: 18.09.2018
+# Last Modified Date: 14.11.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 def archive_topic():
 
-	from ampel.pipeline.t0.load.AllConsumingConsumer import AllConsumingConsumer
+	from ampel.ztf.pipeline.t0.load.AllConsumingConsumer import AllConsumingConsumer
 	from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 	import itertools, tarfile, time, os, pwd, grp, uuid, socket, fastavro, io
 

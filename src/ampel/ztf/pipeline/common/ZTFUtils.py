@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/pipeline/common/ZTFUtils.py
+# File              : ampel/ztf/pipeline/common/ZTFUtils.py
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 07.06.2018
-# Last Modified Date: 29.08.2018
+# Last Modified Date: 14.11.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 

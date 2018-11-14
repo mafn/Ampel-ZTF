@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/pipeline/t0/ingesters/ZIPhotoDictShaper.py
+# File              : ampel/ztf/pipeline/t0/ingest/ZIPhotoDictShaper.py
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 14.12.2017
-# Last Modified Date: 14.07.2018
+# Last Modified Date: 14.11.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from ampel.base.flags.PhotoFlags import PhotoFlags

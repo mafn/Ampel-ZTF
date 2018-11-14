@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/pipeline/t0/ingest/ZIAlertIngester.py
+# File              : ampel/ztf/pipeline/t0/ingest/ZIAlertIngester.py
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 14.12.2017
-# Last Modified Date: 13.11.2018
+# Last Modified Date: 14.11.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 import logging
@@ -16,8 +16,6 @@ from pymongo import MongoClient, UpdateOne
 
 from ampel.core.abstract.AbsAlertIngester import AbsAlertIngester
 from ampel.pipeline.t0.ingest.CompoundBluePrintGenerator import CompoundBluePrintGenerator
-from ampel.pipeline.t0.ingest.ZIPhotoDictShaper import ZIPhotoDictShaper
-from ampel.pipeline.t0.ingest.ZICompoundShaper import ZICompoundShaper
 from ampel.pipeline.t0.ingest.T2DocsBluePrint import T2DocsBluePrint
 from ampel.pipeline.logging.AmpelLogger import AmpelLogger
 from ampel.base.flags.AmpelFlags import AmpelFlags
@@ -28,7 +26,9 @@ from ampel.core.flags.FlagUtils import FlagUtils
 from ampel.pipeline.common.AmpelUtils import AmpelUtils
 from ampel.pipeline.db.AmpelDB import AmpelDB
 from ampel.pipeline.t2.T2Controller import T2Controller
-from ampel.pipeline.common.ZTFUtils import ZTFUtils
+from ampel.ztf.pipeline.t0.ingest.ZIPhotoDictShaper import ZIPhotoDictShaper
+from ampel.ztf.pipeline.t0.ingest.ZICompoundShaper import ZICompoundShaper
+from ampel.ztf.pipeline.common.ZTFUtils import ZTFUtils
 
 SUPERSEEDED = FlagUtils.get_flag_pos_in_enumflag(PhotoFlags.SUPERSEEDED)
 TO_RUN = FlagUtils.get_flag_pos_in_enumflag(T2RunStates.TO_RUN)

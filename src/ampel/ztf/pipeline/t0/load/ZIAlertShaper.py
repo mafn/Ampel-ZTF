@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/pipeline/t0/alerts/ZIAlertShaper.py
+# File              : ampel/ztf/pipeline/t0/load/ZIAlertShaper.py
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 20.04.2018
-# Last Modified Date: 15.09.2018
+# Last Modified Date: 14.11.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 
-from ampel.pipeline.common.ZTFUtils import ZTFUtils
+from ampel.ztf.pipeline.common.ZTFUtils import ZTFUtils
 from types import MappingProxyType
 
 

@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/pipeline/t0/alerts/UWAlertLoader.py
+# File              : ampel/ztf/pipeline/t0/load/UWAlertLoader.py
 # License           : BSD-3-Clause
 # Author            : Jakob van Santen <jakob.van.santen@desy.de>
 # Date              : Unspecified
-# Last Modified Date: 24.09.2018
+# Last Modified Date: 14.11.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 import io, time, itertools, logging, uuid, fastavro
-from ampel.pipeline.t0.load.AllConsumingConsumer import AllConsumingConsumer
+from ampel.ztf.pipeline.t0.load.AllConsumingConsumer import AllConsumingConsumer
 
 class UWAlertLoader:
 	"""
@@ -40,7 +40,7 @@ class UWAlertLoader:
 
 		if update_archive:
 			from ampel.pipeline.config.AmpelConfig import AmpelConfig
-			from ampel.pipeline.t0.ArchiveUpdater import ArchiveUpdater
+			from ampel.ztf.pipeline.t0.ArchiveUpdater import ArchiveUpdater
 			self.archive_updater = ArchiveUpdater(
 				AmpelConfig.get_config('resources.archive.writer')
 			)
