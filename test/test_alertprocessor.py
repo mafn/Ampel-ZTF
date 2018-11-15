@@ -36,7 +36,7 @@ def empty_mongod(mongod):
 
 def populate_archive(alert_generator, empty_archive):
 	from itertools import islice
-	from ampel.pipeline.t0.ArchiveUpdater import ArchiveUpdater
+	from ampel.ztf.pipeline.t0.ArchiveUpdater import ArchiveUpdater
 
 	updater = ArchiveUpdater(empty_archive)
 	for idx, (alert, schema) in enumerate(islice(alert_generator(with_schema=True), 100)):
@@ -45,7 +45,7 @@ def populate_archive(alert_generator, empty_archive):
 
 @pytest.mark.parametrize("config_source,alert_source", [("env", "tarball"), ("env", "archive"), ("cmdline", "tarball"), ("cmdline", "archive"), ("cmdline", "kafka")])
 def test_alertprocessor_entrypoint(alert_tarball, alert_generator, empty_mongod, empty_archive, graphite, kafka_stream, config_source, alert_source):
-	from ampel.archive.ArchiveDB import ArchiveDB
+	from ampel.ztf.archive.ArchiveDB import ArchiveDB
 	if alert_source == "tarball":
 		cmd = ['ampel-ztf-alertprocessor', '--tarfile', alert_tarball, '--channels', 'HU_RANDOM']
 
@@ -84,7 +84,7 @@ def test_alertprocessor_entrypoint(alert_tarball, alert_generator, empty_mongod,
 
 def test_kafka_stream(kafka_stream):
 	"""Does the Kafka stream itself work?"""
-	from ampel.pipeline.t0.load.UWAlertLoader import UWAlertLoader
+	from ampel.ztf.pipeline.t0.load.UWAlertLoader import UWAlertLoader
 	
 	loader = UWAlertLoader(partnership=True, bootstrap=kafka_stream, timeout=10)
 	count = 0
@@ -104,7 +104,7 @@ def live_config():
 	AmpelConfig.reset()
 
 def test_private_channel_split(live_config):
-	from ampel.pipeline.t0.ZIAlertProcessor import split_private_channels
+	from ampel.ztf.pipeline.t0.run import split_private_channels
 	from ampel.pipeline.config.ConfigLoader import ConfigLoader
 	
 	config = ConfigLoader.load_config()
@@ -112,7 +112,7 @@ def test_private_channel_split(live_config):
 	assert len(public) == 1
 
 def test_required_resources():
-	from ampel.pipeline.t0.ZIAlertProcessor import get_required_resources
+	from ampel.ztf.pipeline.t0.run import get_required_resources
 	from ampel.pipeline.config.ConfigLoader import ConfigLoader
 	
 	config = ConfigLoader.load_config()
@@ -120,13 +120,13 @@ def test_required_resources():
 	assert len(resources) > 0
 
 def test_setup():
-	from ampel.pipeline.t0.ZISetup import ZISetup
+	from ampel.ztf.pipeline.t0.ZISetup import ZISetup
 	ZISetup()
 
 def test_ingestion_from_archive(empty_archive, alert_generator, minimal_ingestion_config):
-	from ampel.archive.ArchiveDB import ArchiveDB
+	from ampel.ztf.archive.ArchiveDB import ArchiveDB
 	from ampel.pipeline.t0.AlertProcessor import AlertProcessor
-	from ampel.pipeline.t0.ZISetup import ZISetup
+	from ampel.ztf.pipeline.t0.ZISetup import ZISetup
 
 	count = populate_archive(alert_generator, empty_archive)
 

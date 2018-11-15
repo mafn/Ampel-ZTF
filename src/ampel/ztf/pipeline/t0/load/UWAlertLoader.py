@@ -30,7 +30,7 @@ class UWAlertLoader:
 		:param bytes group_name: consumer group name. Fetchers with the same group name
 	    will be load balanced and receive disjoint sets of messages
 		:param bool update_archive: if True, fetched alerts will be inserted into 
-		the archive db using ampel.pipeline.t0.ArchiveUpdater
+		the archive db using ampel.ztf.pipeline.t0.ArchiveUpdater
 		:param int timeout: time to wait for messages before giving up, in seconds
 		"""
 		topics = ['^ztf_.*_programid1']
