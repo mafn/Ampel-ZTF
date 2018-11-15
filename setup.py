@@ -15,6 +15,9 @@ setup(name='Ampel-ZTF',
 			'console_scripts' : {
 				'ampel-ztf-alertprocessor = ampel.ztf.pipeline.t0.run:run_alertprocessor'
 			},
+			'ampel.pipeline.resources' : [
+				'archive = ampel.ztf.archive.resources:ArchiveDBURI'
+			],
 			'ampel.pipeline.t0.sources' : {
 				'ZTFIPAC = ampel.ztf.pipeline.t0.ZISetup:ZISetup',
 			}
