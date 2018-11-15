@@ -60,6 +60,8 @@ def run_alertprocessor():
 	action.add_argument('--broker', default='epyc.astro.washington.edu:9092')
 	action.add_argument('--tarfile', default=None)
 	action.add_argument('--archive', nargs=2, type=Time, default=None, metavar='TIME')
+	parser.add_argument('--no-update-archive', dest='update_archive',
+	    default=True, action='store_false', help="Don't update the archive")
 	parser.add_argument('--slot', env_var='SLOT', type=int, 
 		default=None, help="Index of archive reader worker")
 	parser.add_argument('--group', default=uuid.uuid1().hex, help="Kafka consumer group name")
@@ -142,8 +144,8 @@ def run_alertprocessor():
 		loader = iter(UWAlertLoader(
 			bootstrap=opts.broker, 
 			group_name=opts.group, 
-			partnership=partnership, 
-            update_archive=True,
+			partnership=partnership,
+			update_archive=args.update_archive,
 			timeout=opts.timeout
 		))
 
