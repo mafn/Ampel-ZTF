@@ -4,19 +4,19 @@ setup(name='Ampel-ZTF',
       package_dir={'':'src'},
       package_data = {'': ['*.json']},
       packages=[
-          'ampel.archive',
-          'ampel.pipeline.common',
-          'ampel.pipeline.t0',
-          'ampel.pipeline.t0.load',
-          'ampel.pipeline.t0.ingest',
-          'ampel.pipeline.t3.sergeant',
+          'ampel.ztf.archive',
+          'ampel.ztf.pipeline.common',
+          'ampel.ztf.pipeline.t0',
+          'ampel.ztf.pipeline.t0.load',
+          'ampel.ztf.pipeline.t0.ingest',
+          'ampel.ztf.pipeline.t3.sergeant',
       ],
       entry_points = {
 			'console_scripts' : {
-				'ampel-ztf-alertprocessor = ampel.pipeline.t0.run:run_alertprocessor'
+				'ampel-ztf-alertprocessor = ampel.ztf.pipeline.t0.run:run_alertprocessor'
 			},
 			'ampel.pipeline.t0.sources' : {
-				'ZTFIPAC = ampel.pipeline.t0.ZISetup:ZISetup',
+				'ZTFIPAC = ampel.ztf.pipeline.t0.ZISetup:ZISetup',
 			}
       }
 )
