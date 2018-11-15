@@ -145,7 +145,7 @@ def run_alertprocessor():
 			bootstrap=opts.broker, 
 			group_name=opts.group, 
 			partnership=partnership,
-			update_archive=args.update_archive,
+			update_archive=opts.update_archive,
 			timeout=opts.timeout
 		))
 
