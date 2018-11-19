@@ -63,17 +63,15 @@ def test_alertprocessor_entrypoint(alert_tarball, alert_generator, empty_mongod,
 		
 	if config_source == "env":
 		env = {**resource_env(empty_mongod, 'mongo', 'writer'),
-		       **resource_env(empty_archive, 'archive', 'writer'),
+		       **resource_env(empty_archive, "writer" if alert_source == "kafka" else "reader"),
 		       **resource_env(graphite, 'graphite'),
 		       'SLOT': '1'}
 		env.update(os.environ)
 	elif config_source == "cmdline":
 		env = os.environ
 		cmd += resource_args(empty_mongod, 'mongo', 'writer') \
-		    + resource_args(empty_archive, 'archive', 'writer') \
+		    + resource_args(empty_archive, 'archive', "writer" if alert_source == "kafka" else "reader") \
 		    + resource_args(graphite, 'graphite')
-		if alert_source == "archive":
-			cmd += ['--slot', '1']
 	subprocess.check_call(cmd, env=env)
 	from pymongo import MongoClient
 	mc = MongoClient(empty_mongod)

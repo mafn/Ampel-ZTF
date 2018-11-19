@@ -62,8 +62,6 @@ def run_alertprocessor():
 	action.add_argument('--archive', nargs=2, type=Time, default=None, metavar='TIME')
 	parser.add_argument('--no-update-archive', dest='update_archive',
 	    default=True, action='store_false', help="Don't update the archive")
-	parser.add_argument('--slot', env_var='SLOT', type=int, 
-		default=None, help="Index of archive reader worker")
 	parser.add_argument('--group', default=uuid.uuid1().hex, help="Kafka consumer group name")
 	parser.add_argument('--timeout', default=3600, type=int, help='Kafka timeout')
 	action = parser.add_mutually_exclusive_group(required=False)
@@ -113,13 +111,6 @@ def run_alertprocessor():
 		loader = TarAlertLoader(tar_path=opts.tarfile)
 
 	elif opts.archive is not None:
-		if opts.slot is None:
-			import os
-			print(os.environ)
-			parser.error("You must specify --slot in archive mode")
-		elif opts.slot < 1 or opts.slot > 16:
-			parser.error("Slot number must be between 1 and 16 (got {})".format(opts.slot))
-
 		# Quieten sqlalchemy logger
 		logging.getLogger('sqlalchemy').setLevel(logging.ERROR)
 
@@ -130,8 +121,9 @@ def run_alertprocessor():
 		loader = archive.get_alerts_in_time_range(
 			opts.archive[0].jd, 
 			opts.archive[1].jd,
-			partitions=(opts.slot-1), 
-			programid=(None if partnership else 1)
+			programid=(None if partnership else 1),
+			group_name=opts.group,
+			block_size=5000
 		)
 
 	else:
