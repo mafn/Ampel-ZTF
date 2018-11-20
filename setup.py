@@ -13,7 +13,8 @@ setup(name='Ampel-ZTF',
       ],
       entry_points = {
 			'console_scripts' : {
-				'ampel-ztf-alertprocessor = ampel.ztf.pipeline.t0.run:run_alertprocessor'
+				'ampel-ztf-alertprocessor = ampel.ztf.pipeline.t0.run:run_alertprocessor',
+				'ampel-ztf-archive-consumer-groups = ampel.ztf.archive.ArchiveDB:consumer_groups_command',
 			},
 			'ampel.pipeline.resources' : [
 				'archive = ampel.ztf.archive.resources:ArchiveDBURI'
