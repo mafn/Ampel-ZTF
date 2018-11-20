@@ -55,6 +55,7 @@ def run_alertprocessor():
 
 	parser = AmpelArgumentParser()
 	parser.require_resource('mongo', ['writer', 'logger'])
+	parser.add_argument('-v', '--verbose', default=False, action="store_true")
 	parser.add_argument('--publish-stats', nargs='*', default=['jobs', 'graphite'])
 	action = parser.add_mutually_exclusive_group(required=True)
 	action.add_argument('--broker', default='epyc.astro.washington.edu:9092')
@@ -154,7 +155,7 @@ def run_alertprocessor():
 		t0 = time.time()
 		log.info('Running on {}'.format(infile))
 		try:
-			alert_processed = processor.run(loader, full_console_logging=False)
+			alert_processed = processor.run(loader, full_console_logging=opts.verbose)
 		finally:
 			dt = time.time()-t0
 			log.info(
