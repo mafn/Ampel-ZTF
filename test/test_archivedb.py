@@ -6,7 +6,8 @@ import time
 from math import isnan
 from collections import defaultdict
 
-from ampel import archive
+from ampel.ztf.archive.ArchiveDB import ArchiveDB
+from ampel.ztf.pipeline.t0.ArchiveUpdater import ArchiveUpdater
 
 from sqlalchemy import select, create_engine, MetaData
 import sqlalchemy
@@ -37,6 +38,15 @@ def temp_database(postgres):
                     connection.execute(table.delete())
 
 @pytest.fixture
+def alert_archive(temp_database, alert_generator):
+    updater = ArchiveUpdater(temp_database)
+    from itertools import islice
+    for alert, schema in islice(alert_generator(with_schema=True),10):
+        assert schema['version'] == "3.0", "Need alerts with current schema"
+        updater.insert_alert(alert, schema, 0, 0)
+    yield temp_database
+
+@pytest.fixture
 def mock_database(temp_database):
     engine = create_engine(temp_database)
     meta = MetaData()
@@ -46,7 +56,7 @@ def mock_database(temp_database):
 
 def test_insert_unique_alerts(temp_database, alert_generator):
     processor_id = 0
-    db = archive.ArchiveDB(temp_database)
+    db = ArchiveUpdater(temp_database)
     connection = db._connection
     meta = db._meta
     timestamps = []
@@ -76,7 +86,7 @@ def count_previous_candidates(alert):
 def test_insert_duplicate_alerts(temp_database, alert_generator):
     import itertools
     processor_id = 0
-    db = archive.ArchiveDB(temp_database)
+    db = ArchiveUpdater(temp_database)
     connection = db._connection
     meta = db._meta
     
@@ -98,7 +108,7 @@ def test_insert_duplicate_alerts(temp_database, alert_generator):
 
 def test_insert_duplicate_photopoints(temp_database, alert_generator):
     processor_id = 0
-    db = archive.ArchiveDB(temp_database)
+    db = ArchiveUpdater(temp_database)
     connection = db._connection
     meta = db._meta
     from sqlalchemy.sql.expression import tuple_, func
@@ -136,7 +146,7 @@ def test_insert_duplicate_photopoints(temp_database, alert_generator):
 
 def test_delete_alert(temp_database, alert_generator):
     processor_id = 0
-    db = archive.ArchiveDB(temp_database)
+    db = ArchiveUpdater(temp_database)
     connection = db._connection
     meta = db._meta
     from sqlalchemy.sql.expression import tuple_, func
@@ -215,11 +225,11 @@ def assert_alerts_equivalent(alert, reco_alert):
 
 def test_get_cutout(temp_database, alert_generator):
     processor_id = 0
-    db = archive.ArchiveDB(temp_database)
-
+    updater = ArchiveUpdater(temp_database)
+    db = ArchiveDB(temp_database)
     for idx, (alert, schema) in enumerate(alert_generator(with_schema=True)):
         processor_id = idx % 16
-        db.insert_alert(alert, schema, processor_id, 0)
+        updater.insert_alert(alert, schema, processor_id, 0)
 
     for idx, alert in enumerate(alert_generator()):
         processor_id = idx % 16
@@ -237,11 +247,12 @@ def test_serializability(temp_database, alert_generator):
     from fastavro import reader
     from io import BytesIO
     processor_id = 0
-    db = archive.ArchiveDB(temp_database)
+    updater = ArchiveUpdater(temp_database)
+    db = ArchiveDB(temp_database)
 
     for idx, (alert, schema) in enumerate(alert_generator(with_schema=True)):
         processor_id = idx % 16
-        db.insert_alert(alert, schema, processor_id, 0)
+        updater.insert_alert(alert, schema, processor_id, 0)
 
     for idx, alert in enumerate(alert_generator()):
         reco = db.get_alert(alert['candid'], with_history=True, with_cutouts=True)
@@ -257,6 +268,44 @@ def test_serializability(temp_database, alert_generator):
         assert len(deserialized['prv_candidates']) == len(reco['prv_candidates'])
         for old, new in zip(reco['prv_candidates'], deserialized['prv_candidates']):
             assert old == pytest.approx(new)
+
+@pytest.fixture
+def alert_32():
+    from os.path import join, dirname
+    import fastavro
+    fname = join(dirname(__file__), '..', 'alerts', 'schema_3.2.avro')
+    with open(fname, 'rb') as f:
+        r = fastavro.reader(f)
+        alert, schema = next(r), r.schema
+
+def test_schema_32(temp_database):
+    from os.path import join, dirname
+    from fastavro._write_py import writer
+    from fastavro import reader
+    from io import BytesIO
+
+    updater = ArchiveUpdater(temp_database)
+    db = ArchiveDB(temp_database)
+
+    with open(join(dirname(__file__), '..', 'alerts', 'schema_3.2.avro'), 'rb') as f:
+        r = reader(f)
+        alert, schema = next(r), r.schema
+
+    updater.insert_alert(alert, schema, 0, 0)
+    reco = db.get_alert(alert['candid'], with_history=True, with_cutouts=True)
+    f = BytesIO()
+    writer(f, schema, [reco])
+    deserialized = next(reader(BytesIO(f.getvalue())))
+    assert deserialized.keys() == reco.keys()
+    for k in reco:
+        if not 'candidate' in k or 'cutout' in k:
+            assert deserialized[k] == reco[k]
+    assert set(deserialized['candidate'].keys()) == set(reco['candidate'].keys())
+    assert deserialized['candidate'] == pytest.approx(reco['candidate'])
+    assert len(deserialized['prv_candidates']) == len(reco['prv_candidates'])
+    for old, new in zip(reco['prv_candidates'], deserialized['prv_candidates']):
+        assert set(old.keys()) == set(new.keys())
+        assert old == pytest.approx(new)
 
 @pytest.mark.skip(reason="Testing alert tarball only contains a single exposure")
 def test_get_alert(mock_database, alert_generator):
@@ -306,12 +355,16 @@ def test_get_alert(mock_database, alert_generator):
 
 def test_archive_object(alert_generator, postgres):
     import astropy.units as u
-    db = archive.ArchiveDB(postgres)
-    
+    updater = ArchiveUpdater(postgres)
     from itertools import islice
     for alert, schema in islice(alert_generator(with_schema=True), 10):
         assert schema['version'] == "3.0", "Need alerts with current schema"
-        db.insert_alert(alert, schema, 0, 0)
+        updater.insert_alert(alert, schema, 0, 0)
+    # end the transaction to commit changes to the stats tables
+    updater._connection.execute('end')
+    updater._connection.execute('vacuum full')
+    del updater
+    db = ArchiveDB(postgres)
     
     for alert in islice(alert_generator(), 10):
         reco_alert = db.get_alert(alert['candid'], with_history=True, with_cutouts=True)
@@ -333,15 +386,32 @@ def test_archive_object(alert_generator, postgres):
     
     reco_candids = [a['candid'] for a in db.get_alerts_in_cone(alerts[0]['candidate']['ra'], alerts[0]['candidate']['dec'], (2*u.deg).to(u.deg).value)]
     assert alerts[0]['candid'] in reco_candids
-    
-    # end the transaction to commit changes to the stats tables
-    db._connection.execute('end')
-    db._connection.execute('vacuum full')
+
     for table, stats in db.get_statistics().items():
         assert stats['rows'] >= db._connection.execute(db._meta.tables[table].count()).fetchone()[0]
 
+def test_partitioned_read_single(alert_archive):
+    db = ArchiveDB(alert_archive)
+    alerts = db.get_alerts_in_time_range(0, 1e8, group_name='testy')
+    l = list((alert['candid'] for alert in alerts))
+    assert len(l) == 10
+
+def test_partitioned_read_double(alert_archive):
+    import itertools
+    db1 = ArchiveDB(alert_archive)
+    db2 = ArchiveDB(alert_archive)
+    # kwargs = dict(group_name='testy', block_size=2, with_history=False, with_cutouts=False)
+    kwargs = dict(group_name='testy', block_size=2)
+    
+    l1 = list((alert['candid'] for alert in itertools.islice(db1.get_alerts_in_time_range(0, 1e8, **kwargs), 5)))
+    l2 = list((alert['candid'] for alert in db2.get_alerts_in_time_range(0, 1e8, **kwargs)))
+    
+    assert set(l1).intersection(l2) == {l1[-1]}, "both clients see alert in last partial block, as it was never committed"
+    assert len(l1) == 5, "first client sees all alerts it consumed"
+    assert len(l2) == 6, "alerts in uncommitted block read by second client"
+
 def test_insert_future_schema(alert_generator, postgres):
-    db = archive.ArchiveDB(postgres)
+    db = ArchiveUpdater(postgres)
 
     alert, schema = next(alert_generator(True))
     schema['version'] = str(float(schema['version'])+10)

@@ -1,19 +1,26 @@
 from setuptools import setup
 setup(name='Ampel-ZTF',
-      version='0.4.0',
+      version='0.5.0',
       package_dir={'':'src'},
       package_data = {'': ['*.json']},
       packages=[
-          'ampel.archive',
-          'ampel.pipeline.common',
-          'ampel.pipeline.t0',
-          'ampel.pipeline.t0.alerts',
-          'ampel.pipeline.t0.ingesters',
-          'ampel.pipeline.t3.sergeant',
+          'ampel.ztf.archive',
+          'ampel.ztf.pipeline.common',
+          'ampel.ztf.pipeline.t0',
+          'ampel.ztf.pipeline.t0.load',
+          'ampel.ztf.pipeline.t0.ingest',
+          'ampel.ztf.pipeline.t3.sergeant',
       ],
       entry_points = {
+			'console_scripts' : {
+				'ampel-ztf-alertprocessor = ampel.ztf.pipeline.t0.run:run_alertprocessor',
+				'ampel-ztf-archive-consumer-groups = ampel.ztf.archive.ArchiveDB:consumer_groups_command',
+			},
+			'ampel.pipeline.resources' : [
+				'archive = ampel.ztf.archive.resources:ArchiveDBURI'
+			],
 			'ampel.pipeline.t0.sources' : {
-				'ZIDataSource = ampel.pipeline.config.ZIDataSource:ZIDataSource',
+				'ZTFIPAC = ampel.ztf.pipeline.t0.ZISetup:ZISetup',
 			}
       }
 )
