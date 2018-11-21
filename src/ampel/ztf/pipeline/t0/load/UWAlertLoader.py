@@ -81,7 +81,7 @@ class UWAlertLoader:
 					} for partition, partition_data in topic_data['partitions'].items()
 				} for topic, topic_data in stats['topics'].items()
 			}
-			self.graphite.add_stats(offsets, prefix='ampel.ztf.kafka.uw')
+			self.graphite.add_stats(offsets, prefix='ampel.ztf.kafka.uw.topics')
 			self.graphite.send()
 		except Exception as e:
 			log.error(e)
