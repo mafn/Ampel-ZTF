@@ -105,9 +105,9 @@ def test_private_channel_split(live_config):
 	from ampel.ztf.pipeline.t0.run import split_private_channels
 	from ampel.pipeline.config.ConfigLoader import ConfigLoader
 	
-	config = ConfigLoader.load_config()
-	public, private = split_private_channels(config)
-	assert len(public) == 1
+	public, private = split_private_channels()
+	assert len(private) > len(public)
+	assert len(public) > 0
 
 def test_required_resources():
 	from ampel.ztf.pipeline.t0.run import get_required_resources
