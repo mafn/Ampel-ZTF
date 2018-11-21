@@ -31,6 +31,8 @@ class AllConsumingConsumer:
 			# "debug": "all",
 		}
 		config.update(**consumer_config)
+		if 'stats_cb' in config and 'statistics.interval.ms' not in config:
+			config['statistics.interval.ms'] = 60000
 		self._consumer = Consumer(**config)
 		
 		self._consumer.subscribe(topics)

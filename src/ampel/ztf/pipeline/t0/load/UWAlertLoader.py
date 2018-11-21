@@ -8,7 +8,10 @@
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 import io, time, itertools, logging, uuid, fastavro
+import json
 from ampel.ztf.pipeline.t0.load.AllConsumingConsumer import AllConsumingConsumer
+
+log = logging.getLogger(__name__)
 
 class UWAlertLoader:
 	"""
@@ -20,7 +23,8 @@ class UWAlertLoader:
 		partnership,
 		bootstrap='epyc.astro.washington.edu:9092', 
 		group_name=uuid.uuid1(), 
-		update_archive=False, 
+		update_archive=False,
+		statistics_interval=0,
 		timeout=1
 	):
 		"""
@@ -37,6 +41,7 @@ class UWAlertLoader:
 
 		if partnership:
 			topics.append('^ztf_.*_programid2')
+		config = {'group.id':group_name}
 
 		if update_archive:
 			from ampel.pipeline.config.AmpelConfig import AmpelConfig
@@ -47,12 +52,40 @@ class UWAlertLoader:
 		else:
 			self.archive_updater = None
 
+		if statistics_interval > 0:
+			from ampel.pipeline.config.AmpelConfig import AmpelConfig
+			from ampel.pipeline.common.GraphiteFeeder import GraphiteFeeder
+			self.graphite = GraphiteFeeder(
+				AmpelConfig.get_config('resources.graphite.default'),
+				autoreconnect = True
+			)
+			config['stats_cb'] = self.report_statistics
+			config['statistics.interval.ms'] = 1000*statistics_interval
+		else:
+			self.graphite = None
+
 		self._consumer = AllConsumingConsumer(
-			bootstrap, timeout=timeout, topics=topics, **{'group.id':group_name}
+			bootstrap, timeout=timeout, topics=topics, **config
 		)
 
-		self.logger = logging.getLogger('UWAlertLoader')
-
+	def report_statistics(self, payload):
+		if self.graphite is None:
+			return
+		try:
+			stats = json.loads(payload)
+			keys = {'hi_offset', 'lo_offset'}
+			offsets = {
+				topic: {
+					partition: {
+						k: v for k, v in partition_data.items() if (k in keys and v >= 0)
+					} for partition, partition_data in topic_data['partitions'].items()
+				} for topic, topic_data in stats['topics'].items()
+			}
+			self.graphite.add_stats(offsets, prefix='ampel.ztf.kafka.uw')
+			self.graphite.send()
+		except Exception as e:
+			log.error(e)
+			return
 
 	def alerts(self, limit=None):
 		"""
@@ -69,7 +102,7 @@ class UWAlertLoader:
 				)
 			yield alert
 
-		self.logger.info('timed out')
+		log.info('timed out')
 
 	def __iter__(self):
 		return self.alerts()

@@ -65,6 +65,7 @@ def run_alertprocessor():
 	    default=True, action='store_false', help="Don't update the archive")
 	parser.add_argument('--group', default=uuid.uuid1().hex, help="Kafka consumer group name")
 	parser.add_argument('--timeout', default=3600, type=int, help='Kafka timeout')
+	parser.add_argument('--statistics-interval', default=0, type=int, help='Report Kafka statistics to Graphite')
 	action = parser.add_mutually_exclusive_group(required=False)
 	action.add_argument('--channels', default=None, nargs="+", 
 		help="Run only these filters on all ZTF alerts")
@@ -139,6 +140,7 @@ def run_alertprocessor():
 			group_name=opts.group, 
 			partnership=partnership,
 			update_archive=opts.update_archive,
+			statistics_interval=0 if not 'graphite' in opts.publish_stats else opts.statistics_interval,
 			timeout=opts.timeout
 		))
 
