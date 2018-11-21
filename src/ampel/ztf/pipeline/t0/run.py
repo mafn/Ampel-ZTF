@@ -48,10 +48,25 @@ def split_private_channels(channels=None, skip_channels=set()):
 	
 	return public, private
 
+def override_channels(config, channel_files):
+	import json
+	from ampel.pipeline.config.channel.ChannelConfig import ChannelConfig
+	config['channels'].clear()
+	for fname in channel_files:
+		with open(fname) as f:
+			for chan_dict in json.load(f):
+				# validate
+				ChannelConfig.create(0, **chan_dict)
+				if chan_dict['channel'] in config['channels']:
+					raise ValueError("Channel {} is already defined".format(chan_dict['channel']))
+				config['channels'][chan_dict['channel']] = chan_dict
+	return config
+
 def run_alertprocessor():
 
 	# Apparently, this is wished
 	AmpelLogger.set_default_stream(sys.stderr)
+	log = logging.getLogger('ampel-ztf-alertprocessor')
 
 	parser = AmpelArgumentParser()
 	parser.require_resource('mongo', ['writer', 'logger'])
@@ -75,6 +90,8 @@ def run_alertprocessor():
 		help="Run public filters on public ZTF alerts only")
 	parser.add_argument('--skip-channels', default=[], nargs="+", 
 		help="Do not run these filters")
+	parser.add_argument('--override-channels', default=None, nargs="+",
+		help="Take channel definitions from these JSON files")
 	
 	# partially parse command line to get config
 	opts, argv = parser.parse_known_args()
@@ -90,6 +107,9 @@ def run_alertprocessor():
 	# parse again
 	opts = parser.parse_args()
 
+	if opts.override_channels is not None:
+		AmpelConfig.set_config(override_channels(opts.config, opts.override_channels))
+
 	partnership = True
 	if opts.private is not None:
 		public, private = split_private_channels(skip_channels=opts.skip_channels)
@@ -100,8 +120,11 @@ def run_alertprocessor():
 			channels = public
 			opts.group += "-public"
 			partnership = False
+	elif opts.channels is None:
+		channels = None
 	else:
 		channels = set(opts.channels) - set(opts.skip_channels)
+	log.info('Running with channels {}'.format(channels))
 
 	count = 0
 	#AlertProcessor.iter_max = 100
@@ -149,8 +172,6 @@ def run_alertprocessor():
 		publish_stats=opts.publish_stats, 
 		channels=channels
 	)
-
-	log = logging.getLogger('ampel-ztf-alertprocessor')
 
 	while alert_processed == AlertProcessor.iter_max:
 
