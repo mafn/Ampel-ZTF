@@ -22,6 +22,7 @@ class AllConsumingConsumer:
 			"bootstrap.servers": broker,
 			"default.topic.config": {"auto.offset.reset": "smallest"},
 			"enable.auto.commit": True,
+			"receive.message.max.bytes": 2**29,
 			"auto.commit.interval.ms": 10000,
 			"enable.auto.offset.store": False,
 			"group.id" : uuid.uuid1(),
