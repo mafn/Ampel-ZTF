@@ -14,7 +14,7 @@ from ampel.core.abstract.AbsCompoundShaper import AbsCompoundShaper
 
 flag_pos = {}
 # pylint: disable=no-member,unsubscriptable-object
-for flag_name in ("ZTF_COLLAB", "SRC_AMPEL", "SUPERSEEDED", "HAS_HUMBOLDT_ZP"):
+for flag_name in ("ZTF_COLLAB", "SRC_AMPEL", "SUPERSEDED", "HAS_HUMBOLDT_ZP"):
 	flag_pos[flag_name] = FlagUtils.get_flag_pos_in_enumflag(
 		PhotoFlags[flag_name]
 	)
@@ -84,9 +84,9 @@ class ZICompoundShaper(AbsCompoundShaper):
 			comp_entry['excl'] = "Manual"
 			self.flags |= CompoundFlags.HAS_EXCLUDED_PPS|CompoundFlags.HAS_MANUAL_EXCLUSION
 
-		#  Check for superseeded 
-		elif flag_pos["SUPERSEEDED"] in input_d['alFlags']:
-			comp_entry['excl'] = "Superseeded"
-			self.flags |= CompoundFlags.HAS_EXCLUDED_PPS|CompoundFlags.HAS_SUPERSEEDED_PPS
+		#  Check for superseded
+		elif flag_pos["SUPERSEDED"] in input_d['alFlags']:
+			comp_entry['excl'] = "Superseded"
+			self.flags |= CompoundFlags.HAS_EXCLUDED_PPS|CompoundFlags.HAS_SUPERSEDED_PPS
 
 		return comp_entry

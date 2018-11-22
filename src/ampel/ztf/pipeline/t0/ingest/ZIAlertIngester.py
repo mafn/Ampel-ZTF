@@ -30,7 +30,7 @@ from ampel.ztf.pipeline.t0.ingest.ZIPhotoDictShaper import ZIPhotoDictShaper
 from ampel.ztf.pipeline.t0.ingest.ZICompoundShaper import ZICompoundShaper
 from ampel.ztf.pipeline.common.ZTFUtils import ZTFUtils
 
-SUPERSEEDED = FlagUtils.get_flag_pos_in_enumflag(PhotoFlags.SUPERSEEDED)
+SUPERSEDED = FlagUtils.get_flag_pos_in_enumflag(PhotoFlags.SUPERSEDED)
 TO_RUN = FlagUtils.get_flag_pos_in_enumflag(T2RunStates.TO_RUN)
 
 
@@ -322,45 +322,45 @@ class ZIAlertIngester(AbsAlertIngester):
 			# Ignore ppts in db older than alert_history_length days  
 			min_jd = pps_alert[0]["jd"] - self.alert_history_length
 			ids_in_db_older_than_xx_days = {el["_id"] for el in pps_db + uls_db if el["jd"] < min_jd}
-			ids_superseeded = ids_in_db_not_in_alert - ids_in_db_older_than_xx_days
+			ids_superseded = ids_in_db_not_in_alert - ids_in_db_older_than_xx_days
 
 			# pps/uls reprocessing occured at IPAC
-			if ids_superseeded:
+			if ids_superseded:
 
-				# loop through superseeded photopoint
-				for photod_db_superseeded in filter(
-					lambda x: x['_id'] in ids_superseeded, pps_db + uls_db
+				# loop through superseded photopoint
+				for photod_db_superseded in filter(
+					lambda x: x['_id'] in ids_superseded, pps_db + uls_db
 				):
 
 					# Match these with new alert data (already 'shaped' by the ampelize method)
 					for new_meas in filter(lambda x: 
 						# jd alone is actually enough for matching pps reproc 
-						x['jd'] == photod_db_superseeded['jd'] and 
-						x['rcid'] == photod_db_superseeded['rcid'], 
+						x['jd'] == photod_db_superseded['jd'] and 
+						x['rcid'] == photod_db_superseded['rcid'], 
 						pps_to_insert + uls_to_insert
 					):
 
 						logs.append(
-							"Marking photodata %s as superseeded by %s" % (
-								photod_db_superseeded["_id"], 
+							"Marking photodata %s as superseded by %s" % (
+								photod_db_superseded["_id"], 
 								new_meas['_id']
 							)
 						)
 
 						# Update flags in dict loaded by fastavro
 						# (required for t2 & compounds doc creation)
-						if SUPERSEEDED not in photod_db_superseeded['alFlags']:
-							photod_db_superseeded['alFlags'].append(SUPERSEEDED)
+						if SUPERSEDED not in photod_db_superseded['alFlags']:
+							photod_db_superseded['alFlags'].append(SUPERSEDED)
 
 						# Create and append pymongo update operation
 						pps_reprocs += 1
 						db_photo_ops.append(
 							UpdateOne(
-								{'_id': photod_db_superseeded["_id"]}, 
+								{'_id': photod_db_superseded["_id"]}, 
 								{
 									'$addToSet': {
 										'newId': new_meas['_id'],
-										'alFlags': SUPERSEEDED
+										'alFlags': SUPERSEDED
 									}
 								}
 							)
