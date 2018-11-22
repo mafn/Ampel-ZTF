@@ -124,14 +124,14 @@ class Sergeant(object):
 			return None
 
 	def _get(self, url):
-				request = requests.get(url, auth=(self.marshalusr, self.marshalpwd))
+				request = requests.get(url, auth=(self.marshalusr, self.marshalpwd), timeout=10)
 				try:
 					return request.json()
 				except ValueError:
 					return request
 
 	def _post(self, url, data):
-				request = requests.post(url, data=data, auth=(self.marshalusr, self.marshalpwd))
+				request = requests.post(url, data=data, auth=(self.marshalusr, self.marshalpwd), timeout=10)
 				try:
 					return request.json()
 				except ValueError:
