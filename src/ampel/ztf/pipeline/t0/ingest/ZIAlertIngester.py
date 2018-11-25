@@ -263,8 +263,7 @@ class ZIAlertIngester(AbsAlertIngester):
 		# PHOTO POINTS
 		if ids_pps_to_insert:
 
-			# ForEach photopoint not existing in DB: 
-			# Rename candid into _id, add tranId, alDocType (PHOTOPOINT) and alFlags
+			# ForEach photopoint not existing in DB: rename candid into _id, add alFlags
 			# Attention: ampelize *modifies* dict instances loaded by fastavro
 			pps_to_insert = self.photo_shaper.ampelize(
 				tran_id, pps_alert, ids_pps_to_insert
@@ -274,7 +273,10 @@ class ZIAlertIngester(AbsAlertIngester):
 				db_photo_ops.append(
 					UpdateOne(
 						{"_id": pp["_id"]},
-						{"$setOnInsert": pp},
+						{
+							"$setOnInsert": pp,
+							"$addToSet": {'tranId': tran_id}
+						},
 						upsert=True
 					)
 				)
@@ -282,8 +284,7 @@ class ZIAlertIngester(AbsAlertIngester):
 		# UPPER LIMITS
 		if ids_uls_to_insert:
 
-			# For each upper limit not existing in DB: 
-			# Add tranId, alDocType (UPPER_LIMIT) and alFlags
+			# For each upper limit not existing in DB: remove dict key with None values
 			# Attention: ampelize *modifies* dict instances loaded by fastavro
 			uls_to_insert = self.photo_shaper.ampelize(
 				tran_id, uls_alert, ids_uls_to_insert, id_field_name='_id'
