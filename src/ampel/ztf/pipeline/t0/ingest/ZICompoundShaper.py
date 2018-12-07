@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/ztf/pipeline/t0/ingesters/ZICompoundShaper.py
+# File              : ampel/ztf/pipeline/t0/ingest/ZICompoundShaper.py
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 01.05.2018
-# Last Modified Date: 04.07.2018
+# Last Modified Date: 07.12.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from ampel.base.flags.PhotoFlags import PhotoFlags
 from ampel.core.flags.FlagUtils import FlagUtils
 from ampel.core.flags.CompoundFlags import CompoundFlags
-from ampel.core.abstract.AbsCompoundShaper import AbsCompoundShaper
 
 flag_pos = {}
 # pylint: disable=no-member,unsubscriptable-object
@@ -19,7 +18,7 @@ for flag_name in ("ZTF_COLLAB", "SRC_AMPEL", "SUPERSEDED", "HAS_HUMBOLDT_ZP"):
 		PhotoFlags[flag_name]
 	)
 
-class ZICompoundShaper(AbsCompoundShaper):
+class ZICompoundShaper:
 	"""
 	"""
 
