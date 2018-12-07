@@ -4,19 +4,19 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 02.09.2018
-# Last Modified Date: 14.11.2018
+# Last Modified Date: 07.12.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from ampel.base.AmpelAlert import AmpelAlert
 from ampel.base.flags.TransientFlags import TransientFlags
 from ampel.core.flags.AlertFlags import AlertFlags
 from ampel.core.flags.LogRecordFlags import LogRecordFlags
-from ampel.core.abstract.AbsT0Setup import AbsT0Setup
+from ampel.core.abstract.AbsInstrumentSetup import AbsInstrumentSetup
 from ampel.pipeline.t0.load.AlertSupplier import AlertSupplier
 from ampel.ztf.pipeline.t0.load.ZIAlertShaper import ZIAlertShaper
 from ampel.ztf.pipeline.t0.ingest.ZIAlertIngester import ZIAlertIngester
 
-class ZISetup(AbsT0Setup):
+class ZISetup(AbsInstrumentSetup):
 	"""
 	ZI: Shortcut for ZTFIPAC
 	Class that sets up various static fields in AmpelAlert and 
