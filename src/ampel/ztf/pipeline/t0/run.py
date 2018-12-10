@@ -78,6 +78,7 @@ def run_alertprocessor():
 	action.add_argument('--archive', nargs=2, type=Time, default=None, metavar='TIME')
 	parser.add_argument('--no-update-archive', dest='update_archive',
 	    default=True, action='store_false', help="Don't update the archive")
+	parser.add_argument('--chunk', type=int, default=AlertProcessor.iter_max, help="Number of alerts to process per invocation of run()")
 	parser.add_argument('--group', default=uuid.uuid1().hex, help="Kafka consumer group name")
 	parser.add_argument('--timeout', default=3600, type=int, help='Kafka timeout')
 	parser.add_argument('--statistics-interval', default=0, type=int, help='Report Kafka statistics to Graphite')
@@ -127,7 +128,7 @@ def run_alertprocessor():
 	log.info('Running with channels {}'.format(channels))
 
 	count = 0
-	#AlertProcessor.iter_max = 100
+	AlertProcessor.iter_max = opts.chunk
 	alert_processed = AlertProcessor.iter_max
 	archive = None
 
@@ -148,7 +149,7 @@ def run_alertprocessor():
 			opts.archive[1].jd,
 			programid=(None if partnership else 1),
 			group_name=opts.group,
-			block_size=5000
+			block_size=opts.chunk
 		)
 
 	else:
