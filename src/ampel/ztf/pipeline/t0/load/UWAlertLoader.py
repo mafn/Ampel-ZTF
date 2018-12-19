@@ -73,13 +73,9 @@ class UWAlertLoader:
 			return
 		try:
 			stats = json.loads(payload)
-			keys = {'hi_offset', 'lo_offset'}
 			offsets = {
-				topic: {
-					partition: {
-						k: v for k, v in partition_data.items() if (k in keys and v >= 0)
-					} for partition, partition_data in topic_data['partitions'].items()
-				} for topic, topic_data in stats['topics'].items()
+				topic: sum(p['hi_offset']-p['lo_offset'] for p in topic_data['partitions'].values() if p.get('hi_offset',-1) >= 0)
+				for topic, topic_data in stats['topics'].items()
 			}
 			self.graphite.add_stats(offsets, prefix='ampel.ztf.kafka.uw.topics')
 			self.graphite.send()
