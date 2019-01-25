@@ -109,12 +109,11 @@ def test_private_channel_split(live_config):
 	assert len(private) > len(public)
 	assert len(public) > 0
 
-def test_required_resources():
+def test_required_resources(live_config):
 	from ampel.ztf.pipeline.t0.run import get_required_resources
 	from ampel.pipeline.config.ConfigLoader import ConfigLoader
 	
-	config = ConfigLoader.load_config()
-	resources = get_required_resources(config)
+	resources = get_required_resources()
 	assert len(resources) > 0
 
 def test_setup():
