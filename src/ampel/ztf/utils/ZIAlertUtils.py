@@ -103,7 +103,7 @@ class ZIAlertUtils:
 					el['_id'] = int("%i%s%i" % (
 						(2457754.5 - el['jd']) * 1000000, 
 						str(el['pid'])[8:10], 
-						round(el['diffmaglim'] * 1000)
+						round(abs(el['diffmaglim']) * 1000)
 					))
 					uls.append(el)
 			return pps, uls
