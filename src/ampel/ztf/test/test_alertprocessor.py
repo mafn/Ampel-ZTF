@@ -52,12 +52,12 @@ def test_alertprocessor_entrypoint(alert_tarball, alert_generator, empty_mongod,
 	elif alert_source == "archive":
 		populate_archive(alert_generator, empty_archive)
 		db = ArchiveDB(empty_archive)
-		assert db.get_statistics()['alert']['rows'] > 0
+		assert db.count_alerts() > 0
 		del db
 		cmd = ['ampel-ztf-alertprocessor', '--archive', '2000-01-01', '2099-01-01', '--channels', 'HU_RANDOM']
 	elif alert_source == "kafka":
 		db = ArchiveDB(empty_archive)
-		assert db.get_statistics()['alert']['rows'] == 0
+		assert db.count_alerts() == 0
 		del db
 		cmd = ['ampel-ztf-alertprocessor', '--broker', kafka_stream, '--timeout=10', '--channels', 'HU_RANDOM']
 		
@@ -79,7 +79,7 @@ def test_alertprocessor_entrypoint(alert_tarball, alert_generator, empty_mongod,
 	assert mc['Ampel_logs']['troubles'].count({}) == 0
 	if alert_source == "kafka":
 		db = ArchiveDB(empty_archive)
-		assert db.get_statistics()['alert']['rows'] == 30
+		assert db.count_alerts() == 30
 
 def test_kafka_stream(kafka_stream):
 	"""Does the Kafka stream itself work?"""
