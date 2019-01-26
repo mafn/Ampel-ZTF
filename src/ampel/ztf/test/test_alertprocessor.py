@@ -63,7 +63,7 @@ def test_alertprocessor_entrypoint(alert_tarball, alert_generator, empty_mongod,
 		
 	if config_source == "env":
 		env = {**resource_env(empty_mongod, 'mongo', 'writer'),
-		       **resource_env(empty_archive, "writer" if alert_source == "kafka" else "reader"),
+		       **resource_env(empty_archive, 'archive', "writer" if alert_source == "kafka" else "reader"),
 		       **resource_env(graphite, 'graphite'),
 		       'SLOT': '1'}
 		env.update(os.environ)
