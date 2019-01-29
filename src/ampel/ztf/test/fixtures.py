@@ -17,7 +17,7 @@ def alert_generator(alert_tarball):
 			reader = fastavro.reader(fileobj)
 			alert = next(reader)
 			if with_schema:
-				yield alert, reader.schema
+				yield alert, reader.writer_schema
 			else:
 				yield alert
 	return alerts

@@ -94,7 +94,7 @@ class UWAlertLoader:
 			alert = next(reader) # raise StopIteration
 			if self.archive_updater:
 				self.archive_updater.insert_alert(
-					alert, reader.schema, message.partition(), int(1e6*time.time())
+					alert, reader.writer_schema, message.partition(), int(1e6*time.time())
 				)
 			yield alert
 

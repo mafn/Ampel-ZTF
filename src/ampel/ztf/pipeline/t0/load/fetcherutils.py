@@ -27,7 +27,7 @@ def archive_topic():
 
 	def trim_alert(payload):
 		reader = fastavro.reader(io.BytesIO(payload))
-		schema = reader.schema
+		schema = reader.writer_schema
 		alert = next(reader)
 
 		candid = alert['candid']
