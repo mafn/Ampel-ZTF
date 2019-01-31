@@ -43,6 +43,7 @@ def populate_archive(alert_generator, empty_archive):
 		updater.insert_alert(alert, schema, idx%16, 0)
 	return idx+1
 
+@pytest.mark.integration
 @pytest.mark.parametrize("config_source,alert_source", [("env", "tarball"), ("env", "archive"), ("cmdline", "tarball"), ("cmdline", "archive"), ("cmdline", "kafka")])
 def test_alertprocessor_entrypoint(alert_tarball, alert_generator, empty_mongod, empty_archive, graphite, kafka_stream, config_source, alert_source):
 	from ampel.ztf.archive.ArchiveDB import ArchiveDB
@@ -80,6 +81,23 @@ def test_alertprocessor_entrypoint(alert_tarball, alert_generator, empty_mongod,
 	if alert_source == "kafka":
 		db = ArchiveDB(empty_archive)
 		assert db.count_alerts() == 30
+
+@pytest.mark.integration
+def test_run_all_tiers(alert_tarball, empty_mongod, empty_archive, graphite):
+	from pymongo import MongoClient
+	cmd = ['ampel-ztf-alertprocessor', '--tarfile', alert_tarball]
+	env = os.environ
+	cmd += resource_args(empty_mongod, 'mongo', 'writer') \
+	    + resource_args(graphite, 'graphite')
+	subprocess.check_call(cmd, env=env)
+	assert MongoClient(empty_mongod)['Ampel_logs']['troubles'].count({}) == 0
+
+	cmd = ['ampel-t2', '--interval', '-1']
+	subprocess.check_call(cmd, env=env)
+	assert MongoClient(empty_mongod)['Ampel_logs']['troubles'].count({}) == 0
+
+	cmd = ['ampel-t3', 'dryrun']
+	subprocess.check_call(cmd, env=env)
 
 def test_kafka_stream(kafka_stream):
 	"""Does the Kafka stream itself work?"""
