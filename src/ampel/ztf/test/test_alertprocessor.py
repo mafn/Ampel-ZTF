@@ -82,6 +82,7 @@ def test_alertprocessor_entrypoint(alert_tarball, alert_generator, empty_mongod,
 		db = ArchiveDB(empty_archive)
 		assert db.count_alerts() == 30
 
+@pytest.mark.skip
 @pytest.mark.integration
 def test_run_all_tiers(alert_tarball, empty_mongod, empty_archive, graphite):
 	from pymongo import MongoClient
