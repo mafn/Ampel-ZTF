@@ -7,6 +7,7 @@
 # Last Modified Date: 14.11.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
+# pylint: disable=bad-builtin
 def archive_topic():
 
 	from ampel.ztf.pipeline.t0.load.AllConsumingConsumer import AllConsumingConsumer
