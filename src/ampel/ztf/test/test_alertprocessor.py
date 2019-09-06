@@ -187,8 +187,7 @@ def test_ingestion_from_troubles(alert_generator, minimal_ingestion_config, trou
 	from datetime import datetime, timedelta
 
 	assert len(list(TroublesAlertLoader.alerts(remove_records=False))) == 1, "reports are coalesced by alert id"
-	assert len(list(TroublesAlertLoader.alerts(remove_records=False, channels=['NOTACHANNEL']))) == 0, "reports are filtered by channel"
-	assert len(list(TroublesAlertLoader.alerts(remove_records=False, after=datetime.now()))) == 0, "reports are filtered by time"
+	assert len(list(TroublesAlertLoader.alerts(remove_records=False, after=datetime.now()+timedelta(days=1)))) == 0, "reports are filtered by time"
 	assert len(list(TroublesAlertLoader.alerts(remove_records=False, after=datetime.now()-timedelta(days=1)))) == 1, "reports are filtered by time"
 
 	alert_content = next(ZISetup(serialization=None).get_alert_supplier(alert_generator()))
