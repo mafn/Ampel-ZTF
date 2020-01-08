@@ -1,0 +1,780 @@
+{
+ "type": "record",
+ "version": "0.1",
+ "name": "alert",
+ "namespace": "zuds",
+ "fields": [
+  {
+   "type": "long",
+   "name": "candid"
+  },
+  {
+   "type": "string",
+   "name": "schemavsn",
+   "doc": "schema version used"
+  },
+  {
+   "type": "bytes",
+   "name": "cutoutScience"
+  },
+  {
+   "type": {
+    "type": "record",
+    "version": "0.1",
+    "name": "candidate",
+    "namespace": "ztf.alert",
+    "fields": [
+     {
+      "type": "float",
+      "name": "lszphotu682",
+      "doc": "upper bound on 68 percentile uncertainty for redshift of the second closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "pszmag1",
+      "doc": "z-band PSF magnitude of closest source from PS1 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lszphotl953",
+      "doc": "lower bound on 95 percentile uncertainty for redshift of the third closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": [
+       "float",
+       "null"
+      ],
+      "name": "lsw1_1",
+      "default": null,
+      "doc": "Tractor WISE W1 magnitude from closest source in LegacySurvey DR8 catalog [mag]"
+     },
+     {
+      "type": [
+       "float",
+       "null"
+      ],
+      "name": "lszphotmed3",
+      "default": null,
+      "doc": "(median) photometric redshift of the third closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": [
+       "float",
+       "null"
+      ],
+      "name": "lszphotu953",
+      "default": null,
+      "doc": "upper bound on 95 percentile uncertainty for redshift of the third closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "lszphotl681",
+      "doc": "upper bound on 68 percentile uncertainty for redshift of the closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "jdstartref",
+      "doc": "Observation Julian date of earliest exposure used to generate reference image [days]"
+     },
+     {
+      "type": "float",
+      "name": "lsgaiap3",
+      "doc": "Gaia parallax from third closest source in LegacySurvey DR8 catalog; if exists [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lsr2",
+      "doc": "r-band Tractor magnitude of second closest source from LegacySurvey DR8 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lszphotu683",
+      "doc": "upper bound on 68 percentile uncertainty for redshift of the third closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "bimage",
+      "doc": "Profile RMS afloat minor axis from SExtractor [pixels]"
+     },
+     {
+      "type": "float",
+      "name": "lsz2",
+      "doc": "z-band Tractor magnitude of second closest source from LegacySurvey DR8 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "int",
+      "name": "rcid",
+      "doc": "Readout channel ID [00 .. 63]"
+     },
+     {
+      "type": "float",
+      "name": "psrmag2",
+      "doc": "r-band PSF magnitude of second closest source from PS1 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "int",
+      "name": "nid",
+      "doc": "night ID"
+     },
+     {
+      "type": "float",
+      "name": "lsg1",
+      "doc": "g-band Tractor magnitude of closest source from LegacySurvey DR8 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "long",
+      "name": "candid",
+      "doc": "candidate ID"
+     },
+     {
+      "type": "float",
+      "name": "psrmag3",
+      "doc": "r-band PSF magnitude of third closest source from PS1 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "int",
+      "name": "programid",
+      "doc": "Program ID: will always be 2, for partnership data"
+     },
+     {
+      "type": "float",
+      "name": "psgmag2",
+      "doc": "g-band PSF magnitude of second closest source from PS1 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lszphotmed2",
+      "doc": "(median) photometric redshift of the second closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "aimagerat",
+      "doc": "Ratio: aimage / fwhm"
+     },
+     {
+      "type": "string",
+      "name": "alert_type",
+      "doc": "single or stack"
+     },
+     {
+      "type": "string",
+      "name": "tnsid",
+      "doc": "TNS name for any source within 1.5 arcsec, if any"
+     },
+     {
+      "type": "long",
+      "name": "lsobjectid3",
+      "doc": "Object ID of third closest source from LegacySurvey DR8 catalog; if exists within 30 arcsec"
+     },
+     {
+      "type": "string",
+      "name": "programpi",
+      "doc": "Principal investigator attached to program ID"
+     },
+     {
+      "type": "float",
+      "name": "lsz3",
+      "doc": "z-band Tractor magnitude of third closest source from LegacySurvey DR8 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "double",
+      "name": "jdendref",
+      "doc": "Observation Julian date of latest exposure used to generate reference image [days]"
+     },
+     {
+      "type": "float",
+      "name": "lszphotu951",
+      "doc": "upper bound on 95 percentile uncertainty for redshift of the closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "lsr3",
+      "doc": "r-band Tractor magnitude of third closest source from LegacySurvey DR8 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "float",
+      "name": "fwhm",
+      "doc": "Full Width Half Max assuming a Gaussian core, from SExtractor [pixels]"
+     },
+     {
+      "type": "float",
+      "name": "lszphotl952",
+      "doc": "lower bound on 95 percentile uncertainty for redshift of the second closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "lszphotu952",
+      "doc": "upper bound on 95 percentile uncertainty for redshift of the second closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "lsw3_2",
+      "doc": "Tractor WISE W3 magnitude from second closest source in the LegacySurvey DR8 catalog; if exists [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lsw3_1",
+      "doc": "Tractor WISE W3 magnitude from closest source in the LegacySurvey DR8 catalog; if exists [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lsgaiap2",
+      "doc": "Gaia parallax from second closest source in LegacySurvey DR8 catalog; if exists [mag]"
+     },
+     {
+      "type": "float",
+      "name": "sgscore3",
+      "doc": "Star/Galaxy score of third closest source from PS1 catalog; if exists within 30 arcsec: 0 <= sgscore <= 1 where closer to 1 implies higher likelihood of being a star"
+     },
+     {
+      "type": "float",
+      "name": "ra",
+      "doc": "Right Ascension of candidate; J2000 [deg]"
+     },
+     {
+      "type": "float",
+      "name": "lszphotl683",
+      "doc": "upper bound on 68 percentile uncertainty for redshift of the third closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "lsw2_3",
+      "doc": "Tractor WISE W2 magnitude from the third closest source in the LegacySurvey DR8 catalog; if exists [mag]"
+     },
+     {
+      "type": "string",
+      "name": "pdiffimfilename",
+      "doc": "filename of positive (sci minus ref) difference image"
+     },
+     {
+      "type": "float",
+      "name": "lsgaiag1",
+      "doc": "Gaia g-band magnitude from the closest source in the LegacySurvey DR8 catalog; if exists [mag]"
+     },
+     {
+      "type": [
+       "float",
+       "null"
+      ],
+      "name": "jdstarthist_single",
+      "default": null,
+      "doc": "Earliest Julian date of single image corresponding to ndethist [days]"
+     },
+     {
+      "type": [
+       "float",
+       "null"
+      ],
+      "name": "jdstarthist_stack",
+      "default": null,
+      "doc": "Earliest Julian date of stack of images containing this detection"
+     },
+     {
+      "type": "float",
+      "name": "diffmaglim",
+      "doc": "5-sigma mag limit in difference image based on PSF-fit photometry [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lsobjectid1",
+      "doc": "Object ID of closest source from LegacySurvey DR8 catalog; if exists within 30 arcsec"
+     },
+     {
+      "type": "float",
+      "name": "psgmag1",
+      "doc": "g-band PSF magnitude of closest source from PS1 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lsdistnr2",
+      "doc": "distance to the second closest source from LegacySurvey DR8 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lsgaiap1",
+      "doc": "Gaia parallax from closest source in LegacySurvey DR8 catalog; if exists [mag]"
+     },
+     {
+      "type": "double",
+      "name": "jd",
+      "doc": "Observation Julian date at start of exposure [days]"
+     },
+     {
+      "type": "float",
+      "name": "lszphotmed1",
+      "doc": "(median) photometric redshift of the closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "string",
+      "name": "drbversion",
+      "doc": "version of Deep-Learning-based classifier model used to assign RealBogus (drb) quality score"
+     },
+     {
+      "type": "float",
+      "name": "lszphotstd1",
+      "doc": "standard deviation in photometric redshift of the closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "long",
+      "name": "pid",
+      "doc": "Processing ID for image"
+     },
+     {
+      "type": "float",
+      "name": "lszspec3",
+      "doc": "spectroscopic redshift for third closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "sgscore1",
+      "doc": "Star/Galaxy score of closest source from PS1 catalog 0 <= sgscore <= 1 where closer to 1 implies higher likelihood of being a star"
+     },
+     {
+      "type": "float",
+      "name": "psgmag3",
+      "doc": "g-band PSF magnitude of third closest source from PS1 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "long",
+      "name": "objectidps3",
+      "doc": "Object ID of third closest source from PS1 catalog; if exists within 30 arcsec"
+     },
+     {
+      "type": "float",
+      "name": "psimag3",
+      "doc": "i-band PSF magnitude of third closest source from PS1 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lsr1",
+      "doc": "r-band Tractor magnitude of closest source from LegacySurvey DR8 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "float",
+      "name": "pszmag2",
+      "doc": "z-band PSF magnitude of second closest source from PS1 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lszphotmean2",
+      "doc": "(mean) photometric redshift of the second closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "string",
+      "name": "ztfname",
+      "doc": "ZTF name for any source within 1.5 arcseconds, if any"
+     },
+     {
+      "type": "float",
+      "name": "lszphotstd2",
+      "doc": "standard deviation in photometric redshift of the second closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "lsebv2",
+      "doc": "Galactic E(B-V) in the direction of the second closest source as reported in LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "xpos",
+      "doc": "x-image position of candidate [pixels]"
+     },
+     {
+      "type": "float",
+      "name": "bimagerat",
+      "doc": "Ratio: bimage / fwhm"
+     },
+     {
+      "type": "string",
+      "name": "lstype3",
+      "doc": "type (REX, PSF, DEV, etc) of third closest source from LegacySurvey DR8 catalog; if exists within 30 arcsec"
+     },
+     {
+      "type": "long",
+      "name": "lsobjectid2",
+      "doc": "Object ID of second closest source from LegacySurvey DR8 catalog; if exists within 30 arcsec"
+     },
+     {
+      "type": "float",
+      "name": "psimag1",
+      "doc": "i-band PSF magnitude of closest source from PS1 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "float",
+      "name": "dec",
+      "doc": "Declination of candidate; J2000 [deg]"
+     },
+     {
+      "type": "double",
+      "name": "jdendhist_single",
+      "doc": "Latest Julian date of epoch corresponding to ndethist_single [days]"
+     },
+     {
+      "type": [
+       "float",
+       "null"
+      ],
+      "name": "jdendhist_stack",
+      "default": null,
+      "doc": "Latest Julian date of epoch corresponding to ndethist_stack [days]"
+     },
+     {
+      "type": "float",
+      "name": "pszmag3",
+      "doc": "z-band PSF magnitude of third closest source from PS1 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lsw2_2",
+      "doc": "Tractor WISE W2 magnitude from the second closest source in the LegacySurvey DR8 catalog; if exists [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lsw1_2",
+      "doc": "Tractor WISE W1 magnitude from second closest source in LegacySurvey DR8 catalog [mag]"
+     },
+     {
+      "type": "float",
+      "name": "aimage",
+      "doc": "Profile RMS afloat major axis from SExtractor [pixels]"
+     },
+     {
+      "type": "float",
+      "name": "lsw4_2",
+      "doc": "Tractor WISE W4 magnitude from second closest source in LegacySurvey DR8 catalog; if exists [mag]"
+     },
+     {
+      "type": "float",
+      "name": "sgscore2",
+      "doc": "Star/Galaxy score of second closest source from PS1 catalog; if exists within 30 arcsec: 0 <= sgscore <= 1 where closer to 1 implies higher likelihood of being a star"
+     },
+     {
+      "type": "float",
+      "name": "lsgaiag2",
+      "doc": "Gaia g-band magnitude from the closest source in the LegacySurvey DR8 catalog; if exists [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lsebv1",
+      "doc": "Galactic E(B-V) in the direction of the closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "lsdistnr3",
+      "doc": "distance to the third closest source from LegacySurvey DR8 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "float",
+      "name": "distpsnr1",
+      "doc": "Distance of closest source from PS1 catalog; if exists within 30 arcsec [arcsec]"
+     },
+     {
+      "type": "int",
+      "name": "nframesref",
+      "doc": "Number of frames (epochal images) used to generate reference image"
+     },
+     {
+      "type": "float",
+      "name": "ypos",
+      "doc": "y-image position of candidate [pixels]"
+     },
+     {
+      "type": "float",
+      "name": "lsdistnr1",
+      "doc": "distance to the closest source from LegacySurvey DR8 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lsg3",
+      "doc": "g-band Tractor magnitude of third closest source from LegacySurvey DR8 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lszspec2",
+      "doc": "spectroscopic redshift for second closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "lszphotl682",
+      "doc": "upper bound on 68 percentile uncertainty for redshift of the second closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "lsw1_3",
+      "doc": "Tractor WISE W1 magnitude from third closest source in LegacySurvey DR8 catalog [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lszphotstd3",
+      "doc": "standard deviation in photometric redshift of the third closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "snr",
+      "doc": "signal to noise of the detection"
+     },
+     {
+      "type": "float",
+      "name": "objectidps2",
+      "doc": "Object ID of second closest source from PS1 catalog; if exists within 30 arcsec"
+     },
+     {
+      "type": "float",
+      "name": "lszphotmean1",
+      "doc": "(mean) photometric redshift of the closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "lsg2",
+      "doc": "g-band Tractor magnitude of second closest source from LegacySurvey DR8 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "float",
+      "name": "elong",
+      "doc": "Ratio: aimage / bimage"
+     },
+     {
+      "type": "float",
+      "name": "lsw2_1",
+      "doc": "Tractor WISE W2 magnitude from the closest source in the LegacySurvey DR8 catalog; if exists [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lsz1",
+      "doc": "z-band Tractor magnitude of closest source from LegacySurvey DR8 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "int",
+      "name": "ndethist_single",
+      "doc": "Number of single-epoch detections going back to the start of ZUDS, not including this one"
+     },
+     {
+      "type": "int",
+      "name": "ndethist_stack",
+      "doc": "Number of stack detections going back to the start of ZUDS, not including this one"
+     },
+     {
+      "type": "float",
+      "name": "lsw4_3",
+      "doc": "Tractor WISE W4 magnitude from third closest source in LegacySurvey DR8 catalog; if exists [mag]"
+     },
+     {
+      "type": "int",
+      "name": "field",
+      "doc": "ZUDS field ID"
+     },
+     {
+      "type": "float",
+      "name": "exptime",
+      "doc": "Integration time of camera exposure (90 for i, 30 for g and r)[sec]"
+     },
+     {
+      "type": "string",
+      "name": "lstype1",
+      "doc": "type (REX, PSF, DEV, etc) of closest source from LegacySurvey DR8 catalog; if exists within 30 arcsec"
+     },
+     {
+      "type": "float",
+      "name": "lszspec1",
+      "doc": "spectroscopic redshift for closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "psrmag1",
+      "doc": "r-band PSF magnitude of closest source from PS1 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "float",
+      "name": "drb",
+      "doc": "RealBogus quality score from Deep-Learning-based classifier; range is 0 to 1 where closer to 1 is more reliable"
+     },
+     {
+      "type": "float",
+      "name": "lsebv3",
+      "doc": "Galactic E(B-V) in the direction of the third closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "psimag2",
+      "doc": "i-band PSF magnitude of second closest source from PS1 catalog; if exists within 30 arcsec [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lszphotmean3",
+      "doc": "(mean) photometric redshift of the third closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "lsw4_1",
+      "doc": "Tractor WISE W4 magnitude from closest source in LegacySurvey DR8 catalog; if exists [mag]"
+     },
+     {
+      "type": "float",
+      "name": "lsgaiag3",
+      "doc": "Gaia g-band magnitude from the third closest source in the LegacySurvey DR8 catalog; if exists [mag]"
+     },
+     {
+      "type": "float",
+      "name": "distpsnr3",
+      "doc": "Distance to third closest source from PS1 catalog; if exists within 30 arcsec [arcsec]"
+     },
+     {
+      "type": "string",
+      "name": "isdiffpos",
+      "doc": "t=> candidate will always be from a positive subtraction"
+     },
+     {
+      "type": "long",
+      "name": "objectidps1",
+      "doc": "Object ID of closest source from PS1 catalog; if exists within 30 arcsec"
+     },
+     {
+      "type": "string",
+      "name": "mqid",
+      "doc": "object ID for any source from milliquas within 1.5 arcseconds, if any"
+     },
+     {
+      "type": "float",
+      "name": "lsw3_3",
+      "doc": "Tractor WISE W3 magnitude from third closest source in the LegacySurvey DR8 catalog; if exists [mag]"
+     },
+     {
+      "type": "string",
+      "name": "lstype2",
+      "doc": "type (REX, PSF, DEV, etc) of second closest source from LegacySurvey DR8 catalog; if exists within 30 arcsec"
+     },
+     {
+      "type": "float",
+      "name": "lszphotu681",
+      "doc": "lower bound on 68 percentile uncertainty for redshift of the closest source in the LegacySurvey DR8 catalog"
+     },
+     {
+      "type": "float",
+      "name": "distpsnr2",
+      "doc": "Distance to second closest source from PS1 catalog; if exists within 30 arcsec [arcsec]"
+     },
+     {
+      "type": "int",
+      "name": "fid",
+      "doc": "Filter ID (1=g; 2=r; 3=i)"
+     },
+     {
+      "type": "float",
+      "name": "lszphotl951",
+      "doc": "lower bound on 95 percentile uncertainty for redshift of the closest source in the LegacySurvey DR8 catalog"
+     }
+    ],
+    "doc": "avro alert schema"
+   },
+   "name": "candidate"
+  },
+  {
+   "type": "string",
+   "name": "publisher",
+   "doc": "origin of alert packet"
+  },
+  {
+   "type": "string",
+   "name": "objectId",
+   "doc": "object identifier or name"
+  },
+  {
+   "type": "bytes",
+   "name": "cutoutDifference"
+  },
+  {
+   "type": "bytes",
+   "name": "cutoutTemplate"
+  },
+  {
+   "type": [
+    {
+     "type": "array",
+     "items": {
+      "type": "record",
+      "version": "0.1",
+      "name": "light_curve",
+      "namespace": "ztf.alert",
+      "fields": [
+       {
+        "type": [
+         "string",
+         "null"
+        ],
+        "name": "zpsys",
+        "default": null,
+        "doc": "mag system, default ab"
+       },
+       {
+        "type": [
+         "float",
+         "null"
+        ],
+        "name": "flux",
+        "default": null,
+        "doc": "flux of detection [DN]"
+       },
+       {
+        "type": [
+         "double"
+        ],
+        "name": "zp",
+        "doc": "zero-point of image"
+       },
+       {
+        "type": [
+         "int"
+        ],
+        "name": "flags",
+        "doc": "any flags on quality of subtraction, default 0"
+       },
+       {
+        "type": [
+         "float",
+         "null"
+        ],
+        "name": "fluxerr",
+        "default": null,
+        "doc": "uncertainty on the flux [DN]"
+       },
+       {
+        "type": [
+         "double",
+         "null"
+        ],
+        "name": "mjd",
+        "doc": "MJD of exposure"
+       },
+       {
+        "type": [
+         "int"
+        ],
+        "name": "id",
+        "doc": "unique integer for image"
+       },
+       {
+        "type": [
+         "string"
+        ],
+        "name": "filter",
+        "doc": "'ztfg', 'ztfr', or 'ztfi'"
+       },
+       {
+        "type": [
+         "float"
+        ],
+        "name": "lim_mag",
+        "doc": "limiting mag of image [mag]"
+       }
+      ],
+      "doc": "avro alert schema"
+     }
+    },
+    "null"
+   ],
+   "name": "light_curve",
+   "default": null
+  }
+ ],
+ "doc": "avro alert schema for ZTF ZUDS survey"
+}
