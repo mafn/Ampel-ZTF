@@ -11,7 +11,9 @@ import sys, time, uuid, logging
 from astropy.time import Time
 from ampel.ztf.archive.ArchiveDB import ArchiveDB
 from ampel.ztf.pipeline.t0.load.UWAlertLoader import UWAlertLoader
+from ampel.ztf.pipeline.t0.load.TroublesAlertLoader import TroublesAlertLoader
 from ampel.ztf.pipeline.t0.ZISetup import ZISetup
+from ampel.ztf.pipeline.t0.TroublesSetup import TroublesSetup
 from ampel.pipeline.logging.AmpelLogger import AmpelLogger
 from ampel.pipeline.t0.AlertProcessor import AlertProcessor
 from ampel.pipeline.t0.load.TarAlertLoader import TarAlertLoader
@@ -68,7 +70,7 @@ def run_alertprocessor():
 	AmpelLogger.set_default_stream(sys.stderr)
 	log = logging.getLogger('ampel-ztf-alertprocessor')
 
-	parser = AmpelArgumentParser()
+	parser = AmpelArgumentParser(tier=0)
 	parser.require_resource('mongo', ['writer', 'logger'])
 	parser.add_argument('-v', '--verbose', default=False, action="store_true")
 	parser.add_argument('--publish-stats', nargs='*', default=['jobs', 'graphite'])
@@ -76,6 +78,8 @@ def run_alertprocessor():
 	action.add_argument('--broker', default='epyc.astro.washington.edu:9092')
 	action.add_argument('--tarfile', default=None)
 	action.add_argument('--archive', nargs=2, type=Time, default=None, metavar='TIME')
+	action.add_argument('--troubles', type=Time, default=None, metavar='TIME',
+	    help='recover alerts from the troubles collection', dest='troubles_after')
 	parser.add_argument('--no-update-archive', dest='update_archive',
 	    default=True, action='store_false', help="Don't update the archive")
 	parser.add_argument('--chunk', type=int, default=AlertProcessor.iter_max, help="Number of alerts to process per invocation of run()")
@@ -83,16 +87,20 @@ def run_alertprocessor():
 	parser.add_argument('--timeout', default=3600, type=int, help='Kafka timeout')
 	parser.add_argument('--statistics-interval', default=0, type=int, help='Report Kafka statistics to Graphite')
 	action = parser.add_mutually_exclusive_group(required=False)
-	action.add_argument('--channels', default=None, nargs="+", 
-		help="Run only these filters on all ZTF alerts")
 	action.add_argument('--private', default=None, action="store_true", 
 		help="Run partnership filters on all ZTF alerts")
 	action.add_argument('--public', dest="private", default=None, action="store_false", 
 		help="Run public filters on public ZTF alerts only")
+	parser.add_argument('--channels', default=None, nargs="+", 
+		help="Run only these filters on all ZTF alerts")
 	parser.add_argument('--skip-channels', default=[], nargs="+", 
 		help="Do not run these filters")
+	parser.add_argument('--skip-t2-units', default=[], nargs="+", 
+		help="Do not create tickets for these T2 units")
 	parser.add_argument('--override-channels', default=None, nargs="+",
 		help="Take channel definitions from these JSON files")
+	parser.add_argument('--raise-exc', default=False, action="store_true",
+		help="Raise exceptions from filters")
 	
 	# partially parse command line to get config
 	opts, argv = parser.parse_known_args()
@@ -113,7 +121,7 @@ def run_alertprocessor():
 
 	partnership = True
 	if opts.private is not None:
-		public, private = split_private_channels(skip_channels=opts.skip_channels)
+		public, private = split_private_channels(opts.channels, skip_channels=opts.skip_channels)
 		if opts.private:
 			channels = private
 			opts.group += "-partnership"
@@ -152,6 +160,11 @@ def run_alertprocessor():
 			block_size=opts.chunk
 		)
 
+	elif opts.troubles_after is not None:
+		infile = 'troubles since {}'.format(opts.troubles_after)
+		maybe_int_channels = [int(c) if c.isdecimal() else c for c in opts.channels] if opts.channels else None
+		loader = TroublesAlertLoader.alerts(channels=channels, after=opts.troubles_after.to_datetime())
+
 	else:
 		# insert loaded alerts into the archive only if 
 		# they didn't come from the archive in the first place
@@ -169,9 +182,10 @@ def run_alertprocessor():
 		))
 
 	processor = AlertProcessor(
-		ZISetup(serialization="avro" if opts.tarfile else None), 
+		ZISetup(serialization="avro" if opts.tarfile else None) if opts.troubles_after is None else TroublesSetup(), 
 		publish_stats=opts.publish_stats, 
-		channels=channels
+		channels=channels,
+		skip_t2_units=opts.skip_t2_units
 	)
 
 	while alert_processed == AlertProcessor.iter_max:
@@ -179,7 +193,7 @@ def run_alertprocessor():
 		t0 = time.time()
 		log.info('Running on {}'.format(infile))
 		try:
-			alert_processed = processor.run(loader, full_console_logging=opts.verbose)
+			alert_processed = processor.run(loader, full_console_logging=opts.verbose, raise_exc=opts.raise_exc)
 		finally:
 			dt = time.time()-t0
 			log.info(
