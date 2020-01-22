@@ -48,9 +48,11 @@ class ZIAlertUtils:
 		)
 
 		return TransientView(
-			alert_content['objectId'], ZIAlertUtils.tran_flags, 
-			[{'dt': now, 'tier': 0, 'loadedBy': 'ZIAlertUtils'}],
-			now, photopoints=lc.ppo_list, upperlimits=lc.ulo_list,
+			alert_content['objectId'], 
+			ZIAlertUtils.tran_flags, 
+			[{'dt': now, 'tier': 0, 'loadedBy': 'ZIAlertUtils'}], # journal,
+			latest_state=lc.id,
+			photopoints=lc.ppo_list, upperlimits=lc.ulo_list,
 			compounds=None, lightcurves=[lc], t2records=science_records
 		)
 
