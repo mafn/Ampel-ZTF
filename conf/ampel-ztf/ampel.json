@@ -1,0 +1,21 @@
+{
+	"t0": {
+		"unit": {
+			"controller": ["ampel.ztf.t0.ZTFAlertStreamController"],
+			"processor": [
+				"ampel.ztf.ingest.ZiAlertContentIngester",
+				"ampel.ztf.ingest.ZiStockIngester",
+				"ampel.ztf.ingest.ZiAlertContentIngester"
+			],
+			"base": [
+				"ampel.ztf.ingest.ZiT1Combiner"
+			]
+		}
+	},
+	"template": {
+		"ztf_uw_private": "ampel.model.ZTFLegacyChannelTemplate",
+		"ztf_uw_public": "ampel.model.ZTFLegacyChannelTemplate",
+		"ztf_uw_caltech": "ampel.model.ZTFLegacyChannelTemplate"
+	},
+	"aux": ["ampel.ztf.alert.ZiAlertSupplier"]
+}
