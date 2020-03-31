@@ -1,26 +1,32 @@
-from setuptools import setup
-setup(name='Ampel-ZTF',
-      version='0.5.0',
-      package_dir={'':'src'},
-      package_data = {'': ['*.json']},
-      packages=[
-          'ampel.ztf.archive',
-          'ampel.ztf.pipeline.common',
-          'ampel.ztf.pipeline.t0',
-          'ampel.ztf.pipeline.t0.load',
-          'ampel.ztf.pipeline.t0.ingest',
-          'ampel.ztf.pipeline.t3.sergeant',
-      ],
-      entry_points = {
-			'console_scripts' : {
-				'ampel-ztf-alertprocessor = ampel.ztf.pipeline.t0.run:run_alertprocessor',
-				'ampel-ztf-archive-consumer-groups = ampel.ztf.archive.ArchiveDB:consumer_groups_command',
-			},
-			'ampel.pipeline.resources' : [
-				'archive = ampel.ztf.archive.resources:ArchiveDBURI'
-			],
-			'ampel.pipeline.t0.sources' : {
-				'ZTFIPAC = ampel.ztf.pipeline.t0.ZISetup:ZISetup',
-			}
-      }
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# File              : Ampel-ZTF/setup.py
+# License           : BSD-3-Clause
+# Author            : jvs
+# Date              : Undefined
+# Last Modified Date: 28.01.2020
+# Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
+
+from setuptools import setup, find_namespace_packages
+
+setup(
+	name='ampel-ztf',
+	version='0.7.0',
+	packages=find_namespace_packages(),
+	package_data = {
+		'conf': [
+			'*.json', '**/*.json', '**/**/*.json',
+			'*.yaml', '**/*.yaml', '**/**/*.yaml',
+			'*.yml', '**/*.yml', '**/**/*.yml'
+		]
+	},
+	entry_points = {
+		'console_scripts': {
+			'ampel-ztf-alertprocessor = ampel.ztf.t0.run:run_alertprocessor',
+			'ampel-ztf-archive-consumer-groups = ampel.ztf.archive.ArchiveDB:consumer_groups_command',
+		},
+		'ampel_resources': [
+			'archive = ampel.ztf.archive.resources:ArchiveDBURI'
+		]
+	}
 )
