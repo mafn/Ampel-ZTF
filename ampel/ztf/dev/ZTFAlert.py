@@ -1,113 +1,139 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/ztf/utils/ZIAlertUtils.py
+# File              : Ampel-ZTF/src/ampel/ztf/utils/ZIAlert.py
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 24.06.2018
-# Last Modified Date: 14.11.2018
+# Last Modified Date: 09.01.2020
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
-import logging, fastavro, tarfile, os, time
-from ampel.base.flags.PhotoFlags import PhotoFlags
-from ampel.base.flags.TransientFlags import TransientFlags
-from ampel.base.LightCurve import LightCurve
-from ampel.base.TransientView import TransientView
-from ampel.base.PlainPhotoPoint import PlainPhotoPoint
-from ampel.base.PlainUpperLimit import PlainUpperLimit
+import fastavro, os, time
+from typing import Dict, Optional, Any, List
+from ampel.view.LightCurve import LightCurve
+from ampel.view.TransientView import TransientView
+from ampel.content.DataPoint import DataPoint
+from ampel.alert.PhotoAlert import PhotoAlert
+from ampel.ztf.t0.ingest.ZIPhotoDataShaper import ZIPhotoDataShaper
+from ampel.ztf.t0.load.ZIAlertShaper import ZIAlertShaper
 
 
-class ZIAlertUtils:
-
-	# pylint: disable=no-member
-	photo_flags = PhotoFlags.INST_ZTF|PhotoFlags.SRC_IPAC
-	# pylint: disable=no-member
-	tran_flags = TransientFlags.INST_ZTF|TransientFlags.SRC_IPAC
+class ZTFAlert:
 
 
-	@staticmethod
-	def to_lightcurve(file_path=None, content=None):
+	@classmethod
+	def _first_shape(cls,
+		file_path: Optional[str] = None,
+		content: Optional[Dict] = None
+	) -> Dict[str, Any]:
+		""" AKA filter shape """
+
+		if file_path:
+			content = cls._load_alert(file_path)
+
+		return ZIAlertShaper.shape(content)
+
+
+
+	@classmethod
+	def to_photo_alert(cls,
+		file_path: Optional[str] = None,
+		content: Optional[Dict] = None
+	) -> PhotoAlert:
 		"""
-		Creates and returns an instance of ampel.base.LightCurve using a ZTF IPAC alert.
+		Creates and returns an instance of ampel.view.LightCurve using a ZTF IPAC alert.
 		"""
-		return ZIAlertUtils._create_lc(
-			*ZIAlertUtils._shape(
-				ZIAlertUtils._get_alert_content(file_path, content)
-			)
+		shaped_content = cls._first_shape(file_path, content)
+
+		return PhotoAlert(
+			shaped_content['stockId'],
+			shaped_content['ro_pps'],
+			shaped_content['ro_uls']
 		)
 
 
-	@staticmethod
-	def to_transientview(file_path=None, content=None, science_records=None):
+	@classmethod
+	def to_lightcurve(cls,
+		file_path: Optional[str] = None,
+		content: Optional[Dict] = None
+	) -> LightCurve:
 		"""
-		Creates and returns an instance of ampel.base.LightCurve using a ZTF IPAC alert.
+		Creates and returns an instance of ampel.view.LightCurve using a ZTF IPAC alert.
 		"""
-		alert_content = ZIAlertUtils._get_alert_content(file_path, content)
-		now = time.time()
-		lc = ZIAlertUtils._create_lc(
-			*ZIAlertUtils._shape(alert_content), now
+
+		shaped_content = cls._first_shape(file_path, content)
+		photo_shaper = ZIPhotoDataShaper()
+
+		# Build upper limit ids (done by ingester for now)
+		for el in shaped_content['uls']:
+			el['_id'] = int("%i%s%i" % (
+				(2457754.5 - el['jd']) * 1000000,
+				str(el['pid'])[8:10],
+				round(abs(el['diffmaglim']) * 1000)
+			))
+
+		uls = photo_shaper.ampelize(
+			shaped_content['uls'],
+			set(el['_id'] for el in shaped_content['uls']),
+			id_field_name='_id'
 		)
+
+		for ul in uls:
+			ul['stock'] = shaped_content['stockId']
+
+		pps = photo_shaper.ampelize(
+			shaped_content['pps'],
+			set(el['candid'] for el in shaped_content['pps'])
+		)
+
+		for pp in pps:
+			pp['stock'] = shaped_content['stockId']
+
+		return LightCurve(
+			os.urandom(16), # CompoundI
+			tuple([DataPoint(**el) for el in pps]), # Photopoints
+			tuple([DataPoint(**el) for el in uls]), # Upperlimit
+			0, # tier
+			time.time() # added
+		)
+
+
+	# TODO: incomplete/meaningless/quick'n'dirty method, to improve if need be
+	@classmethod
+	def to_transientview(cls,
+		file_path: Optional[str] = None,
+		content: Optional[Dict] = None,
+		t2_records: Optional[List[Dict]] = None
+	) -> TransientView:
+		"""
+		Note: incomplete/meaningless//quick'n'dirty method, to improve if need be.
+		Creates and returns an instance of ampel.view.LightCurve using a ZTF IPAC alert.
+		"""
+
+		shaped_content = cls._first_shape(file_path, content)
+		lc = cls.to_lightcurve(file_path, content)
 
 		return TransientView(
-			alert_content['objectId'], 
-			ZIAlertUtils.tran_flags, 
-			[{'dt': now, 'tier': 0, 'loadedBy': 'ZIAlertUtils'}], # journal,
-			latest_state=lc.id,
-			photopoints=lc.ppo_list, upperlimits=lc.ulo_list,
-			compounds=None, lightcurves=[lc], t2records=science_records
+			stock_id = shaped_content['stockId'],
+			tran_names = (shaped_content['ZTFName'],), # tran_names
+			tags = None,
+			journal = None,
+			datapoints = lc.photopoints + lc.upperlimits,
+			compounds = None,
+			t2records = t2_records,
+			channel = None
 		)
 
 
-	@staticmethod
-	def _create_lc(pps, uls, now=None):
+	@classmethod
+	def _load_alert(cls, file_path: str) -> Optional[Dict]:
 		""" """
-		return LightCurve(
-			os.urandom(16), 
-			[PlainPhotoPoint(el, ZIAlertUtils.photo_flags, read_only=True) for el in pps], 
-			[PlainUpperLimit(el, ZIAlertUtils.photo_flags, read_only=True) for el in uls] if uls else None, 
-			info={'tier': 0, 'added': time.time() if now is None else now}, 
-			read_only=True
-		)
-
-
-	@staticmethod
-	def _get_alert_content(file_path=None, content=None):
-		""" """
-		# deserialize extracted alert content
-		if file_path is not None:
-			with open(file_path, 'rb') as f:
-				content = ZIAlertUtils._deserialize(f)
-
-		if content is None:
-			raise ValueError("Illegal parameter")
-
+		with open(file_path, 'rb') as f:
+			content = cls._deserialize(f)
 		return content
 
 
 	@staticmethod
-	def _deserialize(f):
+	def _deserialize(f) -> Optional[Dict]:
 		""" """
 		reader = fastavro.reader(f)
 		return next(reader, None)
-
-
-	@staticmethod
-	def _shape(alert_content):
-		""" """
-		alert_content['candidate']['_id'] = alert_content['candidate'].pop('candid')
-		if alert_content.get('prv_candidates') is not None:
-			pps = [alert_content['candidate']]
-			uls = []
-			for el in alert_content['prv_candidates']:
-				if el.get('candid') is not None:
-					el['_id'] = el.pop('candid')
-					pps.append(el)
-				else:
-					el['_id'] = int("%i%s%i" % (
-						(2457754.5 - el['jd']) * 1000000, 
-						str(el['pid'])[8:10], 
-						round(abs(el['diffmaglim']) * 1000)
-					))
-					uls.append(el)
-			return pps, uls
-		else:
-			return [alert_content['candidate']], None
