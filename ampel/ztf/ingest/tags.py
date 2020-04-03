@@ -23,9 +23,9 @@ tags: Dict[int, Dict[int, List[str]]] = {
 		3: ["ZTF", "ZTF_PRIV", "ZTF_I"]
 	},
 	3: { # Actually CALTEC
-		1: ["ZTF", "ZTF_PRIV", "ZTF_G"],
-		2: ["ZTF", "ZTF_PRIV", "ZTF_R"],
-		3: ["ZTF", "ZTF_PRIV", "ZTF_I"]
+		1: ["ZTF", "ZTF_PUB", "ZTF_PRIV", "ZTF_G"],
+		2: ["ZTF", "ZTF_PUB", "ZTF_PRIV", "ZTF_R"],
+		3: ["ZTF", "ZTF_PUB", "ZTF_PRIV", "ZTF_I"]
 	},
 	0: {
 		1: ["ZTF", "ZTF_PUB", "ZTF_PRIV", "ZTF_G"],
