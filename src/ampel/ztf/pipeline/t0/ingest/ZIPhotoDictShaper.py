@@ -29,7 +29,7 @@ class ZIPhotoDictShaper:
 		0: PhotoFlags.ZTF_PUBLIC | PhotoFlags.ZTF_COLLAB,	
 		1: PhotoFlags.ZTF_PUBLIC,	
 		2: PhotoFlags.ZTF_COLLAB,
-		3: PhotoFlags.ZTF_COLLAB # actually CALTEC
+		3: PhotoFlags.ZTF_PUBLIC | PhotoFlags.ZTF_COLLAB # published CALTECH
 	}
 
 	# Filter color
