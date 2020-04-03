@@ -153,3 +153,70 @@ def test_ingestion_from_archive(empty_archive, alert_generator, minimal_ingestio
 	ap = AlertProcessor(ZISetup(serialization=None), publish_stats=[])
 	iter_count = ap.run(alerts)
 	assert iter_count == count
+
+@pytest.fixture
+def troubled_alert(alert_generator, minimal_ingestion_config, mocker):
+	from ampel.pipeline.db.AmpelDB import AmpelDB
+	from ampel.pipeline.t0.AlertProcessor import AlertProcessor
+	from ampel.ztf.pipeline.t0.ZISetup import ZISetup
+	import itertools
+
+	# raise an exception from a filter unit
+	# pytest-mock's mocker fixture does not actually work as a context manager
+	try:
+		mocker.patch('ampel.pipeline.t0.filter.BasicFilter.BasicFilter.apply', side_effect=ValueError)
+		ap = AlertProcessor(ZISetup(serialization=None), publish_stats=[])
+		ap.run(itertools.islice(alert_generator(), 1), full_console_logging=True, raise_exc=False)
+	finally:
+		mocker.stopall()
+	assert AmpelDB.get_collection('troubles').count_documents({}) == 2, "exceptions logged for each channel"
+
+def test_ingestion_from_troubles(alert_generator, minimal_ingestion_config, troubled_alert):
+	"""
+	Recover alerts where a filter raised an error
+	"""
+	from ampel.pipeline.t0.AlertProcessor import AlertProcessor
+	from ampel.ztf.pipeline.t0.ZISetup import ZISetup
+	from ampel.ztf.pipeline.t0.TroublesSetup import TroublesSetup
+	from ampel.ztf.pipeline.t0.load.TroublesAlertLoader import TroublesAlertLoader
+	from ampel.ztf.pipeline.t0.load.TroublesAlertShaper import TroublesAlertShaper
+	from ampel.pipeline.db.AmpelDB import AmpelDB
+	from ampel.pipeline.common.AmpelUnitLoader import AmpelUnitLoader
+	import types
+	import itertools
+	from datetime import datetime, timedelta
+
+	assert len(list(TroublesAlertLoader.alerts(remove_records=False))) == 1, "reports are coalesced by alert id"
+	assert len(list(TroublesAlertLoader.alerts(remove_records=False, channels=['NOTACHANNEL']))) == 0, "reports are filtered by channel"
+	assert len(list(TroublesAlertLoader.alerts(remove_records=False, after=datetime.now()))) == 0, "reports are filtered by time"
+	assert len(list(TroublesAlertLoader.alerts(remove_records=False, after=datetime.now()-timedelta(days=1)))) == 1, "reports are filtered by time"
+
+	alert_content = next(ZISetup(serialization=None).get_alert_supplier(alert_generator()))
+	reco_content = TroublesAlertShaper.shape(next(TroublesAlertLoader().alerts()))
+	assert reco_content == alert_content, "original alert content recovered"
+
+	# run it again
+	ap = AlertProcessor(TroublesSetup(serialization=None), publish_stats=[])
+	assert ap.run(TroublesAlertLoader.alerts(limit=1), full_console_logging=True, raise_exc=False) == 1, "1 alert reprocessed"
+	assert AmpelDB.get_collection('troubles').count_documents({}) == 0, "no further exceptions"
+
+def test_entrypoint_from_troubles(troubled_alert, minimal_ingestion_config):
+	import subprocess
+	from astropy.time import Time
+	from ampel.pipeline.db.AmpelDB import AmpelDB
+	from ampel.pipeline.config.ConfigLoader import ConfigLoader
+	import tempfile
+	import json
+
+	with tempfile.NamedTemporaryFile(mode='w+') as f:
+		conf = {
+			'resources': minimal_ingestion_config['resources'],
+			'channels': minimal_ingestion_config['channels'],
+		}
+		json.dump(conf, f)
+		f.flush()
+		assert ConfigLoader.load_config(f.name, gather_plugins=False), "config is valid"
+		cmd = ['ampel-ztf-alertprocessor', '-c', f.name, '--troubles', (Time.now()-1).isot, '--publish-stats', 'none', '--channels', '0', '1']
+		subprocess.check_call(cmd)
+
+	assert AmpelDB.get_collection('troubles').count_documents({}) == 0, "no further exceptions"
