@@ -34,7 +34,7 @@ def zuds_alert_generator(request):
 def alert_generator(alert_tarball):
 	import itertools
 	import fastavro
-	from ampel.pipeline.t0.load.TarballWalker import TarballWalker
+	from ampel.t0.load.TarballWalker import TarballWalker
 	def alerts(with_schema=False):
 		atat = TarballWalker(alert_tarball)
 		for fileobj in itertools.islice(atat.get_files(), 0, 1000, 1):

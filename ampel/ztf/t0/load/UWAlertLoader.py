@@ -10,7 +10,7 @@
 import io, time, itertools, logging, uuid, fastavro
 import json
 from collections import defaultdict
-from ampel.ztf.pipeline.t0.load.AllConsumingConsumer import AllConsumingConsumer
+from ampel.ztf.t0.load.AllConsumingConsumer import AllConsumingConsumer
 
 log = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ class UWAlertLoader:
 		:param bytes group_name: consumer group name. Fetchers with the same group name
 	    will be load balanced and receive disjoint sets of messages
 		:param bool update_archive: if True, fetched alerts will be inserted into 
-		the archive db using ampel.ztf.pipeline.t0.ArchiveUpdater
+		the archive db using ampel.ztf.t0.ArchiveUpdater
 		:param int timeout: time to wait for messages before giving up, in seconds
 		"""
 		topics = ['^ztf_.*_programid1$', '^ztf_.*_programid3_public$']
@@ -45,19 +45,19 @@ class UWAlertLoader:
 		config = {'group.id':group_name}
 
 		if update_archive:
-			from ampel.pipeline.config.AmpelConfig import AmpelConfig
-			from ampel.ztf.pipeline.t0.ArchiveUpdater import ArchiveUpdater
+			from ampel.config.AmpelConfig import AmpelConfig
+			from ampel.ztf.t0.ArchiveUpdater import ArchiveUpdater
 			self.archive_updater = ArchiveUpdater(
-				AmpelConfig.get_config('resources.archive.writer')
+				AmpelConfig.get('resource.archive.writer')
 			)
 		else:
 			self.archive_updater = None
 
 		if statistics_interval > 0:
-			from ampel.pipeline.config.AmpelConfig import AmpelConfig
-			from ampel.pipeline.common.GraphiteFeeder import GraphiteFeeder
+			from ampel.config.AmpelConfig import AmpelConfig
+			from ampel.metrics.GraphiteFeeder import GraphiteFeeder
 			self.graphite = GraphiteFeeder(
-				AmpelConfig.get_config('resources.graphite.default'),
+				AmpelConfig.get('resource.graphite.default'),
 				autoreconnect = True
 			)
 			config['stats_cb'] = self.report_statistics

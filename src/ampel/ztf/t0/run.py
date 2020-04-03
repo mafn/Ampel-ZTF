@@ -10,17 +10,15 @@
 import sys, time, uuid, logging
 from astropy.time import Time
 from ampel.ztf.archive.ArchiveDB import ArchiveDB
-from ampel.ztf.pipeline.t0.load.UWAlertLoader import UWAlertLoader
-from ampel.ztf.pipeline.t0.load.TroublesAlertLoader import TroublesAlertLoader
-from ampel.ztf.pipeline.t0.ZISetup import ZISetup
-from ampel.ztf.pipeline.t0.TroublesSetup import TroublesSetup
-from ampel.pipeline.logging.AmpelLogger import AmpelLogger
-from ampel.pipeline.t0.AlertProcessor import AlertProcessor
-from ampel.pipeline.t0.load.TarAlertLoader import TarAlertLoader
-from ampel.pipeline.common.AmpelUnitLoader import AmpelUnitLoader
-from ampel.pipeline.config.AmpelArgumentParser import AmpelArgumentParser
-from ampel.pipeline.config.AmpelConfig import AmpelConfig
-from ampel.pipeline.config.channel.ChannelConfigLoader import ChannelConfigLoader
+from ampel.ztf.t0.load.UWAlertLoader import UWAlertLoader
+from ampel.ztf.t0.ZISetup import ZISetup
+from ampel.logging.AmpelLogger import AmpelLogger
+from ampel.t0.AlertProcessor import AlertProcessor
+from ampel.t0.load.TarAlertLoader import TarAlertLoader
+from ampel.common.AmpelUnitLoader import AmpelUnitLoader
+from ampel.config.AmpelArgumentParser import AmpelArgumentParser
+from ampel.config.AmpelConfig import AmpelConfig
+from ampel.config.channel.ChannelConfigLoader import ChannelConfigLoader
 
 import pkg_resources
 
@@ -52,7 +50,7 @@ def split_private_channels(channels=None, skip_channels=set()):
 
 def override_channels(config, channel_files):
 	import json
-	from ampel.pipeline.config.channel.ChannelConfig import ChannelConfig
+	from ampel.config.channel.ChannelConfig import ChannelConfig
 	config['channels'].clear()
 	for fname in channel_files:
 		with open(fname) as f:
@@ -70,7 +68,7 @@ def run_alertprocessor():
 	AmpelLogger.set_default_stream(sys.stderr)
 	log = logging.getLogger('ampel-ztf-alertprocessor')
 
-	parser = AmpelArgumentParser(tier=0)
+	parser = AmpelArgumentParser()
 	parser.require_resource('mongo', ['writer', 'logger'])
 	parser.add_argument('-v', '--verbose', default=False, action="store_true")
 	parser.add_argument('--publish-stats', nargs='*', default=['jobs', 'graphite'])

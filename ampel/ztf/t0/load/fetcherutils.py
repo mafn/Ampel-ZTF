@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/ztf/pipeline/t0/load/fetcherutils.py
+# File              : ampel/ztf/t0/load/fetcherutils.py
 # License           : BSD-3-Clause
 # Author            : Jakob van Santen <jakob.van.santen@desy.de>
 # Date              : Unspecified
@@ -10,7 +10,7 @@
 # pylint: disable=bad-builtin
 def archive_topic():
 
-	from ampel.ztf.pipeline.t0.load.AllConsumingConsumer import AllConsumingConsumer
+	from ampel.ztf.t0.load.AllConsumingConsumer import AllConsumingConsumer
 	from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 	import itertools, tarfile, time, os, pwd, grp, uuid, socket, fastavro, io
 

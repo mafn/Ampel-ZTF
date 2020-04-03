@@ -36,7 +36,7 @@ def empty_mongod(mongod):
 
 def populate_archive(alert_generator, empty_archive):
 	from itertools import islice
-	from ampel.ztf.pipeline.t0.ArchiveUpdater import ArchiveUpdater
+	from ampel.ztf.t0.ArchiveUpdater import ArchiveUpdater
 
 	updater = ArchiveUpdater(empty_archive)
 	for idx, (alert, schema) in enumerate(islice(alert_generator(with_schema=True), 100)):
@@ -102,7 +102,7 @@ def test_run_all_tiers(alert_tarball, empty_mongod, empty_archive, graphite):
 
 def test_kafka_stream(kafka_stream):
 	"""Does the Kafka stream itself work?"""
-	from ampel.ztf.pipeline.t0.load.UWAlertLoader import UWAlertLoader
+	from ampel.ztf.t0.load.UWAlertLoader import UWAlertLoader
 	
 	loader = UWAlertLoader(partnership=True, bootstrap=kafka_stream, timeout=10)
 	count = 0
@@ -114,36 +114,36 @@ def test_kafka_stream(kafka_stream):
 
 @pytest.fixture
 def live_config():
-	from ampel.pipeline.config.AmpelArgumentParser import AmpelArgumentParser
-	from ampel.pipeline.config.AmpelConfig import AmpelConfig
+	from ampel.run.AmpelArgumentParser import AmpelArgumentParser
+	from ampel.config.AmpelConfig import AmpelConfig
 	AmpelConfig.reset()
 	AmpelArgumentParser().parse_args(args=[])
 	yield
 	AmpelConfig.reset()
 
 def test_private_channel_split(live_config):
-	from ampel.ztf.pipeline.t0.run import split_private_channels
-	from ampel.pipeline.config.ConfigLoader import ConfigLoader
+	from ampel.ztf.t0.run import split_private_channels
+	from ampel.config.ConfigLoader import ConfigLoader
 	
 	public, private = split_private_channels()
 	assert len(private) > len(public)
 	assert len(public) > 0
 
 def test_required_resources(live_config):
-	from ampel.ztf.pipeline.t0.run import get_required_resources
-	from ampel.pipeline.config.ConfigLoader import ConfigLoader
+	from ampel.ztf.t0.run import get_required_resources
+	from ampel.config.ConfigLoader import ConfigLoader
 	
 	resources = get_required_resources()
 	assert len(resources) > 0
 
 def test_setup():
-	from ampel.ztf.pipeline.t0.ZISetup import ZISetup
+	from ampel.ztf.t0.ZISetup import ZISetup
 	ZISetup()
 
 def test_ingestion_from_archive(empty_archive, alert_generator, minimal_ingestion_config):
 	from ampel.ztf.archive.ArchiveDB import ArchiveDB
-	from ampel.pipeline.t0.AlertProcessor import AlertProcessor
-	from ampel.ztf.pipeline.t0.ZISetup import ZISetup
+	from ampel.t0.AlertProcessor import AlertProcessor
+	from ampel.ztf.t0.ZISetup import ZISetup
 
 	count = populate_archive(alert_generator, empty_archive)
 
