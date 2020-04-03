@@ -15,8 +15,8 @@ from ampel.ztf.t0.ZISetup import ZISetup
 from ampel.logging.AmpelLogger import AmpelLogger
 from ampel.t0.AlertProcessor import AlertProcessor
 from ampel.t0.load.TarAlertLoader import TarAlertLoader
-from ampel.common.AmpelUnitLoader import AmpelUnitLoader
-from ampel.config.AmpelArgumentParser import AmpelArgumentParser
+from ampel.abstract.AmpelUnitLoader import AmpelUnitLoader
+from ampel.run.AmpelArgumentParser import AmpelArgumentParser
 from ampel.config.AmpelConfig import AmpelConfig
 from ampel.config.channel.ChannelConfigLoader import ChannelConfigLoader
 
@@ -26,7 +26,7 @@ def get_required_resources(channels=None):
 	units = set()
 	for channel in ChannelConfigLoader.load_configurations(channels, 0):
 		for source in channel.sources:
-			units.add(source.t0Filter.unitId)
+			units.add(source.t0Filter.className)
 	resources = set()
 	for unit in units:
 		for resource in AmpelUnitLoader.get_class(0, unit).resources:
@@ -148,7 +148,7 @@ def run_alertprocessor():
 
 		infile = 'archive'
 		archive = ArchiveDB(
-			AmpelConfig.get_config('resources.archive.reader')
+			AmpelConfig.get('resource.archive.reader')
 		)
 		loader = archive.get_alerts_in_time_range(
 			opts.archive[0].jd, 
