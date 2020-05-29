@@ -8,7 +8,7 @@
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from typing import Tuple, Set, Union, ClassVar
-from ampel.types import DataPointId, ChannelId
+from ampel.type import DataPointId, ChannelId
 from ampel.content.DataPoint import DataPoint
 from ampel.content.Compound import CompoundElement
 from ampel.ingest.T1PhotoCombiner import T1PhotoCombiner

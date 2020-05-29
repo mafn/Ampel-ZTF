@@ -278,7 +278,7 @@ class ZiAlertContentIngester(AbsAlertContentIngester[PhotoAlert, DataPoint]):
 			if el['body']['jd'] <= alert.pps[0]['jd']
 		]
 
-		return sorted(datapoints, key=lambda k: k['body']['jd'])
+		return sorted(datapoints, key=lambda k: k['body']['jd'], reverse=True)
 
 
 	# Mandatory implementation

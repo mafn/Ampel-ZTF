@@ -7,20 +7,18 @@
 # Last Modified Date: 14.11.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
+import pkg_resources
 import sys, time, uuid, logging
 from astropy.time import Time
 from ampel.ztf.archive.ArchiveDB import ArchiveDB
 from ampel.ztf.t0.load.UWAlertLoader import UWAlertLoader
-from ampel.ztf.t0.ZISetup import ZISetup
-from ampel.logging.AmpelLogger import AmpelLogger
-from ampel.t0.AlertProcessor import AlertProcessor
-from ampel.t0.load.TarAlertLoader import TarAlertLoader
-from ampel.abstract.AmpelUnitLoader import AmpelUnitLoader
+from ampel.log.AmpelLogger import AmpelLogger
+from ampel.alert.AlertProcessor import AlertProcessor
+from ampel.alert.load.TarAlertLoader import TarAlertLoader
+from ampel.core.UnitLoader import UnitLoader
 from ampel.run.AmpelArgumentParser import AmpelArgumentParser
 from ampel.config.AmpelConfig import AmpelConfig
-from ampel.config.channel.ChannelConfigLoader import ChannelConfigLoader
 
-import pkg_resources
 
 def get_required_resources(channels=None):
 	units = set()
@@ -29,7 +27,7 @@ def get_required_resources(channels=None):
 			units.add(source.t0Filter.className)
 	resources = set()
 	for unit in units:
-		for resource in AmpelUnitLoader.get_class(0, unit).resources:
+		for resource in UnitLoader.get_class(0, unit).resources:
 			resources.add(resource)
 	return resources
 

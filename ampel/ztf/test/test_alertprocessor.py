@@ -181,7 +181,7 @@ def test_ingestion_from_troubles(alert_generator, minimal_ingestion_config, trou
 	from ampel.ztf.pipeline.t0.load.TroublesAlertLoader import TroublesAlertLoader
 	from ampel.ztf.pipeline.t0.load.TroublesAlertShaper import TroublesAlertShaper
 	from ampel.pipeline.db.AmpelDB import AmpelDB
-	from ampel.pipeline.common.AmpelUnitLoader import AmpelUnitLoader
+	from ampel.pipeline.common.UnitLoader import UnitLoader
 	import types
 	import itertools
 	from datetime import datetime, timedelta

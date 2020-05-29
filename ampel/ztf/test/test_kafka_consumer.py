@@ -11,7 +11,7 @@ def kafka_broker():
 def test_stats(kafka_broker, mocker):
 	import time
 	from unittest.mock import MagicMock
-	from ampel.utils.mappings import flatten_dict
+	from ampel.util.mappings import flatten_dict
 	from ampel.ztf.t0.load.UWAlertLoader import UWAlertLoader
 
 	feeder = mocker.patch('ampel.metrics.GraphiteFeeder.GraphiteFeeder')

@@ -14,7 +14,7 @@ from astropy import units as u
 from ampel.config.AmpelConfig import AmpelConfig
 from ampel.ztf.archive.ArchiveDB import ArchiveDB
 from ampel.t0.AlertProcessor import AlertProcessor
-from ampel.abstract.AmpelUnitLoader import AmpelUnitLoader
+from ampel.abstract.UnitLoader import UnitLoader
 from ampel.config.channel.ChannelConfigLoader import ChannelConfigLoader
 from ampel.ztf.t0.ZISetup import ZISetup
 
@@ -85,7 +85,7 @@ class DelayedT0Controller:
 				pos, radius, dt, channels = target
 				self.launch_alertprocessor(pos, radius, dt, channels)
 			except:
-				log.error("Exception while processing target {}".format(target), exc_info=1)
+				log.error("Exception while processing target {}".format(target), exc=1)
 				raise
 		
 		# in the rare event that the target streams finish, wait for
@@ -110,7 +110,7 @@ def get_required_resources(channels=None):
 			units.add(source.t0Filter.className)
 	resources = set()
 	for unit in units:
-		for resource in AmpelUnitLoader.get_class(0, unit).resources:
+		for resource in UnitLoader.get_class(0, unit).resources:
 			resources.add(resource)
 	return resources
 

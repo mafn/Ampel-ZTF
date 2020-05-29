@@ -7,9 +7,10 @@
 # Last Modified Date: 18.03.2020
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
-from typing import Dict, List, Any, Iterable
+from typing import Dict, List, Any, Iterable, Optional
 from ampel.abstract.AbsT0Unit import AbsT0Unit
 from ampel.content.DataPoint import DataPoint
+from ampel.log.AmpelLogger import AmpelLogger
 from ampel.ztf.ingest.tags import tags
 
 
@@ -18,6 +19,10 @@ class ZiT0UpperLimitShaper(AbsT0Unit):
 	This class 'shapes' upper limits in a format suitable
 	to be saved into the ampel database
 	"""
+
+	# override
+	logger: Optional[AmpelLogger] # type: ignore[assignment]
+
 
 	# Mandatory implementation
 	def ampelize(self, arg: Iterable[Dict[str, Any]]) -> List[DataPoint]:

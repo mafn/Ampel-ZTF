@@ -8,12 +8,12 @@
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from typing import Dict, List, Any, Union
-from ampel.types import StockId
+from ampel.type import StockId
 from ampel.ztf.utils import to_ztf_id
-from ampel.ingest.StockDefaultIngester import StockDefaultIngester
+from ampel.ingest.StockIngester import StockIngester
 
 
-class ZiStockIngester(StockDefaultIngester):
+class ZiStockIngester(StockIngester):
 
 	# Override
 	tag: List[Union[int, str]] = ["ZTF"]
