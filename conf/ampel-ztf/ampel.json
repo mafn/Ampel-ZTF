@@ -2,7 +2,6 @@
 	"unit": {
 		"controller": ["ampel.ztf.t0.ZTFAlertStreamController"],
 		"admin": [
-			"ampel.ztf.ingest.ZiAlertContentIngester",
 			"ampel.ztf.ingest.ZiStockIngester",
 			"ampel.ztf.ingest.ZiAlertContentIngester",
 			"ampel.ztf.alert.ZTFGeneralActiveAlertRegister",

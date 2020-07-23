@@ -7,7 +7,7 @@
 # Last Modified Date: 18.03.2020
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
-from typing import Tuple, Set, Union, ClassVar
+from typing import Tuple, Set, Union
 from ampel.type import DataPointId, ChannelId
 from ampel.content.DataPoint import DataPoint
 from ampel.content.Compound import CompoundElement
@@ -16,7 +16,7 @@ from ampel.ingest.T1PhotoCombiner import T1PhotoCombiner
 
 class ZiT1Combiner(T1PhotoCombiner):
 
-	require: ClassVar = "channel",
+	require = "channel",
 
 	def __init__(self, **kwargs):
 
