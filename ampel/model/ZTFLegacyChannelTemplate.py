@@ -36,7 +36,7 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 		# T3 processes
 		ret: List[Dict[str, Any]] = [
 			self.transfer_channel_parameters(el)
-			for el in self.t3_supervize
+			for el in self.t3_supervise
 		]
 
 		ret.insert(0,
