@@ -23,7 +23,7 @@ class EmbeddedT3Process(StrictModel):
 	name: Optional[str] = None
 	template: Literal["periodic_summary"]
 	schedule: Union[str,Sequence[str]]
-	load: Optional[Sequence[str]] = None,
+	load: Optional[Sequence[str]] = None
 	filter: Optional[FilterModel] = None
 	run: Union[UnitModel, Sequence[UnitModel]]
 
