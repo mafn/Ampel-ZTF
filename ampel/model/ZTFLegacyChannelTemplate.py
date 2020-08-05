@@ -64,7 +64,7 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 		}
 
 	def apply_t3_template(self, template: EmbeddedT3Process, index: int=0) -> Dict[str,Any]:
-		name = template.name if template.name else f"summary.{index:02d}"
+		name = template.name if template.name else f"summary_{index:02d}"
 		process_name = f"{self.channel}|T3|{name}"
 		directive : Dict[str, Any] = {
 			"select": {
