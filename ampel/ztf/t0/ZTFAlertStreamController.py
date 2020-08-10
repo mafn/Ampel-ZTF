@@ -62,9 +62,12 @@ class ZTFAlertStreamController(AbsProcessController, AmpelBaseModel):
             asyncio.create_task(self.run_alertprocessor(pm))
             for pm in self.proc_models
         }
-        for r in await asyncio.gather(*tasks, return_exceptions=True):
-            if isinstance(r, Exception):
-                raise r
+        for results in await asyncio.gather(*tasks, return_exceptions=True):
+            if isinstance(results, BaseException):
+                raise results
+            for r in results:
+                if isinstance(r, BaseException):
+                    raise r
 
     async def run_alertprocessor(self, pm: ProcessModel):
         """
@@ -79,26 +82,24 @@ class ZTFAlertStreamController(AbsProcessController, AmpelBaseModel):
             self.log_profile,
         )
         pending = {launch() for _ in range(self.multiplier)}
-        done = {}
-        while True:
-            try:
-                done, pending = await asyncio.wait(
-                    pending, return_when="FIRST_COMPLETED"
-                )
-            except asyncio.CancelledError:
+        done = set()
+        try:
+            while True:
                 try:
+                    done, pending = await asyncio.wait(
+                        pending, return_when="FIRST_COMPLETED"
+                    )
+                    for task in done:
+                        # start a fresh replica for each processor that
+                        # returned True
+                        if task.result() and len(pending) < self.multiplier:
+                            pending.add(launch())
+                except:
                     for t in pending:
                         t.cancel()
-                finally:
                     break
-            for result in done:
-                if isinstance(result, BaseException):
-                    # TODO: something useful with exceptions
-                    ...
-            # start a fresh replica for each one that finished
-            for _ in range(self.multiplier - len(pending)):
-                pending.add(launch())
-        return await asyncio.gather(*pending, return_exceptions=True)
+        finally:
+            return await asyncio.gather(*done.union(pending), return_exceptions=True)
 
     @staticmethod
     @concurrent.process
@@ -124,6 +125,13 @@ class ZTFAlertStreamController(AbsProcessController, AmpelBaseModel):
             processor.set_supplier(ZiAlertSupplier(deserialize=source["serialization"]))
             processor.set_loader(TarAlertLoader(source["filename"]))
         else:
-            raise ValueError
+            raise TypeError(f"Unhandled source {source}")
 
-        return processor.run()
+        n_alerts = processor.run()
+
+        if "filename" in source:
+            return False
+        elif "broker" in source:
+            return True
+        else:
+            return n_alerts > 0
