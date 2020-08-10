@@ -149,7 +149,10 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 					"unit": "ZTFAlertStreamController",
 					"config": {
 						"priority": "standard",
-						"stream": self.template
+						"source": {
+							"stream": self.template,
+							**first_pass_config['resource']['ampel-ztf/kafka']
+						}
 					}
 				},
 				stock_ingester = "ZiStockIngester",

@@ -14,5 +14,11 @@
 		"ztf_uw_private": "ampel.model.ZTFLegacyChannelTemplate",
 		"ztf_uw_public": "ampel.model.ZTFLegacyChannelTemplate",
 		"ztf_uw_caltech": "ampel.model.ZTFLegacyChannelTemplate"
+	},
+	"resource": {
+		"kafka": {
+			"broker": "partnership.alerts.ztf.uw.edu:9092",
+			"group": "ampel-live"
+		}
 	}
 }
