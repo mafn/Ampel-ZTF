@@ -7,9 +7,9 @@
 # Last Modified Date: 10.08.2020
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
-from typing import Dict, Sequence
+from typing import Dict, Sequence, Optional, Union
 
-from ampel.model.template.PeriodicSummaryT3 import PeriodicSummaryT3
+from ampel.model.template.PeriodicSummaryT3 import PeriodicSummaryT3, LoaderDirective
 
 
 class ZTFPeriodicSummaryT3(PeriodicSummaryT3):
@@ -18,4 +18,4 @@ class ZTFPeriodicSummaryT3(PeriodicSummaryT3):
     """
 
     tag: Dict = {"with": "ZTF", "without": "HAS_ERROR"}
-    load: Sequence[str] = ["TRANSIENT", "T2RECORD"]
+    load: Optional[Sequence[Union[str,LoaderDirective]]] = ["TRANSIENT", "T2RECORD"]
