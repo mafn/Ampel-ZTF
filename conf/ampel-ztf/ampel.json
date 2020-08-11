@@ -13,7 +13,8 @@
 	"template": {
 		"ztf_uw_private": "ampel.model.ZTFLegacyChannelTemplate",
 		"ztf_uw_public": "ampel.model.ZTFLegacyChannelTemplate",
-		"ztf_uw_caltech": "ampel.model.ZTFLegacyChannelTemplate"
+		"ztf_uw_caltech": "ampel.model.ZTFLegacyChannelTemplate",
+		"ztf_periodic_summary": "ampel.model.ZTFPeriodicSummaryT3"
 	},
 	"resource": {
 		"kafka": {
