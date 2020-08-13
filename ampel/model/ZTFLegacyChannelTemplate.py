@@ -60,7 +60,7 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 				t0_ingester = "ZiAlertContentIngester",
 				t1_ingester = ("PhotoCompoundIngester", {"combiner": {"unit": "ZiT1Combiner"}}),
 				t2_state_ingester = ("PhotoT2Ingester", {"tags": ["ZTF"]}),
-				t2_point_ingester = ("PointT2Ingester", {"tags": ["ZTF"]}),
+				t2_point_ingester = ("DualPointT2Ingester", {"tags": ["ZTF"]}),
 				t2_stock_ingester = ("StockT2Ingester", {"tags": ["ZTF"]}),
 			)
 		)
