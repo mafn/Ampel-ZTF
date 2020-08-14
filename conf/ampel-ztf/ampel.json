@@ -5,7 +5,8 @@
 			"ampel.ztf.ingest.ZiStockIngester",
 			"ampel.ztf.ingest.ZiAlertContentIngester",
 			"ampel.ztf.alert.ZTFGeneralActiveAlertRegister",
-			"ampel.ztf.alert.ZTFGeneralAlertRegister"
+			"ampel.ztf.alert.ZTFGeneralAlertRegister",
+			"ampel.ztf.t3.T3LegacyExtJournalAppender"
 		],
 		"base": ["ampel.ztf.ingest.ZiT1Combiner"],
 		"aux": ["ampel.ztf.alert.ZiAlertSupplier"]
