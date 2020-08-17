@@ -14,6 +14,8 @@ from numbers import Number
 from ampel.ztf.pipeline.t0.ZUDSArchiveUpdater import ZUDSArchiveUpdater
 from ampel.ztf.archive.ZUDSArchiveDB import ZUDSArchiveDB
 
+pytestmark = pytest.mark.skip(reason="zuds archive unused")
+
 @pytest.fixture
 def temp_database(zudsarchive):
     """
