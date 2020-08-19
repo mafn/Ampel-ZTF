@@ -20,7 +20,7 @@
 	"resource": {
 		"kafka": {
 			"broker": "partnership.alerts.ztf.uw.edu:9092",
-			"group": "ampel-live"
+			"group": "ampel-v0.7-test"
 		}
 	}
 }

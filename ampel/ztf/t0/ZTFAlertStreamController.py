@@ -10,7 +10,7 @@
 import asyncio
 import copy
 from functools import partial
-from typing import Any, Dict, Literal, Optional, Union
+from typing import Any, Dict, Literal, Optional, Union, Iterable
 
 from ampel.abstract.AbsProcessController import AbsProcessController
 from ampel.abstract.AbsProcessorUnit import AbsProcessorUnit
@@ -23,17 +23,36 @@ from ampel.model.StrictModel import StrictModel
 from ampel.model.UnitModel import UnitModel
 from ampel.util import concurrent
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
+from ampel.ztf.t0.load.UWAlertLoader import UWAlertLoader
 
 
 class KafkaSource(StrictModel):
     broker: str
     group: str
-    stream: str
+    stream: Literal["ztf_uw_private", "ztf_uw_public"]
+    timeout: int = 3600
 
+    def get(self) -> ZiAlertSupplier:
+        supplier = ZiAlertSupplier(serialization=None)
+        supplier.set_alert_source(
+            UWAlertLoader(
+                partnership=(self.stream == "ztf_uw_private"),
+                bootstrap=self.broker,
+                group_name=self.group,
+                update_archive=None,
+                timeout=self.timeout,
+                ).alerts()
+        )
+        return supplier
 
 class TarballSource(StrictModel):
     filename: str
     serialization: Optional[Literal["avro", "json"]] = "avro"
+
+    def get(self) -> ZiAlertSupplier:
+        supplier = ZiAlertSupplier(serialization=self.serialization)
+        supplier.set_alert_source(TarAlertLoader(self.filename))
+        return supplier
 
 
 class ZTFAlertStreamController(AbsProcessController, AmpelBaseModel):
@@ -122,8 +141,9 @@ class ZTFAlertStreamController(AbsProcessController, AmpelBaseModel):
             log_profile=log_profile,
         )
         if "filename" in source:
-            processor.set_supplier(ZiAlertSupplier(deserialize=source["serialization"]))
-            processor.set_loader(TarAlertLoader(source["filename"]))
+            processor.set_supplier(TarballSource(**source).get())
+        elif "broker" in source:
+            processor.set_supplier(KafkaSource(**source).get())
         else:
             raise TypeError(f"Unhandled source {source}")
 

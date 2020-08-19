@@ -43,6 +43,7 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 				**{"name": process_name, "tier": 3}
 			}))
 
+		kafka_config = first_pass_config['resource']['ampel-ztf/kafka']
 		ret.insert(0,
 			self.craft_t0_process(
 				first_pass_config,
@@ -52,7 +53,8 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 						"priority": "standard",
 						"source": {
 							"stream": self.template,
-							**first_pass_config['resource']['ampel-ztf/kafka']
+							"broker": kafka_config['broker'],
+							"group": f"{kafka_config['group']}-{self.template}",
 						}
 					}
 				},
