@@ -12,18 +12,23 @@ import copy
 from functools import partial
 from typing import Any, Dict, Literal, Optional, Union, Iterable
 
+from pydantic import ValidationError
+
 from ampel.abstract.AbsProcessController import AbsProcessController
 from ampel.abstract.AbsProcessorUnit import AbsProcessorUnit
+from ampel.abstract.AbsSecretProvider import AbsSecretProvider
 from ampel.alert.load.TarAlertLoader import TarAlertLoader
 from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.config.AmpelConfig import AmpelConfig
 from ampel.core.AmpelContext import AmpelContext
 from ampel.model.ProcessModel import ProcessModel
+from ampel.model.Secret import Secret
 from ampel.model.StrictModel import StrictModel
 from ampel.model.UnitModel import UnitModel
 from ampel.util import concurrent
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
 from ampel.ztf.t0.load.UWAlertLoader import UWAlertLoader
+from ampel.ztf.archive.ArchiveDB import ArchiveDB
 
 
 class KafkaSource(StrictModel):
@@ -33,7 +38,7 @@ class KafkaSource(StrictModel):
     timeout: int = 3600
 
     def get(self) -> ZiAlertSupplier:
-        supplier = ZiAlertSupplier(serialization=None)
+        supplier = ZiAlertSupplier(deserialize=None)
         supplier.set_alert_source(
             UWAlertLoader(
                 partnership=(self.stream == "ztf_uw_private"),
@@ -45,24 +50,49 @@ class KafkaSource(StrictModel):
         )
         return supplier
 
+
 class TarballSource(StrictModel):
     filename: str
     serialization: Optional[Literal["avro", "json"]] = "avro"
 
     def get(self) -> ZiAlertSupplier:
-        supplier = ZiAlertSupplier(serialization=self.serialization)
+        supplier = ZiAlertSupplier(deserialize=self.serialization)
         supplier.set_alert_source(TarAlertLoader(self.filename))
+        return supplier
+
+
+class ArchiveSource(StrictModel):
+    uri: str
+    group: Optional[str]
+    stream: Literal["ztf_uw_private", "ztf_uw_public"]
+    auth: Secret[dict] = {"key": "ztf/archive/reader"}
+    chunk: int = 5000
+    jd_min: float = -float('inf')
+    jd_max: float = float('inf')
+
+    def get(self) -> ZiAlertSupplier:
+        supplier = ZiAlertSupplier(deserialize=None)
+        supplier.set_alert_source(
+            ArchiveDB(self.uri, connect_args=self.auth.get())
+            .get_alerts_in_time_range(
+                self.jd_min,
+                self.jd_max,
+                programid=(None if self.stream == "ztf_uw_private" else 1),
+                group_name=self.group,
+                block_size=self.chunk,
+            )
+        )
         return supplier
 
 
 class ZTFAlertStreamController(AbsProcessController, AmpelBaseModel):
 
     priority: str
-    source: Union[KafkaSource, TarballSource]
+    source: Union[KafkaSource, TarballSource, ArchiveSource]
     multiplier: int = 1
 
-    def __init__(self, config, processes, *args, **kwargs):
-        AbsProcessController.__init__(self, config, processes)
+    def __init__(self, config, processes, secrets, *args, **kwargs):
+        AbsProcessController.__init__(self, config, processes, secrets)
         AmpelBaseModel.__init__(self, **kwargs)
 
         # merge process directives
@@ -96,6 +126,7 @@ class ZTFAlertStreamController(AbsProcessController, AmpelBaseModel):
         launch = partial(
             self.run_mp_process,
             config,
+            self.secrets,
             pm.dict(),
             self.source.dict(exclude_defaults=False),
             self.log_profile,
@@ -124,6 +155,7 @@ class ZTFAlertStreamController(AbsProcessController, AmpelBaseModel):
     @concurrent.process
     def run_mp_process(
         config: Dict[str, Any],
+        secrets: Optional[AbsSecretProvider],
         p: Dict[str, Any],
         source: Dict[str, Any],
         log_profile: str = "default",
@@ -131,7 +163,8 @@ class ZTFAlertStreamController(AbsProcessController, AmpelBaseModel):
 
         # Create new context with frozen config
         context = AmpelContext.new(
-            tier=p["tier"], config=AmpelConfig(config, freeze=True)
+            tier=p["tier"], config=AmpelConfig(config, freeze=True),
+            secrets=secrets
         )
 
         processor = context.loader.new_admin_unit(
@@ -140,18 +173,29 @@ class ZTFAlertStreamController(AbsProcessController, AmpelBaseModel):
             sub_type=AbsProcessorUnit,
             log_profile=log_profile,
         )
-        if "filename" in source:
-            processor.set_supplier(TarballSource(**source).get())
-        elif "broker" in source:
-            processor.set_supplier(KafkaSource(**source).get())
-        else:
-            raise TypeError(f"Unhandled source {source}")
+        for Source in KafkaSource, TarballSource, ArchiveSource:
+            try:
+                # use UnitLoader to resolve secrets
+                processor.set_supplier(
+                    Source(
+                        **context.loader.resolve_secrets(
+                            Source,
+                            Source.__annotations__,
+                            Source.__field_defaults__,
+                            source
+                        )
+                    ).get()
+                )
+                break
+            except ValidationError:
+                
+                ...
 
         n_alerts = processor.run()
 
-        if "filename" in source:
+        if Source is TarballSource:
             return False
-        elif "broker" in source:
+        elif Source is KafkaSource:
             return True
         else:
             return n_alerts > 0
