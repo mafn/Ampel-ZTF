@@ -29,6 +29,12 @@ from ampel.util import concurrent
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
 from ampel.ztf.t0.load.UWAlertLoader import UWAlertLoader
 from ampel.ztf.archive.ArchiveDB import ArchiveDB
+from ampel.ztf.t0.ArchiveUpdater import ArchiveUpdater
+
+
+class ArchiveSink(StrictModel):
+    db: str
+    auth: Secret[dict] = {"key": "ztf/archive/writer"}
 
 
 class KafkaSource(StrictModel):
@@ -36,6 +42,7 @@ class KafkaSource(StrictModel):
     group: str
     stream: Literal["ztf_uw_private", "ztf_uw_public"]
     timeout: int = 3600
+    archive: Optional[ArchiveSink]
 
     def get(self) -> ZiAlertSupplier:
         supplier = ZiAlertSupplier(deserialize=None)
@@ -44,7 +51,10 @@ class KafkaSource(StrictModel):
                 partnership=(self.stream == "ztf_uw_private"),
                 bootstrap=self.broker,
                 group_name=self.group,
-                update_archive=None,
+                update_archive=(
+                    ArchiveUpdater(self.archive.db, connect_args=self.archive.auth.get())
+                    if self.archive else None
+                ),
                 timeout=self.timeout,
                 ).alerts()
         )
@@ -62,7 +72,7 @@ class TarballSource(StrictModel):
 
 
 class ArchiveSource(StrictModel):
-    uri: str
+    db: str
     group: Optional[str]
     stream: Literal["ztf_uw_private", "ztf_uw_public"]
     auth: Secret[dict] = {"key": "ztf/archive/reader"}
@@ -73,7 +83,7 @@ class ArchiveSource(StrictModel):
     def get(self) -> ZiAlertSupplier:
         supplier = ZiAlertSupplier(deserialize=None)
         supplier.set_alert_source(
-            ArchiveDB(self.uri, connect_args=self.auth.get())
+            ArchiveDB(self.db, connect_args=self.auth.get())
             .get_alerts_in_time_range(
                 self.jd_min,
                 self.jd_max,
@@ -83,6 +93,13 @@ class ArchiveSource(StrictModel):
             )
         )
         return supplier
+
+
+class AlertSource(StrictModel):
+    source: Union[KafkaSource, TarballSource, ArchiveSource]
+
+    def get(self) -> ZiAlertSupplier:
+        return self.source.get()
 
 
 class ZTFAlertStreamController(AbsProcessController, AmpelBaseModel):
@@ -173,23 +190,16 @@ class ZTFAlertStreamController(AbsProcessController, AmpelBaseModel):
             sub_type=AbsProcessorUnit,
             log_profile=log_profile,
         )
-        for Source in KafkaSource, TarballSource, ArchiveSource:
-            try:
-                # use UnitLoader to resolve secrets
-                processor.set_supplier(
-                    Source(
-                        **context.loader.resolve_secrets(
-                            Source,
-                            Source.__annotations__,
-                            Source.__field_defaults__,
-                            source
-                        )
-                    ).get()
+        processor.set_supplier(
+            AlertSource(
+                **context.loader.resolve_secrets(
+                    AlertSource,
+                    AlertSource.__annotations__,
+                    AlertSource.__field_defaults__,
+                    {'source': source},
                 )
-                break
-            except ValidationError:
-                
-                ...
+            ).get()
+        )
 
         n_alerts = processor.run()
 
