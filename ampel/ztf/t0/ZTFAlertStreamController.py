@@ -51,7 +51,7 @@ class KafkaSource(StrictModel):
                 partnership=(self.stream == "ztf_uw_private"),
                 bootstrap=self.broker,
                 group_name=self.group,
-                update_archive=(
+                archive_updater=(
                     ArchiveUpdater(self.archive.db, connect_args=self.archive.auth.get())
                     if self.archive else None
                 ),

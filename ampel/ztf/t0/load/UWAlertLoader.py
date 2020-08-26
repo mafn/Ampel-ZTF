@@ -24,7 +24,7 @@ class UWAlertLoader:
 		partnership,
 		bootstrap='partnership.alerts.ztf.uw.edu:9092', 
 		group_name=uuid.uuid1(), 
-		update_archive=False,
+		archive_updater=None,
 		statistics_interval=0,
 		timeout=1
 	):
@@ -44,14 +44,7 @@ class UWAlertLoader:
 			topics.append('^ztf_.*_programid2$')
 		config = {'group.id':group_name}
 
-		if update_archive:
-			from ampel.config.AmpelConfig import AmpelConfig
-			from ampel.ztf.t0.ArchiveUpdater import ArchiveUpdater
-			self.archive_updater = ArchiveUpdater(
-				AmpelConfig.get('resource.archive.writer')
-			)
-		else:
-			self.archive_updater = None
+		self.archive_updater = archive_updater
 
 		if statistics_interval > 0:
 			from ampel.config.AmpelConfig import AmpelConfig
