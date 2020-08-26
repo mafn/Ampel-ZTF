@@ -49,11 +49,10 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 				first_pass_config,
 				controller = {
 					"unit": "ZTFAlertStreamController",
-					"config": {
-						"priority": "standard",
+					"config": "%ampel-ztf/alert_source",
+					"override": {
 						"source": {
 							"stream": self.template,
-							"broker": kafka_config['broker'],
 							"group": f"{kafka_config['group']}-{self.template}",
 						}
 					}

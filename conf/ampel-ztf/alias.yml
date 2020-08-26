@@ -1,0 +1,15 @@
+t0:
+  alert_source: ampel-ztf/uw_kafka
+  uw_kafka:
+    priority: standard
+    source:
+      broker: partnership.alerts.ztf.uw.edu:9092
+      group: ampel-v0.7-test
+      archive:
+        db: postgres://localhost:5432/ztfarchive
+  archive_smoketest:
+    priority: standard
+    source:
+      db: postgres://localhost:5432/ztfarchive
+      jd_min: 2459013.5
+      jd_max: 2459013.7083333335
