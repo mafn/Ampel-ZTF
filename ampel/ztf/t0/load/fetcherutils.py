@@ -7,6 +7,7 @@
 # Last Modified Date: 14.11.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
+# type: ignore[import]
 # pylint: disable=bad-builtin
 def archive_topic():
 
