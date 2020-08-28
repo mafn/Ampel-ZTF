@@ -57,10 +57,10 @@ class ZiAlertContentIngester(AbsAlertContentIngester[PhotoAlert, DataPoint]):
 	def __init__(self, **kwargs) -> None:
 
 		if "pp_shaper" not in kwargs:
-			kwargs['pp_shaper'] = ZiT0PhotoPointShaper(logger=None)
+			kwargs['pp_shaper'] = ZiT0PhotoPointShaper()
 
 		if "ul_shaper" not in kwargs:
-			kwargs['ul_shaper'] = ZiT0UpperLimitShaper(logger=None)
+			kwargs['ul_shaper'] = ZiT0UpperLimitShaper()
 
 		super().__init__(**kwargs)
 

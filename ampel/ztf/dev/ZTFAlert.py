@@ -17,9 +17,7 @@ from ampel.alert.PhotoAlert import PhotoAlert
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
 from ampel.ztf.ingest.ZiT0PhotoPointShaper import ZiT0PhotoPointShaper
 from ampel.ztf.ingest.ZiT0UpperLimitShaper import ZiT0UpperLimitShaper
-from ampel.log.AmpelLogger import AmpelLogger
 
-logger = AmpelLogger.get_logger()
 
 class ZTFAlert:
 
@@ -52,7 +50,7 @@ class ZTFAlert:
 		pal = cls.to_photo_alert(file_path)
 
 		# Build upper limit ids (done by ingester for now)
-		uls = ZiT0UpperLimitShaper(logger).ampelize(
+		uls = ZiT0UpperLimitShaper().ampelize(
 			[
 				{
 					**el,
@@ -61,7 +59,7 @@ class ZTFAlert:
 				for el in (pal.uls if pal.uls else [])
 			]
 		)
-		pps = ZiT0PhotoPointShaper(logger).ampelize([dict(el) for el in pal.pps])
+		pps = ZiT0PhotoPointShaper().ampelize([dict(el) for el in pal.pps])
 		for collection in uls, pps:
 			for pp in collection:
 				pp['stock'] = pal.stock_id
