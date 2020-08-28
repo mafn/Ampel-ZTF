@@ -10,7 +10,7 @@
 import asyncio
 import copy
 from functools import partial
-from typing import Any, Dict, Literal, Optional, Union, Iterable
+from typing import Any, Dict, Literal, Optional, Union, Iterable, Set
 
 from pydantic import ValidationError
 
@@ -34,7 +34,7 @@ from ampel.ztf.t0.ArchiveUpdater import ArchiveUpdater
 
 class ArchiveSink(StrictModel):
     db: str
-    auth: Secret[dict] = {"key": "ztf/archive/writer"}
+    auth: Secret[dict] = {"key": "ztf/archive/writer"} # type: ignore[assignment]
 
 
 class KafkaSource(StrictModel):
@@ -75,7 +75,7 @@ class ArchiveSource(StrictModel):
     db: str
     group: Optional[str]
     stream: Literal["ztf_uw_private", "ztf_uw_public"]
-    auth: Secret[dict] = {"key": "ztf/archive/reader"}
+    auth: Secret[dict] = {"key": "ztf/archive/reader"} # type: ignore[assignment]
     chunk: int = 5000
     jd_min: float = -float('inf')
     jd_max: float = float('inf')
@@ -149,7 +149,7 @@ class ZTFAlertStreamController(AbsProcessController, AmpelBaseModel):
             self.log_profile,
         )
         pending = {launch() for _ in range(self.multiplier)}
-        done = set()
+        done: Set[asyncio.Future] = set()
         try:
             while True:
                 try:
@@ -178,6 +178,8 @@ class ZTFAlertStreamController(AbsProcessController, AmpelBaseModel):
         log_profile: str = "default",
     ) -> Any:
 
+        from ampel.alert.AlertProcessor import AlertProcessor
+
         # Create new context with frozen config
         context = AmpelContext.new(
             tier=p["tier"], config=AmpelConfig(config, freeze=True),
@@ -187,25 +189,24 @@ class ZTFAlertStreamController(AbsProcessController, AmpelBaseModel):
         processor = context.loader.new_admin_unit(
             unit_model=UnitModel(**p["processor"]),
             context=context,
-            sub_type=AbsProcessorUnit,
+            sub_type=AlertProcessor,
             log_profile=log_profile,
         )
-        processor.set_supplier(
-            AlertSource(
-                **context.loader.resolve_secrets(
-                    AlertSource,
-                    AlertSource.__annotations__,
-                    AlertSource.__field_defaults__,
-                    {'source': source},
-                )
-            ).get()
+        factory = AlertSource(
+            **context.loader.resolve_secrets(
+                AlertSource,
+                AlertSource.__annotations__,
+                AlertSource.__field_defaults__,
+                {'source': source},
+            )
         )
+        processor.set_supplier(factory.get())
 
         n_alerts = processor.run()
 
-        if Source is TarballSource:
+        if isinstance(factory.source, TarballSource):
             return False
-        elif Source is KafkaSource:
+        elif isinstance(factory.source, KafkaSource):
             return True
         else:
             return n_alerts > 0
