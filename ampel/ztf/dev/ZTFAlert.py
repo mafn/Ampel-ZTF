@@ -8,13 +8,18 @@
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 import fastavro, os, time
-from typing import Dict, Optional, List
+from typing import Any, Dict, Optional, List
 from ampel.view.LightCurve import LightCurve
 from ampel.view.TransientView import TransientView
 from ampel.content.DataPoint import DataPoint
+from ampel.content.T2Record import T2Record
 from ampel.alert.PhotoAlert import PhotoAlert
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
+from ampel.ztf.ingest.ZiT0PhotoPointShaper import ZiT0PhotoPointShaper
+from ampel.ztf.ingest.ZiT0UpperLimitShaper import ZiT0UpperLimitShaper
+from ampel.log.AmpelLogger import AmpelLogger
 
+logger = AmpelLogger.get_logger()
 
 class ZTFAlert:
 
@@ -31,6 +36,12 @@ class ZTFAlert:
 
 		return next(als)
 
+	@staticmethod
+	def _upper_limit_id(el: Dict[str, Any]) -> int:
+		return int("%i%s%i" % (
+		(2457754.5 - el['jd']) * 1000000,
+		str(el['pid'])[8:10],
+		round(abs(el['diffmaglim']) * 1000)))
 
 	@classmethod
 	def to_lightcurve(cls, file_path: Optional[str] = None) -> LightCurve:
@@ -39,38 +50,26 @@ class ZTFAlert:
 		"""
 
 		pal = cls.to_photo_alert(file_path)
-		photo_shaper = ZIPhotoDataShaper()
 
 		# Build upper limit ids (done by ingester for now)
-		if pal.uls:
-			for el in pal.uls:
-				el['_id'] = int("%i%s%i" % (
-					(2457754.5 - el['jd']) * 1000000,
-					str(el['pid'])[8:10],
-					round(abs(el['diffmaglim']) * 1000)
-				))
-
-		uls = photo_shaper.ampelize(
-			shaped_content['uls'],
-			set(el['_id'] for el in shaped_content['uls']),
-			id_field_name='_id'
+		uls = ZiT0UpperLimitShaper(logger).ampelize(
+			[
+				{
+					**el,
+					**{'_id': cls._upper_limit_id(el)}
+				}
+				for el in (pal.uls if pal.uls else [])
+			]
 		)
-
-		for ul in uls:
-			ul['stock'] = shaped_content['stockId']
-
-		pps = photo_shaper.ampelize(
-			shaped_content['pps'],
-			set(el['candid'] for el in shaped_content['pps'])
-		)
-
-		for pp in pps:
-			pp['stock'] = shaped_content['stockId']
+		pps = ZiT0PhotoPointShaper(logger).ampelize([dict(el) for el in pal.pps])
+		for collection in uls, pps:
+			for pp in collection:
+				pp['stock'] = pal.stock_id
 
 		return LightCurve(
-			os.urandom(16), # CompoundI
-			tuple([DataPoint(**el) for el in pps]), # Photopoints
-			tuple([DataPoint(**el) for el in uls]), # Upperlimit
+			os.urandom(16), # CompoundId
+			tuple(pps), # Photopoints
+			tuple(uls), # Upperlimit
 			0, # tier
 			time.time() # added
 		)
@@ -81,25 +80,29 @@ class ZTFAlert:
 	def to_transientview(cls,
 		file_path: Optional[str] = None,
 		content: Optional[Dict] = None,
-		t2_records: Optional[List[Dict]] = None
+		t2_records: Optional[List[T2Record]] = None
 	) -> TransientView:
 		"""
 		Note: incomplete/meaningless//quick'n'dirty method, to improve if need be.
 		Creates and returns an instance of ampel.view.LightCurve using a ZTF IPAC alert.
 		"""
 
-		shaped_content = cls._first_shape(file_path, content)
-		lc = cls.to_lightcurve(file_path, content)
+		alert = cls.to_photo_alert(file_path)
+		lc = cls.to_lightcurve(file_path)
+
+		datapoints: List[DataPoint] = []
+		if lc.photopoints:
+			datapoints += list(lc.photopoints)
+		if lc.upperlimits:
+			datapoints += list(lc.upperlimits)
 
 		return TransientView(
-			stock_id = shaped_content['stockId'],
-			tran_names = (shaped_content['ZTFName'],), # tran_names
-			tags = None,
-			journal = None,
-			datapoints = lc.photopoints + lc.upperlimits,
-			compounds = None,
-			t2records = t2_records,
-			channel = None
+			id = alert.stock_id,
+			t0 = datapoints,
+			t2 = t2_records,
+			extra = {
+				'names': [alert.name]
+			}
 		)
 
 
