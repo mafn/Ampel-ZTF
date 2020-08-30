@@ -2,6 +2,59 @@
 from os.path import abspath, join, dirname
 import pytest
 
+from os import environ
+
+@pytest.fixture(scope="session")
+def archive():
+	if 'ARCHIVE_HOSTNAME' in environ and 'ARCHIVE_PORT' in environ:
+		yield 'postgresql://ampel@{}:{}/ztfarchive'.format(environ['ARCHIVE_HOSTNAME'], environ['ARCHIVE_PORT'])
+	else:
+		pytest.skip("Requires a Postgres database")
+
+@pytest.fixture
+def empty_archive(archive):
+	"""
+	Yield archive database, dropping all rows when finished
+	"""
+	from sqlalchemy import select, create_engine, MetaData
+
+	engine = create_engine(archive)
+	meta = MetaData()
+	meta.reflect(bind=engine)
+	try:
+		with engine.connect() as connection:
+			for name, table in meta.tables.items():
+				if name != 'versions':
+					connection.execute(table.delete())
+		yield archive
+	finally:
+		with engine.connect() as connection:
+			for name, table in meta.tables.items():
+				if name != 'versions':
+					connection.execute(table.delete())
+
+
+@pytest.fixture(scope="session")
+def kafka():
+	if 'KAFKA_HOSTNAME' in environ and 'KAFKA_PORT' in environ:
+		yield '{}:{}'.format(environ['KAFKA_HOSTNAME'], environ['KAFKA_PORT'])
+	else:
+		pytest.skip("Requires a Kafka instance")
+
+@pytest.fixture(scope="session")
+def kafka_stream(kafka, alert_tarball):
+	import itertools
+	from confluent_kafka import Producer
+	from ampel.alert.load.TarballWalker import TarballWalker
+	atat = TarballWalker(alert_tarball)
+	print(kafka)
+	producer = Producer({'bootstrap.servers': kafka})
+	for i,fileobj in enumerate(itertools.islice(atat.get_files(), 0, 1000, 1)):
+		producer.produce('ztf_20180819_programid1', fileobj.read())
+		print(f'sent {i}')
+	producer.flush()
+	yield kafka
+
 @pytest.fixture(scope='session')
 def alert_tarball():
 	return join(dirname(__file__), 'test-data', 'ztf_public_20180819_mod1000.tar.gz')
@@ -10,7 +63,7 @@ def alert_tarball():
 def zuds_alert_generator(request):
 	import itertools
 	import fastavro
-	from ampel.pipeline.t0.load.TarballWalker import TarballWalker
+	from ampel.alert.load.TarballWalker import TarballWalker
 	def alerts(with_schema=False):
 		candids = set()
 		try:
@@ -34,7 +87,7 @@ def zuds_alert_generator(request):
 def alert_generator(alert_tarball):
 	import itertools
 	import fastavro
-	from ampel.t0.load.TarballWalker import TarballWalker
+	from ampel.alert.load.TarballWalker import TarballWalker
 	def alerts(with_schema=False):
 		atat = TarballWalker(alert_tarball)
 		for fileobj in itertools.islice(atat.get_files(), 0, 1000, 1):
@@ -48,10 +101,10 @@ def alert_generator(alert_tarball):
 
 @pytest.fixture(scope='session')
 def lightcurve_generator(alert_generator):
-	from ampel.ztf.utils.ZIAlertUtils import ZIAlertUtils
+	from ampel.ztf.dev.ZTFAlert import ZTFAlert
 	def lightcurves():
 		for alert in alert_generator():
-			lightcurve = ZIAlertUtils.to_lightcurve(content=alert)
+			lightcurve = ZTFAlert.to_lightcurve(content=alert)
 			assert isinstance(lightcurve.get_photopoints(), tuple)
 			yield lightcurve
 
