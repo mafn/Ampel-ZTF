@@ -8,7 +8,7 @@
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from typing import overload, List, Union, Iterable
-from ampel.type import StrictIterable
+from ampel.type import StrictIterable, StockId
 
 # Optimization variables
 alphabet = "abcdefghijklmnopqrstuvwxyz"
@@ -103,20 +103,22 @@ def to_ampel_id(ztf_id: Union[str, StrictIterable[str]]) -> Union[int, List[int]
 
 
 @overload
-def to_ztf_id(ampel_id: int) -> str:
+def to_ztf_id(ampel_id: StockId) -> str:
 	...
 
 @overload
-def to_ztf_id(ampel_id: Iterable[int]) -> List[str]:
+def to_ztf_id(ampel_id: Iterable[StockId]) -> List[str]:
 	...
 
-def to_ztf_id(ampel_id: Union[int, Iterable[int]]) -> Union[str, List[str]]:
+def to_ztf_id(ampel_id: Union[StockId, Iterable[StockId]]) -> Union[str, List[str]]:
 	"""
 	%timeit to_ztf_id(274878346346)
 	1.54 µs ± 77.9 ns per loop (mean ± std. dev. of 7 runs, 1000000 loops each)
 	"""
 	# Handle sequences
-	if isinstance(ampel_id, int):
+	if isinstance(ampel_id, Iterable) and not isinstance(ampel_id, str):
+		[to_ztf_id(l) for l in ampel_id]
+	elif isinstance(ampel_id, int):
 
 		# int('00001111', 2) bitmask equals 15
 		year = dec_ztf_years[ampel_id & 15]
@@ -133,5 +135,5 @@ def to_ztf_id(ampel_id: Union[int, Iterable[int]]) -> Union[str, List[str]]:
 				break
 
 		return f"ZTF{year}{''.join(l)}"
-
-	return [to_ztf_id(l) for l in ampel_id]
+	else:
+		raise TypeError(f"Ampel ids for ZTF transients should be ints (got {type(ampel_id)} {ampel_id})")
