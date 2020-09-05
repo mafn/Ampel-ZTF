@@ -88,7 +88,7 @@ class ArchiveSource(StrictModel):
                 self.jd_min,
                 self.jd_max,
                 programid=(None if self.stream == "ztf_uw_private" else 1),
-                group_name=self.group,
+                group_name=f"{self.group}-{self.stream}" if self.group else None,
                 block_size=self.chunk,
             )
         )
