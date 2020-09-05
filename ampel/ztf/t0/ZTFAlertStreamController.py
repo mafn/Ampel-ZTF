@@ -196,6 +196,7 @@ class ZTFAlertStreamController(AbsProcessController):
         )
         factory = AlertSource(
             **context.loader.resolve_secrets(
+                context.loader.secrets,
                 AlertSource,
                 AlertSource.__annotations__,
                 AlertSource.__field_defaults__,
