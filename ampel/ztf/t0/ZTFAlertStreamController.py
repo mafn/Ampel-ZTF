@@ -10,7 +10,7 @@
 import asyncio
 import copy
 from functools import partial
-from typing import Any, Dict, Literal, Optional, Union, Iterable, Set
+from typing import Any, Dict, Literal, Optional, Union, Iterable, Set, Sequence
 
 from pydantic import ValidationError
 
@@ -102,31 +102,33 @@ class AlertSource(StrictModel):
         return self.source.get()
 
 
-class ZTFAlertStreamController(AbsProcessController, AmpelBaseModel):
+class ZTFAlertStreamController(AbsProcessController):
 
     priority: str
     source: Union[KafkaSource, TarballSource, ArchiveSource]
     multiplier: int = 1
 
-    def __init__(self, config, processes, secrets, *args, **kwargs):
-        AbsProcessController.__init__(self, config, processes, secrets)
-        AmpelBaseModel.__init__(self, **kwargs)
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
 
         # merge process directives
-        assert self.proc_models
-        process = copy.deepcopy(self.proc_models[0])
+        assert self.processes
+        process = copy.deepcopy(self.processes[0])
+        assert isinstance(process.processor.config, dict)
+        
         # FIXME: check that trailing processes have compatible AlertProcessor
         # configs
-        for pm in self.proc_models[1:]:
-            process.directives += pm.directives
-        self.proc_models = [process]
+        for pm in self.processes[1:]:
+            assert isinstance(pm.processor.config, dict)
+            process.processor.config["directives"] += pm.processor.config["directives"]
+        self.processes = [process]
 
-        assert len(self.proc_models) == 1, "Can't handle multiple processes"
+        assert len(self.processes) == 1, "Can't handle multiple processes"
 
     async def run(self) -> None:
         tasks = {
             asyncio.create_task(self.run_alertprocessor(pm))
-            for pm in self.proc_models
+            for pm in self.processes
         }
         for results in await asyncio.gather(*tasks, return_exceptions=True):
             if isinstance(results, BaseException):
@@ -135,7 +137,7 @@ class ZTFAlertStreamController(AbsProcessController, AmpelBaseModel):
                 if isinstance(r, BaseException):
                     raise r
 
-    async def run_alertprocessor(self, pm: ProcessModel):
+    async def run_alertprocessor(self, pm: ProcessModel) -> Sequence[bool]:
         """
         Keep `self.multiplier` instances of this process alive until cancelled
         """
@@ -176,7 +178,7 @@ class ZTFAlertStreamController(AbsProcessController, AmpelBaseModel):
         p: Dict[str, Any],
         source: Dict[str, Any],
         log_profile: str = "default",
-    ) -> Any:
+    ) -> bool:
 
         from ampel.alert.AlertProcessor import AlertProcessor
 
