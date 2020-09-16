@@ -47,7 +47,8 @@ class PhotoAlertPlotter:
 		"""
 
 		# TODO: check that alert is a DevPhotoAlert
-
+		if not which in alert.data['cutouts']:
+			return None
 		stamp = alert.data['cutouts'][which]
 		with gzip.open(io.BytesIO(stamp), 'rb') as f:
 			raw = fits.open(io.BytesIO(f.read()))[0].data
@@ -226,7 +227,8 @@ class PhotoAlertPlotter:
 		ax.legend(loc="best")
 		ax.set_xlabel("Date", fontsize="large")
 		ax.set_ylabel("mag (magpsf)", fontsize="large")
-		ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%y'))
+		ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+		ax.xaxis.set_tick_params(rotation=45)
 
 		return self.exit(alert, "lc_", ax_given, ax, **kwargs)
 
@@ -240,14 +242,17 @@ class PhotoAlertPlotter:
 			ax_given = False
 
 		img_data = PhotoAlertPlotter.get_cutout_numeric(alert, which, scaler)
-		mask = np.isfinite(img_data)
-		im = ax.imshow(
-			img_data,
-			norm=Normalize(*np.percentile(img_data[mask], [0.5, 99.5])),
-			aspect="auto"
-			)
-		if cb:
-			plt.colorbar(im, ax=ax)
+		if img_data is not None:
+			mask = np.isfinite(img_data)
+			im = ax.imshow(
+				img_data,
+				norm=Normalize(*np.percentile(img_data[mask], [0.5, 99.5])),
+				aspect="auto"
+				)
+			if cb:
+				plt.colorbar(im, ax=ax)
+		else:
+			ax.text(0.5,0.5,'no data', va='center', ha='center', transform=ax.transAxes)
 		ax.set_title(which)
 		ax.set_yticks([])
 		ax.set_xticks([])
