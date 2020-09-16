@@ -128,8 +128,9 @@ class DevAlertProcessor:
 
 		if self.include_cutouts:
 			alert.data['cutouts'] = {
-				k: alert_content.get(k, {}).get('stampData')
+				k: alert_content.get(k).get('stampData')
 				for k in ('cutoutScience', 'cutoutTemplate', 'cutoutDifference')
+				if alert_content.get(k)
 			}
 
 		return alert
@@ -138,7 +139,7 @@ class DevAlertProcessor:
 	def _filter(self, alert):
 
 		if not self._alert_filter.apply(alert):
-			self._logger.info(
+			self._logger.debug(
 				"- Rejecting %i (objectId: %s)" %
 				(alert.pps[0]['candid'], alert.stock_id)
 			)
