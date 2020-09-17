@@ -20,6 +20,15 @@ setup(
 			'*.yml', '**/*.yml', '**/**/*.yml'
 		]
 	},
+	install_requires = [
+		"ampel-core",
+		"ampel-interface",
+		"ampel-alerts",
+		"ampel-photometry",
+		"confluent-kafka",
+		"psycopg2",
+		"sqlalchemy",
+	]
 	entry_points = {
 		'console_scripts': {
 			'ampel-ztf-alertprocessor = ampel.ztf.t0.run:run_alertprocessor',
