@@ -6,6 +6,7 @@
 			"ampel.ztf.ingest.ZiAlertContentIngester",
 			"ampel.ztf.alert.ZTFGeneralActiveAlertRegister",
 			"ampel.ztf.alert.ZTFGeneralAlertRegister",
+			"ampel.ztf.t3.complement.ZTFCutoutImages",
 			"ampel.ztf.t3.T3LegacyExtJournalAppender"
 		],
 		"base": ["ampel.ztf.ingest.ZiT1Combiner"],
