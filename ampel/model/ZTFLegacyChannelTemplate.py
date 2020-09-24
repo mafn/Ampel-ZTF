@@ -13,6 +13,17 @@ from ampel.config.builder.FirstPassConfig import FirstPassConfig
 from ampel.model.template.AbsLegacyChannelTemplate import AbsLegacyChannelTemplate
 
 class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
+	"""
+	Channel template for ZTF. Each of the named variants consumes adifferent
+	alert streams from IPAC, and produce stocks with a different set of tags:
+	
+	============== ============== ========================
+	Template       ZTF programids Tags
+	============== ============== ========================
+	ztf_uw_private 1, 2, 3_public ZTF, ZTF_PUB, ZTF_COLLAB
+	ztf_uw_public  1, 3_public    ZTF, ZTF_PUB
+	============== ============== ========================
+	"""
 
 	# static variables (ClassVar type) are ignored by pydantic
 	_access: ClassVar = {

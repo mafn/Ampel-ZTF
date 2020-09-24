@@ -14,7 +14,7 @@ from ampel.model.template.PeriodicSummaryT3 import PeriodicSummaryT3, LoaderDire
 
 class ZTFPeriodicSummaryT3(PeriodicSummaryT3):
     """
-    ZTF-specialized periodic summary process
+    Periodic summary process with sensible defaults for ZTF.
     """
 
     tag: Dict = {"with": "ZTF", "without": "HAS_ERROR"}
