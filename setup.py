@@ -26,7 +26,7 @@ setup(
 		"ampel-alerts",
 		"ampel-photometry",
 		"confluent-kafka",
-		"psycopg2",
+		"psycopg2-binary",
 		"sqlalchemy",
 	],
 	entry_points = {
