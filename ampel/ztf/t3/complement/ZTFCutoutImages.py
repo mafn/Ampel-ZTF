@@ -6,7 +6,7 @@
 # Last Modified Date: 18.09.2020
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
-from typing import Iterable
+from typing import Iterable, Literal
 
 from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.core.AmpelBuffer import AmpelBuffer
@@ -18,10 +18,12 @@ from ampel.ztf.archive.ArchiveDB import ArchiveDB
 
 class ZTFCutoutImages(AbsT3DataAppender):
     """
-    Add cutout images from archive database to the most recent detection
+    Add cutout images from ZTF archive database
     """
 
     auth: Secret[dict] = {"key": "ztf/archive/reader"}  # type: ignore[assignment]
+    #: Which detection to retrieve cutouts for
+    eligible: Literal["first", "last", "brightest", "all"] = "last"
 
     def __init__(self, context: AmpelContext, **kwargs) -> None:
 
@@ -40,8 +42,19 @@ class ZTFCutoutImages(AbsT3DataAppender):
                 [pp for pp in photopoints if pp["_id"] > 0],
                 key=lambda pp: pp["body"]["jd"],
             )
+            if not pps:
+                return
             if record.get("extra") is None:
                 record["extra"] = {}
             assert "cutouts" not in record["extra"]
-            candid = pps[-1]["_id"]
-            record["extra"]["cutouts"] = {candid: self.archive.get_cutout(candid)}
+            if self.eligible == "last":
+                candids = [pps[-1]["_id"]]
+            elif self.eligible == "first":
+                candids = [pps[0]["_id"]]
+            elif self.eligible == "brightest":
+                candids = [min(pps, key=lambda pp: pp["body"]["magpsf"])["_id"]]
+            elif self.eligible == "all":
+                candids = [pp["_id"] for pp in pps]
+            record["extra"]["cutouts"] = {
+                candid: self.archive.get_cutout(candid) for candid in candids
+            }
