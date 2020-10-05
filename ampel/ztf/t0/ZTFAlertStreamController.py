@@ -137,6 +137,12 @@ class ZTFAlertStreamController(AbsProcessController):
                 if isinstance(r, BaseException):
                     raise r
 
+    def stop(self, name: Optional[str]=None) -> None:
+        """Stop scheduling new processes."""
+        assert name is None
+        for pm in self.processes:
+            pm.active = False
+
     async def run_alertprocessor(self, pm: ProcessModel) -> Sequence[bool]:
         """
         Keep `self.multiplier` instances of this process alive until cancelled
@@ -153,7 +159,7 @@ class ZTFAlertStreamController(AbsProcessController):
         pending = {launch() for _ in range(self.multiplier)}
         done: Set[asyncio.Future] = set()
         try:
-            while True:
+            while pm.active:
                 try:
                     done, pending = await asyncio.wait(
                         pending, return_when="FIRST_COMPLETED"
