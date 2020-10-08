@@ -27,8 +27,9 @@ class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
     def add(
         self, tviews: Sequence["TransientView"]
     ) -> Optional[Dict[StockId, JournalExtra]]:
+        """Pass each view to :meth:`post_candidate`."""
         for view in tviews:
-            self.post_source(view)
+            self.post_candidate(view)
         return None
 
     def done(self) -> None:

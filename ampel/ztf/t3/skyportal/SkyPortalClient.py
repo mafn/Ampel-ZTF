@@ -22,6 +22,7 @@ from typing import (
     TYPE_CHECKING,
     Union,
 )
+from functools import lru_cache
 
 import numpy as np
 import requests
@@ -90,7 +91,9 @@ CUTOUT_TYPES = {"science": "new", "template": "ref", "difference": "sub"}
 
 class SkyPortalClient(AmpelBaseModel):
 
+    #: Base URL of SkyPortal server
     base_url: str = "http://localhost:9000"
+    #: API token
     token: Secret[str]
 
     def __init__(self, **kwargs):
@@ -121,6 +124,13 @@ class SkyPortalClient(AmpelBaseModel):
             return response["data"][0]["id"]
         else:
             return response["data"]["id"]
+
+    @lru_cache(1024)
+    def get_by_name(self, endpoint, name):
+        try:
+            return next(d['id'] for d in self.get(endpoint, params={'name': name})['data'] if d['name']==name)
+        except StopIteration:
+            raise KeyError(f"No {endpoint} named {name}")
 
     def get(self, endpoint, **kwargs):
         return self.request("GET", endpoint, **kwargs)
@@ -195,11 +205,6 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             kwargs["logger"] = AmpelLogger.get_logger()
         super().__init__(**kwargs)
 
-        self.instrument_id = int(
-            self.get("instrument", params={"name": "ZTF"}, raise_exc=True)["data"][0][
-                "telescope_id"
-            ]
-        )
         self.groups = {
             doc["name"]: doc["id"]
             for doc in self.get("groups", raise_exc=True)["data"][
@@ -240,10 +245,28 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 content[k].append(v)
         return dict(content)
 
-    def post_source(self, view: "TransientView", groups: Optional[List[str]] = None):
+    def post_candidate(self, view: "TransientView", filters: Optional[List[str]] = None):
+        """
+        Perform the following actions:
+          * Post candidate to filters specified by ``filters``. ``ra``/``dec``
+            are taken from the most recent detection; ``drb`` from the maximum
+            over detections.
+          * Post photometry using the ``candid`` of the latest detection.
+          * Post a PNG-encoded cutout of the last detection image.
+          * Post each T2 result as comment with a JSON-encoded attachment. If
+            a comment corresponding to the T2 unit already exists, overwrite it
+            with the most recent result.
+        
+        :param view:
+            Data to post
+        :param filters:
+            Names of the filter to associate with the candidate. If None, use
+            filters named AMPEL.{channel} for each ``channel`` the transient
+            belongs to.
+        """
 
-        group_ids = (
-            [self.groups[k] for k in groups] if groups else list(self.groups.values())
+        filter_ids = (
+            [self.get_by_name("filters", name) for name in (filters or [f"AMPEL.{channel}" for channel in view.stock["channel"]])]
         )
 
         assert view.stock and view.stock["name"] is not None
@@ -270,18 +293,18 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             "origin": "Ampel",
             "score": max(drb) if (drb := lc.get_values("drb")) is not None else None,
             "detect_photometry_count": len(pps),
-            "transient": True,  # sure, why not
+            "transient": True,  # sure, why not,
         }
 
-        if (response := self.get(f"sources/{name}", raise_exc=False))[
+        if (response := self.get(f"candidates/{name}", raise_exc=False))[
             "status"
         ] == "success":
             source_id = response["data"]["id"]
             # update if required
             if diff := {k: doc[k] for k in doc if doc[k] != response["data"][k]}:
-                self.request("PUT", f"sources/{name}", json=diff)
+                self.request("PUT", f"candidates/{name}", json={"filter_ids": filter_ids, **diff})
         else:
-            source_id = self.post("sources", json={"group_ids": group_ids, **doc})[
+            source_id = self.post("candidates", json={"filter_ids": filter_ids, **diff})[
                 "data"
             ]["id"]
 
