@@ -114,20 +114,30 @@ class ZTFAlertStreamController(AbsProcessController):
         # merge process directives
         assert self.processes
         process = copy.deepcopy(self.processes[0])
+
+        assert process.processor.unit == "AlertProcessor", "Lead process is an AlertProcessor"
         assert isinstance(process.processor.config, dict)
-        
-        # FIXME: check that trailing processes have compatible AlertProcessor
-        # configs
+
+        def strip(config):
+            """Remove AlertProcessor config keys that are either"""
+            return {k: v for k, v in config.items() if k not in {"process_name", "publish_stats", "directives"}}
+
         for pm in self.processes[1:]:
+            # ensure that trailing AlertProcessor configs are compatible
+            assert process.controller == pm.controller
             assert isinstance(pm.processor.config, dict)
+            assert process.processor.unit == pm.processor.unit, "All processes are AlertProcessors"
+            assert strip(process.processor.config) == strip(pm.processor.config), "AlertProcessor configs are compatible"
             process.processor.config["directives"] += pm.processor.config["directives"]
         self.processes = [process]
 
         assert len(self.processes) == 1, "Can't handle multiple processes"
+        self._scale_event = None
 
     async def run(self) -> None:
+        self._scale_event = asyncio.Event()
         tasks = {
-            asyncio.create_task(self.run_alertprocessor(pm))
+            asyncio.create_task(self.run_alertprocessor(pm, self._scale_event))
             for pm in self.processes
         }
         for results in await asyncio.gather(*tasks, return_exceptions=True):
@@ -143,7 +153,14 @@ class ZTFAlertStreamController(AbsProcessController):
         for pm in self.processes:
             pm.active = False
 
-    async def run_alertprocessor(self, pm: ProcessModel) -> Sequence[bool]:
+    def scale(self, name: Optional[str]=None, multiplier: int=1):
+        if multiplier < 1:
+            raise ValueError("multiplier must be nonnegative")
+        assert self._scale_event
+        self.processes[0].multiplier = multiplier
+        self._scale_event.set()
+
+    async def run_alertprocessor(self, pm: ProcessModel, scale_event: asyncio.Event) -> Sequence[bool]:
         """
         Keep `self.multiplier` instances of this process alive until cancelled
         """
@@ -156,7 +173,9 @@ class ZTFAlertStreamController(AbsProcessController):
             self.source.dict(exclude_defaults=False),
             self.log_profile,
         )
+        assert pm.active
         pending = {launch() for _ in range(self.multiplier)}
+        pending.add(asyncio.create_task(scale_event.wait(), name="scale"))
         done: Set[asyncio.Future] = set()
         try:
             while pm.active:
@@ -165,15 +184,31 @@ class ZTFAlertStreamController(AbsProcessController):
                         pending, return_when="FIRST_COMPLETED"
                     )
                     for task in done:
-                        # start a fresh replica for each processor that
-                        # returned True
-                        if task.result() and len(pending) < self.multiplier:
-                            pending.add(launch())
+                        if task.get_name() == "scale":
+                            if scale_event.is_set():
+                                print(f"scale {len(pending)} -> {pm.multiplier}")
+                                # scale down
+                                to_kill = {pending.pop() for _ in range(len(pending)-pm.multiplier)}
+                                for t in to_kill:
+                                    t.cancel()
+                                await asyncio.gather(*to_kill, return_exceptions=True)
+                                # scale up
+                                for _ in range(pm.multiplier-len(pending)):
+                                    pending.add(launch())
+                                scale_event.clear()
+                            pending.add(asyncio.create_task(scale_event.wait(), name="scale"))
+                        else:
+                            # start a fresh replica for each processor that
+                            # returned True
+                            if task.result() and len(pending) < pm.multiplier:
+                                pending.add(launch())
                 except:
                     for t in pending:
                         t.cancel()
                     break
         finally:
+            # force scale future to come due
+            scale_event.set()
             return await asyncio.gather(*done.union(pending), return_exceptions=True)
 
     @staticmethod
