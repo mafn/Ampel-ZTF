@@ -42,12 +42,17 @@ class ZTFAlert:
 		round(abs(el['diffmaglim']) * 1000)))
 
 	@classmethod
-	def to_lightcurve(cls, file_path: Optional[str] = None) -> LightCurve:
+	def to_lightcurve(cls, file_path: Optional[str] = None, pal: Optional[PhotoAlert] = None) -> LightCurve:
 		"""
 		Creates and returns an instance of ampel.view.LightCurve using a ZTF IPAC alert.
+		This is either created from an already existing ampel.alert.PhotoAlert or
+		read through a ampel.ztf.alert.ZiAlertSupplier (default). 
+		In the latter case a path to a stored avro file can be given.
 		"""
 
-		pal = cls.to_photo_alert(file_path)
+		if pal is None:
+			pal = cls.to_photo_alert(file_path)
+
 
 		# Build upper limit ids (done by ingester for now)
 		uls = ZiT0UpperLimitShaper().ampelize(
@@ -77,6 +82,7 @@ class ZTFAlert:
 	@classmethod
 	def to_transientview(cls,
 		file_path: Optional[str] = None,
+		alert: Optional[PhotoAlert] = None,
 		content: Optional[Dict] = None,
 		t2_records: Optional[List[T2Record]] = None
 	) -> TransientView:
@@ -85,8 +91,9 @@ class ZTFAlert:
 		Creates and returns an instance of ampel.view.LightCurve using a ZTF IPAC alert.
 		"""
 
-		alert = cls.to_photo_alert(file_path)
-		lc = cls.to_lightcurve(file_path)
+		if alert is None:
+			alert = cls.to_photo_alert(file_path)
+		lc = cls.to_lightcurve(pal=alert)
 
 		datapoints: List[DataPoint] = []
 		if lc.photopoints:

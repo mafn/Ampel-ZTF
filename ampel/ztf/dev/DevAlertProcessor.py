@@ -59,10 +59,10 @@ class DevAlertProcessor:
 		return self._rejected_alerts
 
 
-	def process_tar(self, tar_file_path, tar_mode="r:gz", iter_max=5000):
+	def process_tar(self, tar_file_path, tar_mode="r:gz", iter_max=5000, iter_offset=0):
 		""" For each alert: load, filter, ingest """
 		self.tar_file = tarfile.open(tar_file_path, mode=tar_mode)
-		return self._run(self.tar_file, self._unpack, iter_max=iter_max)
+		return self._run(self.tar_file, self._unpack, iter_max=iter_max, iter_offset=iter_offset	)
 
 
 	def process_loaded_alerts(self, list_of_alerts, iter_max=5000):
@@ -70,7 +70,7 @@ class DevAlertProcessor:
 		return self._run(list_of_alerts, lambda x: x, iter_max=iter_max)
 
 
-	def _run(self, iterable, load, iter_max=5000):
+	def _run(self, iterable, load, iter_max=5000, iter_offset=0):
 		""" For each alert: load, filter, ingest  """
 
 		self._accepted_alerts = []
@@ -81,6 +81,9 @@ class DevAlertProcessor:
 
 		# Iterate over alerts
 		for content in iterable:
+			if iter_count<iter_offset:
+				iter_count += 1
+				continue
 
 			alert = load(content)
 			if alert is None:
@@ -90,17 +93,17 @@ class DevAlertProcessor:
 			self._filter(alert)
 
 			iter_count += 1
-			if iter_count == iter_max:
+			if iter_count == (iter_max+iter_offset):
 				self._logger.info("Reached max number of iterations")
 				break
 
 		self._logger.info(
 			"%i alert(s) processed (time required: %is)" %
-			(iter_count, int(time.time() - run_start))
+			(iter_count-iter_offset, int(time.time() - run_start))
 		)
 
 		# Return number of processed alerts
-		return iter_count
+		return iter_count-iter_offset
 
 
 	def _unpack(self, tar_info):
@@ -145,7 +148,7 @@ class DevAlertProcessor:
 			)
 			target_array = self._rejected_alerts
 		else:
-			self._logger.info(
+			self._logger.debug(
 				"+ Ingesting %i (objectId: %s)" %
 				(alert.pps[0]['candid'], alert.stock_id)
 			)
