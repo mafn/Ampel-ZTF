@@ -141,7 +141,7 @@ class DevAlertProcessor:
 
 	def _filter(self, alert):
 
-		if not self._alert_filter.apply(alert):
+		if not self._alert_filter.apply(alert)>0:
 			self._logger.debug(
 				"- Rejecting %i (objectId: %s)" %
 				(alert.pps[0]['candid'], alert.stock_id)
@@ -157,11 +157,11 @@ class DevAlertProcessor:
 		if self.save == "alert":
 			target_array.append(alert)
 		elif self.save == 'objectId':
-			target_array.append(alert['objectId'])
+			target_array.append(alert.id)
 		elif self.save == 'candid':
-			target_array.append(alert['candid'])
+			target_array.append(alert.pps[0]['candid'])
 		elif self.save == 'objectId_candid':
-			target_array.append(alert['objectId'], alert['candid'])
+			target_array.append( (alert.id, alert.pps[0]['candid']) )
 
 
 	def _deserialize(self, f):
