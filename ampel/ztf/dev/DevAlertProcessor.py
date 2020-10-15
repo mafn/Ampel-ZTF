@@ -141,7 +141,8 @@ class DevAlertProcessor:
 
 	def _filter(self, alert):
 
-		if not self._alert_filter.apply(alert)>0:
+		filter_result = self._alert_filter.apply(alert)
+		if filter_result is None or filter_result<0:
 			self._logger.debug(
 				"- Rejecting %i (objectId: %s)" %
 				(alert.pps[0]['candid'], alert.stock_id)
