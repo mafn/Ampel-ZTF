@@ -10,7 +10,8 @@
 import asyncio
 import copy
 from functools import partial
-from typing import Any, Dict, Literal, Optional, Union, Iterable, Set, Sequence
+from os.path import basename 
+from typing import Any, Dict, List, Literal, Optional, Union, Iterable, Set, Sequence
 
 from pydantic import ValidationError
 
@@ -44,6 +45,9 @@ class KafkaSource(StrictModel):
     timeout: int = 3600
     archive: Optional[ArchiveSink]
 
+    def label(self):
+        return f"kafka.{self.group}"
+
     def get(self) -> ZiAlertSupplier:
         supplier = ZiAlertSupplier(deserialize=None)
         supplier.set_alert_source(
@@ -65,6 +69,9 @@ class TarballSource(StrictModel):
     filename: str
     serialization: Optional[Literal["avro", "json"]] = "avro"
 
+    def label(self):
+        return basename(self.filename)
+
     def get(self) -> ZiAlertSupplier:
         supplier = ZiAlertSupplier(deserialize=self.serialization)
         supplier.set_alert_source(TarAlertLoader(self.filename))
@@ -79,6 +86,9 @@ class ArchiveSource(StrictModel):
     chunk: int = 5000
     jd_min: float = -float('inf')
     jd_max: float = float('inf')
+
+    def label(self):
+        return f"archive.{self.group}.{self.stream}"
 
     def get(self) -> ZiAlertSupplier:
         supplier = ZiAlertSupplier(deserialize=None)
@@ -111,96 +121,103 @@ class ZTFAlertStreamController(AbsProcessController):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-        # merge process directives
-        assert self.processes
-        process = copy.deepcopy(self.processes[0])
+        self._scale_event = None
+        self._process = self._merge_processes(self.processes)
 
+    def update(self,
+        config: AmpelConfig,
+        secrets: Optional[AbsSecretProvider],
+        processes: Sequence[ProcessModel],
+    ) -> None:
+        self.config = config
+        self.processes = processes
+        self.secrets = secrets
+        self._process = self._merge_processes(self.processes)
+
+    def _merge_processes(self, processes: List[ProcessModel]) -> ProcessModel:
+        assert len(processes) > 0
+        process = copy.deepcopy(processes[0])
+
+        assert process.active
         assert process.processor.unit == "AlertProcessor", "Lead process is an AlertProcessor"
         assert isinstance(process.processor.config, dict)
 
         def strip(config):
-            """Remove AlertProcessor config keys that are either"""
+            """Remove AlertProcessor config keys will be changed or merged"""
             return {k: v for k, v in config.items() if k not in {"process_name", "publish_stats", "directives"}}
 
         for pm in self.processes[1:]:
             # ensure that trailing AlertProcessor configs are compatible
-            assert process.controller == pm.controller
+            assert pm.active
+            assert process.controller.config == pm.controller.config
             assert isinstance(pm.processor.config, dict)
             assert process.processor.unit == pm.processor.unit, "All processes are AlertProcessors"
             assert strip(process.processor.config) == strip(pm.processor.config), "AlertProcessor configs are compatible"
             process.processor.config["directives"] += pm.processor.config["directives"]
-        self.processes = [process]
 
-        assert len(self.processes) == 1, "Can't handle multiple processes"
-        self._scale_event = None
-
-    async def run(self) -> None:
-        self._scale_event = asyncio.Event()
-        tasks = {
-            asyncio.create_task(self.run_alertprocessor(pm, self._scale_event))
-            for pm in self.processes
-        }
-        for results in await asyncio.gather(*tasks, return_exceptions=True):
-            if isinstance(results, BaseException):
-                raise results
-            for r in results:
-                if isinstance(r, BaseException):
-                    raise r
+        process.name = self.source.label()
+        
+        return process
 
     def stop(self, name: Optional[str]=None) -> None:
         """Stop scheduling new processes."""
         assert name is None
-        for pm in self.processes:
-            pm.active = False
+        self._process.active = False
 
     def scale(self, name: Optional[str]=None, multiplier: int=1):
         if multiplier < 1:
             raise ValueError("multiplier must be nonnegative")
         assert self._scale_event
-        self.processes[0].multiplier = multiplier
+        self.multiplier = multiplier
         self._scale_event.set()
 
-    async def run_alertprocessor(self, pm: ProcessModel, scale_event: asyncio.Event) -> Sequence[bool]:
+    async def run(self) -> Sequence[bool]:
         """
-        Keep `self.multiplier` instances of this process alive until cancelled
+        Keep `self.multiplier` instances of this process alive until:
+          
+          * they all return 0/False, or
+          * the task is cancelend,
+        
+        whichever comes first.
         """
-        config = self.config.get()
-        launch = partial(
-            self.run_mp_process,
-            config,
-            self.secrets,
-            pm.dict(),
-            self.source.dict(exclude_defaults=False),
-            self.log_profile,
-        )
-        assert pm.active
+        assert self._scale_event is None, "run() is not reentrant"
+        self._scale_event = asyncio.Event()
+        def launch():
+            return self.run_mp_process(
+                self.config.get(),
+                self.secrets,
+                self._process.dict(),
+                self.source.dict(exclude_defaults=False),
+                self.log_profile
+            )
+        assert self._process.active
         pending = {launch() for _ in range(self.multiplier)}
-        pending.add(asyncio.create_task(scale_event.wait(), name="scale"))
+        pending.add(asyncio.create_task(self._scale_event.wait(), name="scale"))
         done: Set[asyncio.Future] = set()
         try:
-            while pm.active:
+            while self._process.active:
                 try:
                     done, pending = await asyncio.wait(
                         pending, return_when="FIRST_COMPLETED"
                     )
                     for task in done:
                         if task.get_name() == "scale":
-                            if scale_event.is_set():
-                                print(f"scale {len(pending)} -> {pm.multiplier}")
+                            if self._scale_event.is_set():
+                                print(f"scale {len(pending)} -> {self.multiplier}")
                                 # scale down
-                                to_kill = {pending.pop() for _ in range(len(pending)-pm.multiplier)}
+                                to_kill = {pending.pop() for _ in range(len(pending)-self.multiplier)}
                                 for t in to_kill:
                                     t.cancel()
                                 await asyncio.gather(*to_kill, return_exceptions=True)
                                 # scale up
-                                for _ in range(pm.multiplier-len(pending)):
+                                for _ in range(self.multiplier-len(pending)):
                                     pending.add(launch())
-                                scale_event.clear()
+                                self._scale_event.clear()
                             pending.add(asyncio.create_task(scale_event.wait(), name="scale"))
                         else:
                             # start a fresh replica for each processor that
-                            # returned True
-                            if task.result() and len(pending) < pm.multiplier:
+                            # returned True. NB: +1 for scale wait task
+                            if task.result() and len(pending) < self.multiplier+1:
                                 pending.add(launch())
                 except:
                     for t in pending:
@@ -208,7 +225,7 @@ class ZTFAlertStreamController(AbsProcessController):
                     break
         finally:
             # force scale future to come due
-            scale_event.set()
+            self._scale_event.set()
             return await asyncio.gather(*done.union(pending), return_exceptions=True)
 
     @staticmethod
