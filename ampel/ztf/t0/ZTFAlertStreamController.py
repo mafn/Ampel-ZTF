@@ -254,6 +254,7 @@ class ZTFAlertStreamController(AbsProcessController):
             unit_model=UnitModel(**p["processor"]),
             context=context,
             sub_type=AlertProcessor,
+            process_name = p["name"],
         )
         factory = AlertSource(
             **context.loader.resolve_secrets(
