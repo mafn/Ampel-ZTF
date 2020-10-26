@@ -188,7 +188,6 @@ class ZTFAlertStreamController(AbsProcessController):
                 self.secrets,
                 self._process.dict(),
                 self.source.dict(exclude_defaults=False),
-                self.log_profile
             )
         assert self._process.active
         pending = {launch() for _ in range(self.multiplier)}
@@ -235,8 +234,13 @@ class ZTFAlertStreamController(AbsProcessController):
         secrets: Optional[AbsSecretProvider],
         p: Dict[str, Any],
         source: Dict[str, Any],
-        log_profile: str = "default",
     ) -> bool:
+
+        try:
+            import setproctitle
+            setproctitle.setproctitle(f"ampel.process.t{p['tier']}.{p['name']}")
+        except:
+            ...
 
         from ampel.alert.AlertProcessor import AlertProcessor
 
@@ -250,7 +254,6 @@ class ZTFAlertStreamController(AbsProcessController):
             unit_model=UnitModel(**p["processor"]),
             context=context,
             sub_type=AlertProcessor,
-            log_profile=log_profile,
         )
         factory = AlertSource(
             **context.loader.resolve_secrets(
