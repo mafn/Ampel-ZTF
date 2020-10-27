@@ -122,7 +122,8 @@ class ZTFAlertStreamController(AbsProcessController):
         super().__init__(**kwargs)
 
         self._scale_event = None
-        self._process = self._merge_processes(self.processes)
+        self.process = self.merge_processes(self.processes)
+        self.process.name = self.source.label()
 
     def update(self,
         config: AmpelConfig,
@@ -132,9 +133,11 @@ class ZTFAlertStreamController(AbsProcessController):
         self.config = config
         self.processes = processes
         self.secrets = secrets
-        self._process = self._merge_processes(self.processes)
+        self.process = self.merge_processes(self.processes)
+        self.process.name = self.source.label()
 
-    def _merge_processes(self, processes: List[ProcessModel]) -> ProcessModel:
+    @staticmethod
+    def merge_processes(processes: List[ProcessModel]) -> ProcessModel:
         assert len(processes) > 0
         process = copy.deepcopy(processes[0])
 
@@ -146,7 +149,7 @@ class ZTFAlertStreamController(AbsProcessController):
             """Remove AlertProcessor config keys will be changed or merged"""
             return {k: v for k, v in config.items() if k not in {"process_name", "publish_stats", "directives"}}
 
-        for pm in self.processes[1:]:
+        for pm in processes[1:]:
             # ensure that trailing AlertProcessor configs are compatible
             assert pm.active
             assert process.controller.config == pm.controller.config
@@ -155,8 +158,6 @@ class ZTFAlertStreamController(AbsProcessController):
             assert strip(process.processor.config) == strip(pm.processor.config), "AlertProcessor configs are compatible"
             process.processor.config["directives"] += pm.processor.config["directives"]
 
-        process.name = self.source.label()
-        
         return process
 
     def stop(self, name: Optional[str]=None) -> None:
