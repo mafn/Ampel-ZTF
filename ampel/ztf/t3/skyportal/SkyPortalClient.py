@@ -128,7 +128,11 @@ class SkyPortalClient(AmpelBaseModel):
     @lru_cache(1024)
     def get_by_name(self, endpoint, name):
         try:
-            return next(d['id'] for d in self.get(endpoint, params={'name': name})['data'] if d['name']==name)
+            return next(
+                d["id"]
+                for d in self.get(endpoint, params={"name": name})["data"]
+                if d["name"] == name
+            )
         except StopIteration:
             raise KeyError(f"No {endpoint} named {name}")
 
@@ -174,9 +178,12 @@ def provision_seed_data(client: SkyPortalClient):
         "stream": client.get_id("streams", {"name": "ztf_partnership"}),
         "group": 1,  # root group
     }
-    if not source["stream"] in [groupstream['id'] for groupstream in client.get(f"groups/{source['group']}")['data']['streams'] ]:
+    if not source["stream"] in [
+        groupstream["id"]
+        for groupstream in client.get(f"groups/{source['group']}")["data"]["streams"]
+    ]:
         client.post(
-           f"groups/{source['group']}/streams", json={"stream_id": source["stream"]}
+            f"groups/{source['group']}/streams", json={"stream_id": source["stream"]}
         )
     source["filter"] = client.get_id(
         "filters",
@@ -189,7 +196,10 @@ def provision_seed_data(client: SkyPortalClient):
     )
 
     # ensure that all users are in the root group
-    users = [users['username'] for users in client.get(f"groups/{source['group']}")['data']['users']]
+    users = [
+        users["username"]
+        for users in client.get(f"groups/{source['group']}")["data"]["users"]
+    ]
     for user in client.get("user")["data"]:
         if not user["username"] in users:
             client.post(
@@ -248,7 +258,21 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 content[k].append(v)
         return dict(content)
 
-    def post_candidate(self, view: "TransientView", filters: Optional[List[str]] = None, groups: Optional[List[str]] = None, instrument: Optional[str] = None):
+    def _find_instrument(self, tags: List[str]) -> int:
+        for tag in tags:
+            try:
+                return self.get_by_name("instrument", tag)
+            except:
+                ...
+        raise KeyError(f"None of {tags} match a known instrument")
+
+    def post_candidate(
+        self,
+        view: "TransientView",
+        filters: Optional[List[str]] = None,
+        groups: Optional[List[str]] = None,
+        instrument: Optional[str] = None,
+    ):
         """
         Perform the following actions:
           * Post candidate to filters specified by ``filters``. ``ra``/``dec``
@@ -273,23 +297,22 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             Name of the instrument with which to associate the photometry.
         """
 
-        filter_ids = (
-            [self.get_by_name("filters", name) for name in (filters or [f"AMPEL.{channel}" for channel in view.stock["channel"]])]
+        filter_ids = [
+            self.get_by_name("filters", name)
+            for name in (
+                filters or [f"AMPEL.{channel}" for channel in view.stock["channel"]]
+            )
+        ]
+        group_ids = (
+            ([self.get_by_name("groups", name) for name in (groups)])
+            if groups
+            else "all"
         )
-        if groups is not None:
-            group_ids = (
-               [self.get_by_name("groups", name) for name in (groups)]
-           )
-        else:
-            group_ids = ( [group['id'] for group in self.get("groups")['data']['user_accessible_groups']] )
-        if instrument is not None:
-            instrument_id = self.get_by_name("instrument", instrument)
-        else:
-            # Assume the instrument is contained in one of the stock tags
-            instrument_id = [inst['name'] for inst in self.get('instrument')['data'] if inst['name'] in view.stock['tag']]
-            assert len(instrument_id)==1
-            instrument_id = instrument_id[0]
-
+        instrument_id = (
+            self.get_by_name("instrument", instrument)
+            if instrument
+            else self._find_instrument(self, view.stock["tag"])
+        )
 
         assert view.stock and view.stock["name"] is not None
         name = next(
@@ -324,7 +347,9 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             source_id = response["data"]["id"]
             # update if required
             if diff := {k: doc[k] for k in doc if doc[k] != response["data"][k]}:
-                self.request("PUT", f"candidates/{name}", json={"filter_ids": filter_ids, **doc})
+                self.request(
+                    "PUT", f"candidates/{name}", json={"filter_ids": filter_ids, **doc}
+                )
         else:
             source_id = self.post("candidates", json={"filter_ids": filter_ids, **doc})[
                 "data"
@@ -338,9 +363,9 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         photometry = {
             "obj_id": name,
             "alert_id": pps[-1]["_id"],  # candid for ZTF alerts
-            "group_ids": group_ids,
+            "group_ids": "all",
             "magsys": "ab",
-            "instrument_id": instrument_id,
+            "instrument_id": self.get_by_name("instrument", "ZTF"),
             **self.make_photometry(dps),
         }
         datapoint_ids = photometry.pop("_id")
@@ -374,7 +399,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             if t2["unit"] not in latest_t2 or latest_t2[t2["unit"]]["_id"] < t2["_id"]:
                 latest_t2[t2["unit"]] = t2
         for t2 in latest_t2.values():
-            # find associated comment 
+            # find associated comment
             for comment in response["data"]["comments"]:
                 if comment["text"] == t2["unit"]:
                     break
