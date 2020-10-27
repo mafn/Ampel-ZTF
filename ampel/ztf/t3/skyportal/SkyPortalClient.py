@@ -146,6 +146,55 @@ class SkyPortalClient(AmpelBaseModel):
         return self.request("PUT", endpoint, **kwargs)
 
 
+class FilterGroupProvisioner(SkyPortalClient):
+    """
+    Set up filters to corresponding to AMPEL channels
+    """
+
+    #: mapping from ampel stream name to Fritz stream name
+    stream_names: Dict[str, str] = {
+        "ztf_uw_public": "ZTF Public",
+        "ztf_uw_private": "ZTF Public+Partnership",
+        "ztf_uw_caltech": "ZTF Public+Partnership+Caltech",
+    }
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def create_filter(self, name, stream, group):
+        try:
+            return self.get_by_name("filters", name)
+        except KeyError:
+            ...
+        doc = {
+            "name": name,
+            "stream_id": self.get_by_name("streams", self.stream_names[stream]),
+            "group_id": self.get_by_name("groups", group),
+        }
+        self.post("filters", json=doc)
+        return self.get_by_name("filters", name)
+
+    def create_filters(
+        self, config: "AmpelConfig", group: str, stream: Optional[str] = None
+    ) -> None:
+        """
+        Create a dummy SkyPortal filter for each Ampel filter
+        
+        :param group: name of group that should own the filter
+        :param stream:
+          name of the filter's alert stream (meaningless, since there is no
+          filter actually defined)
+        """
+        for channel in config.get("channel").values():
+            name = f"AMPEL.{channel['channel']}"
+            try:
+                self.get_by_name("filters", name)
+                continue
+            except KeyError:
+                ...
+            self.create_filter(name, stream or channel["template"], group)
+
+
 def provision_seed_data(client: SkyPortalClient):
     """Set up instruments and groups for a test instance"""
     p48 = client.get_id(
