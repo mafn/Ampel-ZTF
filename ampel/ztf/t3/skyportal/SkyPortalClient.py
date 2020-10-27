@@ -189,7 +189,6 @@ class FilterGroupProvisioner(SkyPortalClient):
             if not channel.get('active', True):
                 continue
             name = f"AMPEL.{channel['channel']}"
-            continue
             try:
                 self.get_by_name("filters", name)
                 continue
