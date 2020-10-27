@@ -121,9 +121,9 @@ class ZTFAlertStreamController(AbsProcessController):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-        self._scale_event = None
-        self.process = self.merge_processes(self.processes)
-        self.process.name = self.source.label()
+        self._scale_event : Optional[asyncio.Event] = None
+        self._process = self.merge_processes(list(self.processes))
+        self._process.name = self.source.label()
 
     def update(self,
         config: AmpelConfig,
@@ -133,8 +133,8 @@ class ZTFAlertStreamController(AbsProcessController):
         self.config = config
         self.processes = processes
         self.secrets = secrets
-        self.process = self.merge_processes(self.processes)
-        self.process.name = self.source.label()
+        self._process = self.merge_processes(list(self.processes))
+        self._process.name = self.source.label()
 
     @staticmethod
     def merge_processes(processes: List[ProcessModel]) -> ProcessModel:
@@ -183,7 +183,7 @@ class ZTFAlertStreamController(AbsProcessController):
         """
         assert self._scale_event is None, "run() is not reentrant"
         self._scale_event = asyncio.Event()
-        def launch():
+        def launch() -> asyncio.Task:
             return self.run_mp_process(
                 self.config.get(),
                 self.secrets,
@@ -193,13 +193,13 @@ class ZTFAlertStreamController(AbsProcessController):
         assert self._process.active
         pending = {launch() for _ in range(self.multiplier)}
         pending.add(asyncio.create_task(self._scale_event.wait(), name="scale"))
-        done: Set[asyncio.Future] = set()
+        done: Set[asyncio.Task] = set()
         try:
             while self._process.active:
                 try:
-                    done, pending = await asyncio.wait(
+                    done, pending = await asyncio.wait( #  type: ignore[assignment]
                         pending, return_when="FIRST_COMPLETED"
-                    )
+                    ) 
                     for task in done:
                         if task.get_name() == "scale":
                             if self._scale_event.is_set():
@@ -213,7 +213,7 @@ class ZTFAlertStreamController(AbsProcessController):
                                 for _ in range(self.multiplier-len(pending)):
                                     pending.add(launch())
                                 self._scale_event.clear()
-                            pending.add(asyncio.create_task(scale_event.wait(), name="scale"))
+                            pending.add(asyncio.create_task(self._scale_event.wait(), name="scale"))
                         else:
                             # start a fresh replica for each processor that
                             # returned True. NB: +1 for scale wait task
@@ -238,7 +238,7 @@ class ZTFAlertStreamController(AbsProcessController):
     ) -> bool:
 
         try:
-            import setproctitle
+            import setproctitle #  type: ignore
             setproctitle.setproctitle(f"ampel.process.t{p['tier']}.{p['name']}")
         except:
             ...
