@@ -239,7 +239,7 @@ class ZTFAlertStreamController(AbsProcessController):
 
         try:
             import setproctitle #  type: ignore
-            setproctitle.setproctitle(f"ampel.process.t{p['tier']}.{p['name']}")
+            setproctitle.setproctitle(f"ampel.t{p['tier']}.{p['name']}")
         except:
             ...
 
