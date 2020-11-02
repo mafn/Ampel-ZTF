@@ -38,7 +38,7 @@ class UWAlertLoader:
 		the archive db using ampel.ztf.t0.ArchiveUpdater
 		:param int timeout: time to wait for messages before giving up, in seconds
 		"""
-		topics = ['^ztf_.*_programid1$', '^ztf_.*_programid3_public$']
+		topics = ['^ztf_.*_programid1$']
 
 		if partnership:
 			topics.append('^ztf_.*_programid2$')
