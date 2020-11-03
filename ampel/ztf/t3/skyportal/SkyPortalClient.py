@@ -426,7 +426,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         # TODO: stash bulk upload id somewhere for reference
         photometry_response["data"]["upload_id"]
 
-        for candid, cutouts in (view.extra or {}).get("cutouts", {}).items():
+        for candid, cutouts in (view.extra or {}).get("ZTFCutoutImages", {}).items():
             photometry_id = photometry_ids[datapoint_ids.index(candid)]
             for kind, blob in cutouts.items():
                 assert isinstance(blob, bytes)

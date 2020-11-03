@@ -55,6 +55,6 @@ class ZTFCutoutImages(AbsT3DataAppender):
                 candids = [min(pps, key=lambda pp: pp["body"]["magpsf"])["_id"]]
             elif self.eligible == "all":
                 candids = [pp["_id"] for pp in pps]
-            record["extra"]["cutouts"] = {
+            record["extra"][self.__class__.__name__] = {
                 candid: self.archive.get_cutout(candid) for candid in candids
             }
