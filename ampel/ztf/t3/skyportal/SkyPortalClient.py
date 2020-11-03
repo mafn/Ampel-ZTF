@@ -10,6 +10,7 @@ import base64
 import gzip
 import io
 import json
+from astropy.time import Time
 from collections import defaultdict
 from datetime import datetime
 from typing import (
@@ -88,6 +89,8 @@ def render_thumbnail(cutout_data: bytes) -> str:
 ZTF_FILTERS = {1: "ztfg", 2: "ztfr", 3: "ztfi"}
 CUTOUT_TYPES = {"science": "new", "template": "ref", "difference": "sub"}
 
+class SkyPortalAPIError(IOError):
+    ...
 
 class SkyPortalClient(AmpelBaseModel):
 
@@ -104,17 +107,21 @@ class SkyPortalClient(AmpelBaseModel):
         }
         self._session = requests.Session()
 
-    def request(self, verb, endpoint, raise_exc=True, **kwargs):
+    def request(self, verb, endpoint, raise_exc=True, _decode_json=True, **kwargs):
         if endpoint.startswith("/"):
             url = self.base_url + endpoint
         else:
             url = self.base_url + "/api/" + endpoint
         response = self._session.request(
             verb, url, **{**self._request_kwargs, **kwargs}
-        ).json()
-        if raise_exc and response["status"] != "success":
-            raise RuntimeError(response["message"])
-        return response
+        )
+        if _decode_json:
+            payload = response.json()
+            if raise_exc and payload["status"] != "success":
+                raise SkyPortalAPIError(payload["message"])
+            return payload
+        else:
+            return response
 
     def get_id(self, endpoint, params, default=None):
         """Query for an object by id, inserting it if not found"""
@@ -134,7 +141,8 @@ class SkyPortalClient(AmpelBaseModel):
                 if d["name"] == name
             )
         except StopIteration:
-            raise KeyError(f"No {endpoint} named {name}")
+            pass
+        raise KeyError(f"No {endpoint} named {name}")
 
     def get(self, endpoint, **kwargs):
         return self.request("GET", endpoint, **kwargs)
@@ -144,6 +152,9 @@ class SkyPortalClient(AmpelBaseModel):
 
     def put(self, endpoint, **kwargs):
         return self.request("PUT", endpoint, **kwargs)
+
+    def head(self, endpoint, **kwargs):
+        return self.request("HEAD", endpoint, _decode_json=False, **kwargs)
 
 
 class FilterGroupProvisioner(SkyPortalClient):
@@ -362,7 +373,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         instrument_id = (
             self.get_by_name("instrument", instrument)
             if instrument
-            else self._find_instrument(self, view.stock["tag"])
+            else self._find_instrument(view.stock["tag"])
         )
 
         assert view.stock and view.stock["name"] is not None
@@ -371,7 +382,9 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         )
 
         # latest lightcurve
-        assert view.lightcurve
+        if not view.lightcurve:
+            self.logger.warning(f"No light curve found for {name}!")
+            return
         lc = sorted(view.lightcurve, key=lambda lc: len(lc.get_photopoints() or []))[-1]
         # detections, in order
         pps = sorted((lc.get_photopoints() or []), key=lambda pp: pp["body"]["jd"])
@@ -389,22 +402,22 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             "origin": "Ampel",
             "score": max(drb) if (drb := lc.get_values("drb")) is not None else None,
             "detect_photometry_count": len(pps),
-            "transient": True,  # sure, why not,
+            "transient": True,  # sure, why not
+        }
+        filter_doc = {
+            "passing_alert_id": pps[-1]["_id"],
+            "passed_at": Time(pps[-1]["body"]["jd"], format="jd").to_datetime().isoformat(),
         }
 
         if (response := self.get(f"candidates/{name}", raise_exc=False))[
             "status"
         ] == "success":
-            source_id = response["data"]["id"]
-            # update if required
-            if diff := {k: doc[k] for k in doc if doc[k] != response["data"][k]}:
-                self.request(
-                    "PUT", f"candidates/{name}", json={"filter_ids": filter_ids, **doc}
-                )
+            # update filters
+            new_filters = list(set(filter_ids).difference(response["data"]["filter_ids"]))
+            if new_filters:
+                self.post(f"candidates", json={"id": name, "filter_ids": new_filters, **filter_doc})
         else:
-            source_id = self.post("candidates", json={"filter_ids": filter_ids, **doc})[
-                "data"
-            ]["id"]
+            self.post("candidates", json={"filter_ids": filter_ids, **doc, **filter_doc})
 
         # Post photometry for the latest light curve.
         # For ZTF, the id of the most recent detection is the alert id
@@ -413,18 +426,17 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         # group_ids are idempotent
         photometry = {
             "obj_id": name,
-            "alert_id": pps[-1]["_id"],  # candid for ZTF alerts
-            "group_ids": "all",
+            "group_ids": [1], # change to "all" after https://github.com/skyportal/skyportal/issues/1263 is fixed
             "magsys": "ab",
             "instrument_id": self.get_by_name("instrument", "ZTF"),
             **self.make_photometry(dps),
         }
         datapoint_ids = photometry.pop("_id")
-        photometry_response = self.post("photometry", json=photometry)
+        photometry_response = self.put("photometry", json=photometry)
         photometry_ids = photometry_response["data"]["ids"]
         assert len(datapoint_ids) == len(photometry_ids)
         # TODO: stash bulk upload id somewhere for reference
-        photometry_response["data"]["upload_id"]
+        photometry_response["data"].get("upload_id")
 
         for candid, cutouts in (view.extra or {}).get("ZTFCutoutImages", {}).items():
             photometry_id = photometry_ids[datapoint_ids.index(candid)]
@@ -449,9 +461,10 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             assert isinstance(t2["unit"], str)
             if t2["unit"] not in latest_t2 or latest_t2[t2["unit"]]["_id"] < t2["_id"]:
                 latest_t2[t2["unit"]] = t2
+        previous_comments = response["data"]["comments"] if response["status"] == "success" else []
         for t2 in latest_t2.values():
             # find associated comment
-            for comment in response["data"]["comments"]:
+            for comment in previous_comments:
                 if comment["text"] == t2["unit"]:
                     break
             else:
@@ -460,7 +473,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 self.post(
                     "comment",
                     json={
-                        "obj_id": source_id,
+                        "obj_id": name,
                         "text": t2["unit"],
                         "attachment": {
                             "body": encode_t2_body(t2),
