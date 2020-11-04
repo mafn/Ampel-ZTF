@@ -10,7 +10,7 @@ import base64
 import gzip
 import io
 import json
-from astropy.time import Time
+import time
 from collections import defaultdict
 from datetime import datetime
 from typing import (
@@ -22,6 +22,7 @@ from typing import (
     Sequence,
     TYPE_CHECKING,
     Union,
+    TypedDict,
 )
 from functools import lru_cache
 
@@ -35,8 +36,10 @@ from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.model.Secret import Secret
 from ampel.t2.T2RunState import T2RunState
+from ampel.util.collections import ampel_iter
 
 if TYPE_CHECKING:
+    from ampel.config.AmpelConfig import AmpelConfig
     from ampel.content.DataPoint import DataPoint
     from ampel.content.T2Record import T2Record
     from ampel.view.TransientView import TransientView
@@ -89,8 +92,10 @@ def render_thumbnail(cutout_data: bytes) -> str:
 ZTF_FILTERS = {1: "ztfg", 2: "ztfr", 3: "ztfi"}
 CUTOUT_TYPES = {"science": "new", "template": "ref", "difference": "sub"}
 
+
 class SkyPortalAPIError(IOError):
     ...
+
 
 class SkyPortalClient(AmpelBaseModel):
 
@@ -196,8 +201,8 @@ class FilterGroupProvisioner(SkyPortalClient):
           name of the filter's alert stream (meaningless, since there is no
           filter actually defined)
         """
-        for channel in config.get("channel").values():
-            if not channel.get('active', True):
+        for channel in config.get("channel", dict, raise_exc=True).values():
+            if not channel.get("active", True):
                 continue
             name = f"AMPEL.{channel['channel']}"
             try:
@@ -271,6 +276,17 @@ def provision_seed_data(client: SkyPortalClient):
     return source
 
 
+class PostReport(TypedDict):
+    candidate: bool  #: whether the candidate was posted
+    filters: int #: number of new filter postings
+    photometry_count: int  #: size of posted photometry
+    photometry_error: Optional[str] #: error raised while posting photometry
+    thumbnail_count: int  #: number of thumbnails posted
+    comments: int  #: number of comments posted
+    comment_errors: List[str]  #: errors raised while posting comments
+    dt: float #: elapsed time in seconds
+
+
 class BaseSkyPortalPublisher(SkyPortalClient):
 
     logger: AmpelLogger
@@ -320,7 +336,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 content[k].append(v)
         return dict(content)
 
-    def _find_instrument(self, tags: List[str]) -> int:
+    def _find_instrument(self, tags: Sequence[Union[int, str]]) -> int:
         for tag in tags:
             try:
                 return self.get_by_name("instrument", tag)
@@ -334,7 +350,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         filters: Optional[List[str]] = None,
         groups: Optional[List[str]] = None,
         instrument: Optional[str] = None,
-    ):
+    ) -> PostReport:
         """
         Perform the following actions:
           * Post candidate to filters specified by ``filters``. ``ra``/``dec``
@@ -359,17 +375,31 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             Name of the instrument with which to associate the photometry.
         """
 
-        filter_ids = [
-            self.get_by_name("filters", name)
+        ret: PostReport = {
+            "candidate": True,
+            "filters": 0,
+            "photometry_count": 0,
+            "photometry_error": None,
+            "thumbnail_count": 0,
+            "comments": 0,
+            "comment_errors": [],
+            "dt": -time.time(),
+        }
+
+        assert view.stock, f"{self.__class__} requires stock records"
+        assert view.stock["channel"] is not None
+        filter_ids = {
+            name: self.get_by_name("filters", name)
             for name in (
                 filters or [f"AMPEL.{channel}" for channel in view.stock["channel"]]
             )
-        ]
+        }
         group_ids = (
             ([self.get_by_name("groups", name) for name in (groups)])
             if groups
             else "all"
         )
+        assert view.stock["tag"] is not None
         instrument_id = (
             self.get_by_name("instrument", instrument)
             if instrument
@@ -381,43 +411,72 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             n for n in view.stock["name"] if isinstance(n, str) and n.startswith("ZTF")
         )
 
-        # latest lightcurve
-        if not view.lightcurve:
-            self.logger.warning(f"No light curve found for {name}!")
-            return
-        lc = sorted(view.lightcurve, key=lambda lc: len(lc.get_photopoints() or []))[-1]
-        # detections, in order
-        pps = sorted((lc.get_photopoints() or []), key=lambda pp: pp["body"]["jd"])
-        dps = sorted(
-            pps + list(lc.get_upperlimits() or []), key=lambda pp: pp["body"]["jd"]
-        )
+        # all photometry, in time order
+        assert view.t0 is not None
+        dps = sorted(view.t0, key=lambda pp: pp["body"]["jd"])
+        # detections, in time order
+        pps = [pp for pp in dps if pp["_id"] > 0]
 
         # post transient
-        doc = {
-            "id": name,
+        candidate = {
             "ra": pps[-1]["body"]["ra"],
             "dec": pps[-1]["body"]["dec"],
             "ra_dis": pps[0]["body"]["ra"],
             "dec_dis": pps[0]["body"]["dec"],
             "origin": "Ampel",
-            "score": max(drb) if (drb := lc.get_values("drb")) is not None else None,
+            "score": max(drb)
+            if (drb := [pp["body"].get("drb", pp["body"]["rb"]) for pp in pps])
+            else None,
             "detect_photometry_count": len(pps),
             "transient": True,  # sure, why not
         }
-        filter_doc = {
-            "passing_alert_id": pps[-1]["_id"],
-            "passed_at": Time(pps[-1]["body"]["jd"], format="jd").to_datetime().isoformat(),
-        }
+        new_filters = set(filter_ids.values())
 
         if (response := self.get(f"candidates/{name}", raise_exc=False))[
             "status"
         ] == "success":
-            # update filters
-            new_filters = list(set(filter_ids).difference(response["data"]["filter_ids"]))
-            if new_filters:
-                self.post(f"candidates", json={"id": name, "filter_ids": new_filters, **filter_doc})
-        else:
-            self.post("candidates", json={"filter_ids": filter_ids, **doc, **filter_doc})
+            # Only update filters, not the candidate itself
+            new_filters.difference_update(response["data"]["filter_ids"])
+            candidate = {}
+            ret["candidate"] = False
+
+        # Walk through the non-autocomplete journal entries in time order,
+        # finding the time and alert id at which each filter passed for the
+        # first time. If the candidate has not yet been posted, do so for the
+        # first alert that passes a filter.
+        for jentry in view.get_journal_entries(tier=0) or []:
+            if jentry["extra"] is None or jentry["extra"].get("ac", False):
+                continue
+            # no more filters left to update
+            if not new_filters:
+                break
+            # set all filters to passing on the first go if filters were
+            # specified explicitly
+            fids = (
+                list(new_filters)
+                if filters
+                else [
+                    fid
+                    for channel in ampel_iter(jentry["channel"])
+                    if (fid := filter_ids[f"AMPEL.{channel}"]) in new_filters
+                ]
+            )
+            # no new filters passed on this alert
+            if not fids:
+                continue
+            new_filters.difference_update(fids)
+            self.post(
+                f"candidates",
+                json={
+                    "id": name,
+                    "filter_ids": fids,
+                    "passing_alert_id": jentry["extra"]["alert"],
+                    "passed_at": datetime.fromtimestamp(jentry["ts"]).isoformat(),
+                    **candidate,
+                },
+            )
+            ret["filters"] += 1
+            candidate = {}
 
         # Post photometry for the latest light curve.
         # For ZTF, the id of the most recent detection is the alert id
@@ -426,17 +485,21 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         # group_ids are idempotent
         photometry = {
             "obj_id": name,
-            "group_ids": [1], # change to "all" after https://github.com/skyportal/skyportal/issues/1263 is fixed
+            "group_ids": [
+                1
+            ],  # change to "all" after https://github.com/skyportal/skyportal/issues/1263 is fixed
             "magsys": "ab",
             "instrument_id": self.get_by_name("instrument", "ZTF"),
             **self.make_photometry(dps),
         }
         datapoint_ids = photometry.pop("_id")
-        photometry_response = self.put("photometry", json=photometry)
-        photometry_ids = photometry_response["data"]["ids"]
-        assert len(datapoint_ids) == len(photometry_ids)
-        # TODO: stash bulk upload id somewhere for reference
-        photometry_response["data"].get("upload_id")
+        try:
+            photometry_response = self.put("photometry", json=photometry)
+            photometry_ids = photometry_response["data"]["ids"]
+            assert len(datapoint_ids) == len(photometry_ids)
+            ret["photometry_count"] = len(photometry_ids)
+        except SkyPortalAPIError as exc:
+            ret["photometry_error"] = exc.args[0]
 
         for candid, cutouts in (view.extra or {}).get("ZTFCutoutImages", {}).items():
             photometry_id = photometry_ids[datapoint_ids.index(candid)]
@@ -452,6 +515,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                     },
                     raise_exc=True,
                 )
+                ret["thumbnail_count"] += 1
 
         # represent latest T2 results as a comments
         latest_t2: Dict[str, "T2Record"] = {}
@@ -461,7 +525,10 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             assert isinstance(t2["unit"], str)
             if t2["unit"] not in latest_t2 or latest_t2[t2["unit"]]["_id"] < t2["_id"]:
                 latest_t2[t2["unit"]] = t2
-        previous_comments = response["data"]["comments"] if response["status"] == "success" else []
+        previous_comments = (
+            response["data"]["comments"] if response["status"] == "success" else []
+        )
+
         for t2 in latest_t2.values():
             # find associated comment
             for comment in previous_comments:
@@ -470,17 +537,21 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             else:
                 # post new comment
                 self.logger.debug(f"posting {t2['unit']}")
-                self.post(
-                    "comment",
-                    json={
-                        "obj_id": name,
-                        "text": t2["unit"],
-                        "attachment": {
-                            "body": encode_t2_body(t2),
-                            "name": f"{name}.{t2['unit']}.json",
+                try:
+                    self.post(
+                        "comment",
+                        json={
+                            "obj_id": name,
+                            "text": t2["unit"],
+                            "attachment": {
+                                "body": encode_t2_body(t2),
+                                "name": f"{name}.{t2['unit']}.json",
+                            },
                         },
-                    },
-                )
+                    )
+                    ret["comments"] += 1
+                except SkyPortalAPIError as exc:
+                    ret["comment_errors"].append(exc.args[0])
                 continue
             # update previous comment
             previous_body = decode_t2_body(comment["attachment_bytes"])
@@ -488,16 +559,23 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 t2["body"][-1]["ts"] > previous_body["ts"]
             ):
                 self.logger.debug(f"updating {t2['unit']}")
-                self.request(
-                    "PUT",
-                    f"comment/{comment['id']}",
-                    json={
-                        "attachment_bytes": encode_t2_body(t2),
-                        "author_id": comment["author_id"],
-                        "obj_id": name,
-                        "text": comment["text"],
-                    },
-                )
+                try:
+                    self.request(
+                        "PUT",
+                        f"comment/{comment['id']}",
+                        json={
+                            "attachment_bytes": encode_t2_body(t2),
+                            "author_id": comment["author_id"],
+                            "obj_id": name,
+                            "text": comment["text"],
+                        },
+                    )
+                    ret["comments"] += 1
+                except SkyPortalAPIError as exc:
+                    ret["comment_errors"].append(exc.args[0])
             else:
                 self.logger.debug(f"{t2['unit']} exists and is current")
-        return
+
+        ret["dt"] += time.time()
+
+        return ret
