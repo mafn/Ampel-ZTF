@@ -42,8 +42,8 @@ class ZiAlertContentIngester(AbsAlertContentIngester[PhotoAlert, DataPoint]):
 	alert_history_length: int = 30
 
 	# Associated T0 units
-	pp_shaper: AbsT0Unit
-	ul_shaper: AbsT0Unit
+	pp_shaper: AbsT0Unit = ZiT0PhotoPointShaper()
+	ul_shaper: AbsT0Unit = ZiT0UpperLimitShaper()
 
 	# JD2017 is used to defined upper limits primary IDs
 	JD2017: float = 2457754.5
@@ -55,13 +55,6 @@ class ZiAlertContentIngester(AbsAlertContentIngester[PhotoAlert, DataPoint]):
 	}
 
 	def __init__(self, **kwargs) -> None:
-
-		if "pp_shaper" not in kwargs:
-			kwargs['pp_shaper'] = ZiT0PhotoPointShaper()
-
-		if "ul_shaper" not in kwargs:
-			kwargs['ul_shaper'] = ZiT0UpperLimitShaper()
-
 		super().__init__(**kwargs)
 
 		# used to check potentially already inserted pps
