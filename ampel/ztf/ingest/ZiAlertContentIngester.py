@@ -9,6 +9,7 @@
 
 from pymongo import UpdateOne
 from typing import Dict, List, Any
+from ampel.util.mappings import unflatten_dict
 from ampel.ztf.ingest.ZiT0PhotoPointShaper import ZiT0PhotoPointShaper
 from ampel.ztf.ingest.ZiT0UpperLimitShaper import ZiT0UpperLimitShaper
 from ampel.content.DataPoint import DataPoint
@@ -64,6 +65,31 @@ class ZiAlertContentIngester(AbsAlertContentIngester[PhotoAlert, DataPoint]):
 		self.stat_pps_inserts = 0
 		self.stat_uls_inserts = 0
 
+		self._projection_spec = unflatten_dict(self.projection)
+
+	def project(self, doc: Dict[str, Any]) -> Dict[str, Any]:
+		return self._project(doc, self._projection_spec)
+
+	def _project(
+		self,
+		doc: Dict[str, Any],
+		projection: Dict[str, Any]
+	) -> Dict[str, Any]:
+	
+		out = {}
+		for key, spec in projection.items():
+			if not key in doc:
+				continue
+			
+			if isinstance(spec, dict):
+				item = doc[key]
+				if isinstance(item, list):
+					out[key] = [self._project(v, spec) for v in item]
+				elif isinstance(item, dict):
+					out[key] = self._project(item, spec)
+			else:
+				out[key] = doc[key]
+		return out
 
 	def ingest(self, alert: PhotoAlert) -> List[DataPoint]:
 		"""
@@ -266,7 +292,10 @@ class ZiAlertContentIngester(AbsAlertContentIngester[PhotoAlert, DataPoint]):
 
 		# Photo data that will be part of the compound
 		datapoints = [
-			el for el in pps_db + pps_to_insert + uls_db + uls_to_insert
+			el for el in (
+			pps_db + list(map(self.project, pps_to_insert)) +
+			uls_db + list(map(self.project, uls_to_insert))
+			)
 			# https://github.com/AmpelProject/Ampel-ZTF/issues/6
 			if el['body']['jd'] <= alert.pps[0]['jd']
 		]
