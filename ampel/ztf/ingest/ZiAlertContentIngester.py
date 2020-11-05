@@ -135,7 +135,7 @@ class ZiAlertContentIngester(AbsAlertContentIngester[PhotoAlert, DataPoint]):
 					)
 				))
 
-			ids_uls_alert.add(uld['_id'])
+				ids_uls_alert.add(uld['_id'])
 
 		# python set of ids of upper limits from DB
 		ids_uls_db = {el['_id'] for el in uls_db}
