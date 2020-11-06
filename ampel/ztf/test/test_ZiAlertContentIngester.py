@@ -44,6 +44,15 @@ def avro_packets():
         TarAlertLoader, Path(__file__).parent / "test-data" / "ZTF18abxhyqv.tar.gz"
     )
 
+@pytest.fixture
+def superseded_packets():
+    """
+    Two alerts, received 100 ms apart, with the same points but different candids
+    """
+    return partial(
+        TarAlertLoader, Path(__file__).parent / "test-data" / "ZTF18acruwxq.tar.gz"
+    )
+
 
 @pytest.fixture
 def ingester(dev_context):
@@ -94,7 +103,8 @@ def test_deduplication(ingester, avro_packets):
 
 def test_out_of_order_ingestion(ingester, avro_packets):
     """
-    Return 
+    Ensure that returned alert content does not depend on whether photopoints
+    were already committed to the database
     """
 
     alerts = list(get_supplier(avro_packets()))
@@ -115,3 +125,32 @@ def test_out_of_order_ingestion(ingester, avro_packets):
     out_of_order = {idx: ingest(alerts[idx]) for idx in (-3,-2,-1)}
 
     assert sorted(in_order.items()) == sorted(out_of_order.items())
+
+@pytest.mark.xfail(reason="Current ZiAlertContentIngester reprocessing check has a data race")
+def test_superseded_candidates(ingester, superseded_packets):
+    """
+    Ensure that photopoints are marked superseded even if ingested simultaneously
+    """
+
+    alerts = list(reversed(list(get_supplier(superseded_packets()))))
+
+    assert alerts[0].pps[0]["jd"] == alerts[1].pps[0]["jd"]
+    candids = [alert.pps[0]["candid"] for alert in alerts]
+    assert candids[0] < candids[1]
+
+    def ingest(alert):
+        dps = ingester.ingest(alert)
+        print(ingester.updates_buffer.db_ops['t0'])
+        ingester.updates_buffer.push_updates()
+        return dps
+
+    # NB: commit updates only after ingestion
+    dps = [ingester.ingest(alert) for alert in alerts]
+    ingester.updates_buffer.push_updates()
+
+    pp_db = ingester.context.db.get_collection("t0").find_one({"_id" : candids[0]}, ingester.projection)
+
+    assert dps[0][0]["tag"] == pp_db["tag"], "data points match database content"
+    assert "SUPERSEDED" in pp0["tag"], "database point marked as superseded"
+
+
