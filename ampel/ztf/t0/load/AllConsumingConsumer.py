@@ -7,10 +7,28 @@
 # Last Modified Date: 14.11.2018
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
+import enum
 import sys
 import uuid
 
-from confluent_kafka import Consumer
+import confluent_kafka
+
+KafkaErrorCode = enum.IntEnum(
+    "KafkaErrorCode",
+    {
+        k: v
+        for k, v in confluent_kafka.KafkaError.__dict__.items()
+        if isinstance(v, int)
+    },
+)
+
+
+class KafkaError(RuntimeError):
+    """Picklable wrapper for cimpl.KafkaError"""
+
+    def __init__(self, kafka_err):
+        super().__init__(kafka_err.args[0])
+        self.code = KafkaErrorCode(kafka_err.code())
 
 
 class AllConsumingConsumer:
@@ -36,7 +54,7 @@ class AllConsumingConsumer:
         config.update(**consumer_config)
         if "stats_cb" in config and "statistics.interval.ms" not in config:
             config["statistics.interval.ms"] = 60000
-        self._consumer = Consumer(**config)
+        self._consumer = confluent_kafka.Consumer(**config)
 
         self._consumer.subscribe(topics)
         if timeout is None:
@@ -87,7 +105,7 @@ class AllConsumingConsumer:
             return message
 
         if message.error():
-            raise RuntimeError(message.error())
+            raise KafkaError(message.error())
         else:
             self._last_message = message
             return message
