@@ -7,19 +7,12 @@
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
 import asyncio
-from typing import (
-    Dict,
-    Optional,
-    Sequence,
-    Tuple,
-    TYPE_CHECKING,
-)
+from typing import Dict, List, Optional, Sequence, Tuple, TYPE_CHECKING
 
 import nest_asyncio
 
 from ampel.abstract.AbsPhotoT3Unit import AbsPhotoT3Unit
 from ampel.struct.JournalExtra import JournalExtra
-from ampel.t2.T2RunState import T2RunState
 from ampel.type import StockId
 from ampel.ztf.t3.skyportal.SkyPortalClient import BaseSkyPortalPublisher
 
@@ -31,6 +24,8 @@ class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
 
     #: Number of connections per (host,port) pair
     max_parallel_connections: int = 50
+    #: Save sources to these groups
+    groups: Optional[List[str]]
 
     def add(
         self, tviews: Sequence["TransientView"]
@@ -64,7 +59,9 @@ class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
     async def post_view(self, view: "TransientView") -> Tuple[StockId, JournalExtra]:
         return (
             view.id,
-            JournalExtra(extra=dict(await self.post_candidate(view))),
+            JournalExtra(
+                extra=dict(await self.post_candidate(view, groups=self.groups))
+            ),
         )
 
     def done(self) -> None:

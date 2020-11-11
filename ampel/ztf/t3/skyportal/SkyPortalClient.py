@@ -12,24 +12,23 @@ import io
 import json
 import time
 from collections import defaultdict
+from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import (
-    overload,
     Any,
     Dict,
     Generator,
     List,
     Optional,
+    overload,
     Sequence,
     TYPE_CHECKING,
-    Union,
     TypedDict,
+    Union,
 )
-from contextlib import asynccontextmanager
 
 import aiohttp
 import numpy as np
-import requests
 from astropy.io import fits
 from matplotlib.colors import Normalize
 from matplotlib.figure import Figure
@@ -334,6 +333,7 @@ async def provision_seed_data(client: SkyPortalClient):
 class PostReport(TypedDict):
     candidate: bool  #: whether the candidate was posted
     filters: int  #: number of new filter postings
+    save_error: Optional[str]  #: error raised while saving source
     photometry_count: int  #: size of posted photometry
     photometry_error: Optional[str]  #: error raised while posting photometry
     thumbnail_count: int  #: number of thumbnails posted
@@ -419,8 +419,8 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             filters named AMPEL.{channel} for each ``channel`` the transient
             belongs to.
         :param groups:
-            Names of the filter to associate with the candidate. If None, use
-            all accessible groups associated with token.
+            Names of the groups to save the source to. If None, use all
+            accessible groups associated with token.
         :param instrumentname:
             Name of the instrument with which to associate the photometry.
         """
@@ -428,6 +428,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         ret: PostReport = {
             "candidate": True,
             "filters": 0,
+            "save_error": None,
             "photometry_count": 0,
             "photometry_error": None,
             "thumbnail_count": 0,
@@ -444,11 +445,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 filters or [f"AMPEL.{channel}" for channel in view.stock["channel"]]
             )
         }
-        group_ids = (
-            ([await self.get_by_name("groups", name) for name in (groups)])
-            if groups
-            else "all"
-        )
+        group_ids = {await self.get_by_name("groups", name) for name in (groups or [])}
         assert view.stock["tag"] is not None
         instrument_id = (
             await self.get_by_name("instrument", instrument)
@@ -527,6 +524,21 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             )
             ret["filters"] += 1
             candidate = {}
+
+        # Save source to groups, if specified
+        if groups:
+            try:
+                source = (await self.get(f"sources/{name}"))["data"]
+                prev_groups = {group["id"] for group in source["groups"]}
+            except SkyPortalAPIError:
+                prev_groups = set()
+            if groups_to_post := group_ids.difference(prev_groups):
+                try:
+                    await self.post(
+                        "sources", json={"id": name, "group_ids": list(groups_to_post)}
+                    )
+                except SkyPortalAPIError as exc:
+                    ret["save_error"] = exc.args[0]
 
         # Post photometry for the latest light curve.
         # For ZTF, the id of the most recent detection is the alert id
