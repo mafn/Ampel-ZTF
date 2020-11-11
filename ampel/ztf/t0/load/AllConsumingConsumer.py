@@ -100,6 +100,16 @@ class AllConsumingConsumer:
             # wake up occasionally to catch SIGINT
             message = self._consumer.poll(self._poll_interval)
             if message is not None:
+                if err := message.error():
+                    if err.code() == KafkaErrorCode.UNKNOWN_TOPIC_OR_PART:
+                        # ignore unknown topic messages
+                        continue
+                    elif err.code() in (
+                        KafkaErrorCode._TIMED_OUT,
+                        KafkaErrorCode._MAX_POLL_EXCEEDED,
+                    ):
+                        # bail on timeouts
+                        return None
                 break
         else:
             return message

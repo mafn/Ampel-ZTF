@@ -219,7 +219,7 @@ class ZTFAlertStreamController(AbsProcessController):
                         else:
                             # start a fresh replica for each processor that
                             # returned True. NB: +1 for scale wait task
-                            if task.result() and len(pending) < self.multiplier+1:
+                            if (task.exception() or task.result()) and len(pending) < self.multiplier+1:
                                 pending.add(launch())
                 except:
                     for t in pending:
