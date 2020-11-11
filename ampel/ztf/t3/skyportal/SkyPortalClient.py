@@ -358,6 +358,8 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             body = dp["body"]
             if body["jd"] <= after:
                 continue
+            if "SUPERSEDED" in dp["tag"]:
+                continue
             base = {
                 "_id": dp["_id"],
                 "filter": ZTF_FILTERS[body["fid"]],
