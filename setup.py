@@ -28,6 +28,8 @@ setup(
 		"confluent-kafka",
 		"psycopg2-binary",
 		"sqlalchemy",
+		"aiohttp",
+		"nest_asyncio",
 	],
 	extras_require = {
 		"testing": [

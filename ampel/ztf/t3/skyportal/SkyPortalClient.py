@@ -14,6 +14,7 @@ import time
 from collections import defaultdict
 from datetime import datetime
 from typing import (
+    overload,
     Any,
     Dict,
     Generator,
@@ -24,8 +25,9 @@ from typing import (
     Union,
     TypedDict,
 )
-from functools import lru_cache
+from contextlib import asynccontextmanager
 
+import aiohttp
 import numpy as np
 import requests
 from astropy.io import fits
@@ -104,62 +106,113 @@ class SkyPortalClient(AmpelBaseModel):
     #: API token
     token: Secret[str]
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
         self._request_kwargs = {
             "headers": {"Authorization": f"token {self.token.get()}"}
         }
-        self._session = requests.Session()
+        self._ids: Dict[str, Dict[str, int]] = {}
+        self._session: Optional[aiohttp.ClientSession] = None
 
-    def request(self, verb, endpoint, raise_exc=True, _decode_json=True, **kwargs):
+    @asynccontextmanager
+    async def session(self, limit_per_host=0):
+        async with aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(limit_per_host=limit_per_host)
+        ) as session:
+            self._session = session
+            yield self
+            self._session = None
+
+    @overload
+    async def request(
+        self,
+        verb: str,
+        endpoint: str,
+        raise_exc: bool,
+        _decode_json: None,
+        **kwargs: Dict[str, Any],
+    ) -> aiohttp.ClientResponse:
+        ...
+
+    @overload
+    async def request(
+        self,
+        verb: str,
+        endpoint: str,
+        raise_exc: bool,
+        _decode_json: bool,
+        **kwargs: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        ...
+
+    async def request(
+        self,
+        verb: str,
+        endpoint: str,
+        raise_exc: bool = True,
+        _decode_json: Optional[bool] = True,
+        **kwargs: Dict[str, Any],
+    ) -> Union[aiohttp.ClientResponse, Dict[str, Any]]:
+        if self._session is None:
+            raise ValueError(
+                "call operations within an `async with self.session()` block"
+            )
         if endpoint.startswith("/"):
             url = self.base_url + endpoint
         else:
             url = self.base_url + "/api/" + endpoint
-        response = self._session.request(
+        async with self._session.request(
             verb, url, **{**self._request_kwargs, **kwargs}
-        )
-        if _decode_json:
-            payload = response.json()
-            if raise_exc and payload["status"] != "success":
-                raise SkyPortalAPIError(payload["message"])
-            return payload
-        else:
-            return response
+        ) as response:
+            if _decode_json:
+                payload = await response.json()
+                if raise_exc and payload["status"] != "success":
+                    raise SkyPortalAPIError(payload["message"])
+                return payload
+            else:
+                return response
 
-    def get_id(self, endpoint, params, default=None):
+    async def get_id(self, endpoint, params, default=None):
         """Query for an object by id, inserting it if not found"""
-        if not (response := self.get(endpoint, params=params, raise_exc=False))["data"]:
-            response = self.post(endpoint, json=default or params)
+        if not (response := await self.get(endpoint, params=params, raise_exc=False))[
+            "data"
+        ]:
+            response = await self.post(endpoint, json=default or params)
         if isinstance(response["data"], list):
             return response["data"][0]["id"]
         else:
             return response["data"]["id"]
 
-    @lru_cache(1024)
-    def get_by_name(self, endpoint, name):
+    async def get_by_name(self, endpoint, name):
+        if not endpoint in self._ids:
+            self._ids[endpoint] = {}
+        if not name in self._ids[endpoint]:
+            self._ids[endpoint][name] = await self._get_by_name(endpoint, name)
+        return self._ids[endpoint][name]
+
+    async def _get_by_name(self, endpoint, name):
         try:
             return next(
                 d["id"]
-                for d in self.get(endpoint, params={"name": name})["data"]
+                for d in (await self.get(endpoint, params={"name": name}))["data"]
                 if d["name"] == name
             )
         except StopIteration:
             pass
         raise KeyError(f"No {endpoint} named {name}")
 
-    def get(self, endpoint, **kwargs):
-        return self.request("GET", endpoint, **kwargs)
+    async def get(self, endpoint: str, **kwargs) -> Dict[str, Any]:
+        return await self.request("GET", endpoint, **kwargs)
 
-    def post(self, endpoint, **kwargs):
-        return self.request("POST", endpoint, **kwargs)
+    async def post(self, endpoint: str, **kwargs) -> Dict[str, Any]:
+        return await self.request("POST", endpoint, **kwargs)
 
-    def put(self, endpoint, **kwargs):
-        return self.request("PUT", endpoint, **kwargs)
+    async def put(self, endpoint: str, **kwargs) -> Dict[str, Any]:
+        return await self.request("PUT", endpoint, **kwargs)
 
-    def head(self, endpoint, **kwargs):
-        return self.request("HEAD", endpoint, _decode_json=False, **kwargs)
+    async def head(self, endpoint: str, **kwargs) -> aiohttp.ClientResponse:
+        return await self.request("HEAD", endpoint, _decode_json=None, **kwargs)
 
 
 class FilterGroupProvisioner(SkyPortalClient):
@@ -177,20 +230,20 @@ class FilterGroupProvisioner(SkyPortalClient):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def create_filter(self, name, stream, group):
+    async def create_filter(self, name, stream, group):
         try:
-            return self.get_by_name("filters", name)
+            return await self.get_by_name("filters", name)
         except KeyError:
             ...
         doc = {
             "name": name,
-            "stream_id": self.get_by_name("streams", self.stream_names[stream]),
-            "group_id": self.get_by_name("groups", group),
+            "stream_id": await self.get_by_name("streams", self.stream_names[stream]),
+            "group_id": await self.get_by_name("groups", group),
         }
-        self.post("filters", json=doc)
-        return self.get_by_name("filters", name)
+        await self.post("filters", json=doc)
+        return await self.get_by_name("filters", name)
 
-    def create_filters(
+    async def create_filters(
         self, config: "AmpelConfig", group: str, stream: Optional[str] = None
     ) -> None:
         """
@@ -206,16 +259,16 @@ class FilterGroupProvisioner(SkyPortalClient):
                 continue
             name = f"AMPEL.{channel['channel']}"
             try:
-                self.get_by_name("filters", name)
+                await self.get_by_name("filters", name)
                 continue
             except KeyError:
                 ...
-            self.create_filter(name, stream or channel["template"], group)
+            await self.create_filter(name, stream or channel["template"], group)
 
 
-def provision_seed_data(client: SkyPortalClient):
+async def provision_seed_data(client: SkyPortalClient):
     """Set up instruments and groups for a test instance"""
-    p48 = client.get_id(
+    p48 = await client.get_id(
         "telescope",
         {"name": "P48"},
         {
@@ -242,17 +295,19 @@ def provision_seed_data(client: SkyPortalClient):
                 "name": "ZTF",
             },
         ),
-        "stream": client.get_id("streams", {"name": "ztf_partnership"}),
+        "stream": await client.get_id("streams", {"name": "ztf_partnership"}),
         "group": 1,  # root group
     }
     if not source["stream"] in [
         groupstream["id"]
-        for groupstream in client.get(f"groups/{source['group']}")["data"]["streams"]
+        for groupstream in (await client.get(f"groups/{source['group']}"))["data"][
+            "streams"
+        ]
     ]:
-        client.post(
+        await client.post(
             f"groups/{source['group']}/streams", json={"stream_id": source["stream"]}
         )
-    source["filter"] = client.get_id(
+    source["filter"] = await client.get_id(
         "filters",
         {"name": "highlander"},
         {
@@ -265,11 +320,11 @@ def provision_seed_data(client: SkyPortalClient):
     # ensure that all users are in the root group
     users = [
         users["username"]
-        for users in client.get(f"groups/{source['group']}")["data"]["users"]
+        for users in (await client.get(f"groups/{source['group']}"))["data"]["users"]
     ]
-    for user in client.get("user")["data"]:
+    for user in (await client.get("user"))["data"]:
         if not user["username"] in users:
-            client.post(
+            await client.post(
                 f"groups/{source['group']}/users", json={"username": user["username"]},
             )
 
@@ -278,13 +333,13 @@ def provision_seed_data(client: SkyPortalClient):
 
 class PostReport(TypedDict):
     candidate: bool  #: whether the candidate was posted
-    filters: int #: number of new filter postings
+    filters: int  #: number of new filter postings
     photometry_count: int  #: size of posted photometry
-    photometry_error: Optional[str] #: error raised while posting photometry
+    photometry_error: Optional[str]  #: error raised while posting photometry
     thumbnail_count: int  #: number of thumbnails posted
     comments: int  #: number of comments posted
     comment_errors: List[str]  #: errors raised while posting comments
-    dt: float #: elapsed time in seconds
+    dt: float  #: elapsed time in seconds
 
 
 class BaseSkyPortalPublisher(SkyPortalClient):
@@ -295,13 +350,6 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         if not "logger" in kwargs:
             kwargs["logger"] = AmpelLogger.get_logger()
         super().__init__(**kwargs)
-
-        self.groups = {
-            doc["name"]: doc["id"]
-            for doc in self.get("groups", raise_exc=True)["data"][
-                "user_accessible_groups"
-            ]
-        }
 
     def _transform_datapoints(
         self, dps: Sequence["DataPoint"], after=-float("inf")
@@ -336,15 +384,15 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 content[k].append(v)
         return dict(content)
 
-    def _find_instrument(self, tags: Sequence[Union[int, str]]) -> int:
+    async def _find_instrument(self, tags: Sequence[Union[int, str]]) -> int:
         for tag in tags:
             try:
-                return self.get_by_name("instrument", tag)
+                return await self.get_by_name("instrument", tag)
             except:
                 ...
         raise KeyError(f"None of {tags} match a known instrument")
 
-    def post_candidate(
+    async def post_candidate(
         self,
         view: "TransientView",
         filters: Optional[List[str]] = None,
@@ -389,21 +437,21 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         assert view.stock, f"{self.__class__} requires stock records"
         assert view.stock["channel"] is not None
         filter_ids = {
-            name: self.get_by_name("filters", name)
+            name: await self.get_by_name("filters", name)
             for name in (
                 filters or [f"AMPEL.{channel}" for channel in view.stock["channel"]]
             )
         }
         group_ids = (
-            ([self.get_by_name("groups", name) for name in (groups)])
+            ([await self.get_by_name("groups", name) for name in (groups)])
             if groups
             else "all"
         )
         assert view.stock["tag"] is not None
         instrument_id = (
-            self.get_by_name("instrument", instrument)
+            await self.get_by_name("instrument", instrument)
             if instrument
-            else self._find_instrument(view.stock["tag"])
+            else await self._find_instrument(view.stock["tag"])
         )
 
         assert view.stock and view.stock["name"] is not None
@@ -432,7 +480,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         }
         new_filters = set(filter_ids.values())
 
-        if (response := self.get(f"candidates/{name}", raise_exc=False))[
+        if (response := await self.get(f"candidates/{name}", raise_exc=False))[
             "status"
         ] == "success":
             # Only update filters, not the candidate itself
@@ -465,7 +513,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             if not fids:
                 continue
             new_filters.difference_update(fids)
-            self.post(
+            await self.post(
                 f"candidates",
                 json={
                     "id": name,
@@ -487,14 +535,14 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             "obj_id": name,
             "group_ids": [
                 1
-            ],  # change to "all" after https://github.com/skyportal/skyportal/issues/1263 is fixed
+            ],  # change to "all" after https://github.com/skyportal/skyportal/pull/1264 is merged
             "magsys": "ab",
-            "instrument_id": self.get_by_name("instrument", "ZTF"),
+            "instrument_id": instrument_id,
             **self.make_photometry(dps),
         }
         datapoint_ids = photometry.pop("_id")
         try:
-            photometry_response = self.put("photometry", json=photometry)
+            photometry_response = await self.put("photometry", json=photometry)
             photometry_ids = photometry_response["data"]["ids"]
             assert len(datapoint_ids) == len(photometry_ids)
             ret["photometry_count"] = len(photometry_ids)
@@ -506,7 +554,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             for kind, blob in cutouts.items():
                 assert isinstance(blob, bytes)
                 # FIXME: switch back to FITS when SkyPortal supports it
-                self.post(
+                await self.post(
                     "thumbnail",
                     json={
                         "photometry_id": photometry_id,
@@ -538,7 +586,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 # post new comment
                 self.logger.debug(f"posting {t2['unit']}")
                 try:
-                    self.post(
+                    await self.post(
                         "comment",
                         json={
                             "obj_id": name,
@@ -560,8 +608,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             ):
                 self.logger.debug(f"updating {t2['unit']}")
                 try:
-                    self.request(
-                        "PUT",
+                    await self.put(
                         f"comment/{comment['id']}",
                         json={
                             "attachment_bytes": encode_t2_body(t2),
