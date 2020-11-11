@@ -38,8 +38,12 @@ class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
         """Pass each view to :meth:`post_candidate`."""
         # Patch event loop to be reentrant if it is already running, e.g.
         # within a notebook
-        if asyncio.get_event_loop().is_running():
-            nest_asyncio.apply()
+        try:
+            if asyncio.get_event_loop().is_running():
+                nest_asyncio.apply()
+        except RuntimeError:
+            # second call raises: RuntimeError: There is no current event loop in thread 'MainThread'.
+            ...
         return asyncio.run(self.post_candidates(tviews))
 
     async def post_candidates(
