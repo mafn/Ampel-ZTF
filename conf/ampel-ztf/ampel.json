@@ -8,11 +8,13 @@
 			"ampel.ztf.alert.ZTFGeneralAlertRegister",
 			"ampel.ztf.t3.complement.ZTFCutoutImages",
 			"ampel.ztf.t3.complement.FritzReport",
-			"ampel.ztf.t3.skyportal.SkyPortalPublisher",
 			"ampel.ztf.t3.select.T3AdHocStockSelector",
 			"ampel.ztf.t3.T3LegacyExtJournalAppender"
 		],
-		"base": ["ampel.ztf.ingest.ZiT1Combiner"],
+		"base": [
+			"ampel.ztf.ingest.ZiT1Combiner",
+			"ampel.ztf.t3.skyportal.SkyPortalPublisher"
+		],
 		"aux": ["ampel.ztf.alert.ZiAlertSupplier"]
 	},
 	"template": {
