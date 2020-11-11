@@ -197,7 +197,7 @@ class ZTFAlertStreamController(AbsProcessController):
         pending.add(asyncio.create_task(self._scale_event.wait(), name="scale"))
         done: Set[asyncio.Task] = set()
         try:
-            while self._process.active:
+            while self._process.active and len(pending) > 1:
                 try:
                     done, pending = await asyncio.wait( #  type: ignore[assignment]
                         pending, return_when="FIRST_COMPLETED"
