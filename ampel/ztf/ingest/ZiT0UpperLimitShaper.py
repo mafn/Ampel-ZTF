@@ -40,7 +40,11 @@ class ZiT0UpperLimitShaper(AbsT0Unit):
 				'body': {
 					'jd': photo_dict['jd'],
 					'diffmaglim': photo_dict['diffmaglim'],
-					'rcid': (photo_dict['pid'] % 10000) // 100,
+					'rcid': (
+						rcid
+						if (rcid := photo_dict.get('rcid')) is not None
+						else (photo_dict['pid'] % 10000) // 100
+					),
 					'fid': photo_dict['fid']
 					#'pdiffimfilename': fname
 					#'pid': photo_dict['pid'],
@@ -72,6 +76,6 @@ class ZiT0UpperLimitShaper(AbsT0Unit):
 		"""
 		return (
 			(int((self.JD2017 - uld['jd']) * 1000000) * 10000000)
-			- (((uld["pid"] % 10000)//100) * 100000)
+			- ((rcid if (rcid := uld.get("rcid")) is not None else (uld["pid"] % 10000)//100) * 100000)
 			- round(uld['diffmaglim'] * 1000)
 		)
