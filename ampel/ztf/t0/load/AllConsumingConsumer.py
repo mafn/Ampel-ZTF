@@ -84,7 +84,7 @@ class AllConsumingConsumer:
     def __iter__(self):
         return self
 
-    def consume(self) -> Optional[confluent_kafka.KafkaMessage]:
+    def consume(self) -> Optional[confluent_kafka.Message]:
         """
         Block until one message has arrived, and return it.
         
