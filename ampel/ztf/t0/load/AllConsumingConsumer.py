@@ -10,15 +10,16 @@
 import enum
 import sys
 import uuid
+from typing import Optional
 
 import confluent_kafka
 
-KafkaErrorCode = enum.IntEnum(
+KafkaErrorCode = enum.IntEnum(  # type: ignore[misc]
     "KafkaErrorCode",
     {
         k: v
         for k, v in confluent_kafka.KafkaError.__dict__.items()
-        if isinstance(v, int)
+        if isinstance(v, int) and isinstance(k, str)
     },
 )
 
@@ -83,7 +84,7 @@ class AllConsumingConsumer:
     def __iter__(self):
         return self
 
-    def consume(self):
+    def consume(self) -> Optional[confluent_kafka.KafkaMessage]:
         """
         Block until one message has arrived, and return it.
         
@@ -101,12 +102,12 @@ class AllConsumingConsumer:
             message = self._consumer.poll(self._poll_interval)
             if message is not None:
                 if err := message.error():
-                    if err.code() == KafkaErrorCode.UNKNOWN_TOPIC_OR_PART:
+                    if err.code() == confluent_kafka.KafkaError.UNKNOWN_TOPIC_OR_PART:
                         # ignore unknown topic messages
                         continue
                     elif err.code() in (
-                        KafkaErrorCode._TIMED_OUT,
-                        KafkaErrorCode._MAX_POLL_EXCEEDED,
+                        confluent_kafka.KafkaError._TIMED_OUT,
+                        confluent_kafka.KafkaError._MAX_POLL_EXCEEDED,
                     ):
                         # bail on timeouts
                         return None
