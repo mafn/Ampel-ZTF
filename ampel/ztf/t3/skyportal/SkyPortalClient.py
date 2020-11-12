@@ -28,6 +28,7 @@ from typing import (
 )
 
 import aiohttp
+import backoff
 import numpy as np
 from astropy.io import fits
 from matplotlib.colors import Normalize
@@ -145,6 +146,11 @@ class SkyPortalClient(AmpelBaseModel):
     ) -> Dict[str, Any]:
         ...
 
+    @backoff.on_exception(
+        backoff.expo,
+        (aiohttp.ClientResponseError, aiohttp.ClientConnectionError),
+        max_time=300,
+    )
     async def request(
         self,
         verb: str,
@@ -164,6 +170,8 @@ class SkyPortalClient(AmpelBaseModel):
         async with self._session.request(
             verb, url, **{**self._request_kwargs, **kwargs}
         ) as response:
+            if response.status >= 500:
+                response.raise_for_status()
             if _decode_json:
                 payload = await response.json()
                 if raise_exc and payload["status"] != "success":
