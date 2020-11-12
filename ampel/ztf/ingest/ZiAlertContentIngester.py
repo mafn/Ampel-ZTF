@@ -66,7 +66,6 @@ class ZiAlertContentIngester(AbsAlertContentIngester[PhotoAlert, DataPoint]):
 
 		# used to check potentially already inserted pps
 		self._photo_col = self.context.db.get_collection("t0")
-		self._photo_client = self._photo_col.database.client
 
 		self.stat_pps_reprocs = 0
 		self.stat_pps_inserts = 0
@@ -215,9 +214,9 @@ class ZiAlertContentIngester(AbsAlertContentIngester[PhotoAlert, DataPoint]):
 		# Part 4: commit ops and check for conflicts
 		############################################
 		if self.check_reprocessing:
-			# Commit ops
+			# Commit ops, retrying on upsert races
 			if ops:
-				self._photo_col.bulk_write(ops)
+				self.updates_buffer.call_bulk_write('t0', ops)
 			# If another query returns docs not present in the first query, the
 			# set of superseded photopoints may be incomplete.
 			if concurrent_updates := (
