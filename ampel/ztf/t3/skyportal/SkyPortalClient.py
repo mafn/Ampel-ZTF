@@ -571,20 +571,29 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         except SkyPortalAPIError as exc:
             ret["photometry_error"] = exc.args[0]
 
+        # SkyPortal only supports one of thumbnail per object and type
+        # ('new', 'ref', 'sub', 'sdss', 'dr8', 'new_gz', 'ref_gz', 'sub_gz')
+        # Post one of each type only if they do not yet exist.
+        existing_cutouts: Set[str] = {
+            t["type"] for t in response["data"]["thumbnails"]
+        } if response["status"] == "success" else set()
         for candid, cutouts in (view.extra or {}).get("ZTFCutoutImages", {}).items():
             photometry_id = photometry_ids[datapoint_ids.index(candid)]
             for kind, blob in cutouts.items():
+                if CUTOUT_TYPES[kind] in existing_cutouts:
+                    continue
                 assert isinstance(blob, bytes)
                 # FIXME: switch back to FITS when SkyPortal supports it
                 await self.post(
                     "thumbnail",
                     json={
-                        "photometry_id": photometry_id,
+                        "obj_id": name,
                         "data": render_thumbnail(blob),
                         "ttype": CUTOUT_TYPES[kind],
                     },
                     raise_exc=True,
                 )
+                existing_cutouts.add(CUTOUT_TYPES[kind])
                 ret["thumbnail_count"] += 1
 
         # represent latest T2 results as a comments
