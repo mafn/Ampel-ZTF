@@ -55,7 +55,8 @@ def encode_t2_body(t2: "T2Record") -> str:
             {
                 "timestamp": datetime.fromtimestamp(doc["ts"]).isoformat(),
                 **{k: v for k, v in doc.items() if k != "ts"},
-            }
+            },
+            default=lambda o: None
         ).encode()
     ).decode()
 
