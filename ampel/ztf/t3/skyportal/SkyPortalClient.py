@@ -615,7 +615,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                             "text": t2["unit"],
                             "attachment": {
                                 "body": encode_t2_body(t2),
-                                "name": f"{name}.{t2['unit']}.json",
+                                "name": f"{name}-{t2['unit']}.json",
                             },
                         },
                     )
