@@ -38,9 +38,10 @@ class ZiAlertSupplier(AbsAlertSupplier[PhotoAlert]):
 
 		if d['prv_candidates']:
 
-			dps: List[ReadOnlyDict] = []
+			pp = ReadOnlyDict(d['candidate'])
+			dps: List[ReadOnlyDict] = [pp]
 			uls: List[ReadOnlyDict] = []
-			pps: List[ReadOnlyDict] = [ReadOnlyDict(d['candidate'])]
+			pps: List[ReadOnlyDict] = [pp]
 
 			for el in d['prv_candidates']:
 
@@ -85,7 +86,7 @@ class ZiAlertSupplier(AbsAlertSupplier[PhotoAlert]):
 			)
 
 		self.stat_pps += 1
-		datapoints = ReadOnlyDict(d['candidate']),
+		datapoints = (ReadOnlyDict(d['candidate']),)
 
 		# No "previous candidate"
 		return PhotoAlert(
