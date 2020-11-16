@@ -4,14 +4,9 @@ import itertools
 import os
 import pickle
 import socket
-from functools import partial
-from pathlib import Path
 
-import mongomock
-import pymongo
 import pytest
 
-from ampel.alert.load.TarAlertLoader import TarAlertLoader
 from ampel.config.AmpelConfig import AmpelConfig
 from ampel.db.DBUpdatesBuffer import DBUpdatesBuffer
 from ampel.dev.DevAmpelContext import DevAmpelContext
@@ -20,58 +15,6 @@ from ampel.log.LogsBufferDict import LogsBufferDict
 from ampel.util import concurrent
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
 from ampel.ztf.ingest.ZiAlertContentIngester import ZiAlertContentIngester
-
-
-@pytest.fixture
-def patch_mongo(monkeypatch):
-    monkeypatch.setattr("ampel.db.AmpelDB.MongoClient", mongomock.MongoClient)
-
-
-@pytest.fixture
-def dev_context():
-    config = AmpelConfig.load(
-        Path(__file__).parent / "test-data" / "testing-config.yaml",
-    )
-    custom_conf = {}
-    if "MONGO_HOSTNAME" in os.environ:
-        custom_conf[
-            "resource.mongo"
-        ] = f"mongodb://{os.environ['MONGO_HOSTNAME']}:{os.environ.get('MONGO_PORT', 27017)}"
-    try:
-        return DevAmpelContext.new(
-            config=config, purge_db=True, custom_conf=custom_conf
-        )
-    except pymongo.errors.ServerSelectionTimeoutError:
-        raise pytest.skip(f"No mongod listening on {(custom_conf or config).get('resource.mongo')}")
-
-
-@pytest.fixture
-def avro_packets():
-    """
-    4 alerts for a random AGN, widely spaced:
-    
-    ------------------ -------------------------- ------------------------
-    candid             detection                  history
-    ------------------ -------------------------- ------------------------
-    673285273115015035 2018-11-05 06:50:48.001935 29 days, 22:11:31.004165 
-    879461413115015009 2019-05-30 11:04:25.996800 0:00:00 
-    882463993115015007 2019-06-02 11:08:09.003839 3 days, 0:03:43.007039 
-    885458643115015010 2019-06-05 11:00:26.997131 5 days, 23:56:01.000331 
-    ------------------ -------------------------- ------------------------
-    """
-    return partial(
-        TarAlertLoader, Path(__file__).parent / "test-data" / "ZTF18abxhyqv.tar.gz"
-    )
-
-
-@pytest.fixture
-def superseded_packets():
-    """
-    Three alerts, received within 100 ms, with the same points but different candids
-    """
-    return partial(
-        TarAlertLoader, Path(__file__).parent / "test-data" / "ZTF18acruwxq.tar.gz"
-    )
 
 
 def _make_ingester(context):

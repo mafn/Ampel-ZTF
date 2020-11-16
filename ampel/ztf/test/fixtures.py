@@ -1,7 +1,14 @@
-from os.path import abspath, join, dirname
+from os import environ
+from os.path import dirname, join
+from pathlib import Path
+from functools import partial
+
+import mongomock
 import pytest
 
-from os import environ
+from ampel.alert.load.TarAlertLoader import TarAlertLoader
+from ampel.config.AmpelConfig import AmpelConfig
+from ampel.dev.DevAmpelContext import DevAmpelContext
 
 
 @pytest.fixture(scope="session")
@@ -19,7 +26,7 @@ def empty_archive(archive):
     """
     Yield archive database, dropping all rows when finished
     """
-    from sqlalchemy import select, create_engine, MetaData
+    from sqlalchemy import create_engine, MetaData
 
     engine = create_engine(archive)
     meta = MetaData()
@@ -48,7 +55,9 @@ def kafka():
 @pytest.fixture(scope="session")
 def kafka_stream(kafka, alert_tarball):
     import itertools
+
     from confluent_kafka import Producer
+
     from ampel.alert.load.TarballWalker import TarballWalker
 
     atat = TarballWalker(alert_tarball)
@@ -75,7 +84,9 @@ def alert_tarball():
 )
 def zuds_alert_generator(request):
     import itertools
+
     import fastavro
+
     from ampel.alert.load.TarballWalker import TarballWalker
 
     def alerts(with_schema=False):
@@ -102,7 +113,9 @@ def zuds_alert_generator(request):
 @pytest.fixture(scope="session")
 def alert_generator(alert_tarball):
     import itertools
+
     import fastavro
+
     from ampel.alert.load.TarballWalker import TarballWalker
 
     def alerts(with_schema=False):
@@ -129,3 +142,57 @@ def lightcurve_generator(alert_generator):
             yield lightcurve
 
     return lightcurves
+
+
+@pytest.fixture
+def patch_mongo(monkeypatch):
+    monkeypatch.setattr("ampel.db.AmpelDB.MongoClient", mongomock.MongoClient)
+
+
+@pytest.fixture
+def dev_context():
+    config = AmpelConfig.load(
+        Path(__file__).parent / "test-data" / "testing-config.yaml",
+    )
+    custom_conf = {}
+    if "MONGO_HOSTNAME" in environ:
+        custom_conf[
+            "resource.mongo"
+        ] = f"mongodb://{environ['MONGO_HOSTNAME']}:{environ.get('MONGO_PORT', 27017)}"
+    try:
+        return DevAmpelContext.new(
+            config=config, purge_db=True, custom_conf=custom_conf
+        )
+    except pymongo.errors.ServerSelectionTimeoutError:
+        raise pytest.skip(
+            f"No mongod listening on {(custom_conf or config).get('resource.mongo')}"
+        )
+
+
+@pytest.fixture
+def avro_packets():
+    """
+    4 alerts for a random AGN, widely spaced:
+    
+    ------------------ -------------------------- ------------------------
+    candid             detection                  history
+    ------------------ -------------------------- ------------------------
+    673285273115015035 2018-11-05 06:50:48.001935 29 days, 22:11:31.004165 
+    879461413115015009 2019-05-30 11:04:25.996800 0:00:00 
+    882463993115015007 2019-06-02 11:08:09.003839 3 days, 0:03:43.007039 
+    885458643115015010 2019-06-05 11:00:26.997131 5 days, 23:56:01.000331 
+    ------------------ -------------------------- ------------------------
+    """
+    return partial(
+        TarAlertLoader, Path(__file__).parent / "test-data" / "ZTF18abxhyqv.tar.gz"
+    )
+
+
+@pytest.fixture
+def superseded_packets():
+    """
+    Three alerts, received within 100 ms, with the same points but different candids
+    """
+    return partial(
+        TarAlertLoader, Path(__file__).parent / "test-data" / "ZTF18acruwxq.tar.gz"
+    )
