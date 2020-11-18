@@ -561,9 +561,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         # group_ids are idempotent
         photometry = {
             "obj_id": name,
-            "group_ids": [
-                1
-            ],  # change to "all" after https://github.com/skyportal/skyportal/pull/1264 is merged
+            "group_ids": "all",
             "magsys": "ab",
             "instrument_id": instrument_id,
             **self.make_photometry(dps),
