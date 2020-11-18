@@ -22,6 +22,7 @@ from typing import (
     Optional,
     overload,
     Sequence,
+    Set,
     TYPE_CHECKING,
     TypedDict,
     Union,
@@ -56,7 +57,7 @@ def encode_t2_body(t2: "T2Record") -> str:
                 "timestamp": datetime.fromtimestamp(doc["ts"]).isoformat(),
                 **{k: v for k, v in doc.items() if k != "ts"},
             },
-            default=lambda o: None
+            default=lambda o: None,
         ).encode()
     ).decode()
 
@@ -171,9 +172,8 @@ class SkyPortalClient(AmpelBaseModel):
         async with self._session.request(
             verb, url, **{**self._request_kwargs, **kwargs}
         ) as response:
-            if response.status >= 500:
-                response.raise_for_status()
             if _decode_json:
+                response.raise_for_status()
                 payload = await response.json()
                 if raise_exc and payload["status"] != "success":
                     raise SkyPortalAPIError(payload["message"])
@@ -340,8 +340,8 @@ async def provision_seed_data(client: SkyPortalClient):
 
 
 class PostReport(TypedDict):
-    candidate: bool  #: whether the candidate was posted
-    filters: int  #: number of new filter postings
+    new: bool  #: is this a new source?
+    candidates: List[int]  #: new candidates created
     save_error: Optional[str]  #: error raised while saving source
     photometry_count: int  #: size of posted photometry
     photometry_error: Optional[str]  #: error raised while posting photometry
@@ -435,8 +435,8 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         """
 
         ret: PostReport = {
-            "candidate": True,
-            "filters": 0,
+            "new": True,
+            "candidates": [],
             "save_error": None,
             "photometry_count": 0,
             "photometry_error": None,
@@ -494,7 +494,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             # Only update filters, not the candidate itself
             new_filters.difference_update(response["data"]["filter_ids"])
             candidate = {}
-            ret["candidate"] = False
+            ret["new"] = False
 
         # Walk through the non-autocomplete journal entries in time order,
         # finding the time and alert id at which each filter passed for the
@@ -521,17 +521,19 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             if not fids:
                 continue
             new_filters.difference_update(fids)
-            await self.post(
-                f"candidates",
-                json={
-                    "id": name,
-                    "filter_ids": fids,
-                    "passing_alert_id": jentry["extra"]["alert"],
-                    "passed_at": datetime.fromtimestamp(jentry["ts"]).isoformat(),
-                    **candidate,
-                },
-            )
-            ret["filters"] += 1
+            candidate_ids = (
+                await self.post(
+                    f"candidates",
+                    json={
+                        "id": name,
+                        "filter_ids": fids,
+                        "passing_alert_id": jentry["extra"]["alert"],
+                        "passed_at": datetime.fromtimestamp(jentry["ts"]).isoformat(),
+                        **candidate,
+                    },
+                )
+            )["data"]["ids"]
+            ret["candidates"] += candidate_ids
             candidate = {}
 
         # Save source to groups, if specified
