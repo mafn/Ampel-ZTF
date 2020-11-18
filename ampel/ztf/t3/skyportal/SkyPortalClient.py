@@ -173,8 +173,11 @@ class SkyPortalClient(AmpelBaseModel):
             verb, url, **{**self._request_kwargs, **kwargs}
         ) as response:
             if _decode_json:
-                response.raise_for_status()
-                payload = await response.json()
+                try:
+                    payload = await response.json()
+                except:
+                    # only use status code if response can't be read
+                    response.raise_for_status()
                 if raise_exc and payload["status"] != "success":
                     raise SkyPortalAPIError(payload["message"])
                 return payload
