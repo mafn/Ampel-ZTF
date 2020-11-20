@@ -100,7 +100,8 @@ class ZiT1ArchivalCompoundIngester(AbsCompoundIngester[PhotoCompoundBluePrint]):
                         },
                         {"$group": {"_id": None, "jd": {"$min": "$body.jd"}}},
                     ]
-                )
+                ),
+                {"jd": None},
             )["jd"]
         ) is None:
             return from_alert
