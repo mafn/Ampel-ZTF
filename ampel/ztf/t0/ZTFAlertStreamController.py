@@ -93,7 +93,7 @@ class ArchiveSource(StrictModel):
     def get(self) -> ZiAlertSupplier:
         supplier = ZiAlertSupplier(deserialize=None)
         supplier.set_alert_source(
-            ArchiveDB(self.db, connect_args=self.auth.get())
+            ArchiveDB.instance(self.db, connect_args=self.auth.get())
             .get_alerts_in_time_range(
                 self.jd_min,
                 self.jd_max,

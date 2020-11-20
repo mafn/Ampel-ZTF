@@ -29,7 +29,7 @@ class ZTFCutoutImages(AbsT3DataAppender):
 
         AmpelBaseModel.__init__(self, **kwargs)
 
-        self.archive = ArchiveDB(
+        self.archive = ArchiveDB.instance(
             context.config.get(f"resource.ampel-ztf/archive", str),
             connect_args=self.auth.get(),
         )
