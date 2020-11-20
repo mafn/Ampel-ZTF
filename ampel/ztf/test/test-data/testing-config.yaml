@@ -56,10 +56,72 @@ db:
   prefix: AmpelTest
   mongo_options:
     serverSelectionTimeoutMS: 1
+channel:
+  EXAMPLE_TNS_MSIP:
+    channel: EXAMPLE_TNS_MSIP
+    purge:
+      content:
+        delay: 100
+        format: json
+        unify: true
+        compress: true
+      logs:
+        delay: 50
+        format: csv
+        compress: true
+        header: false
+    active: true
+    hash: 71181859740809111
+    distrib: ampel-contrib-sample
+    source: conf/ampel-contrib-sample/channel/EXAMPLE_TNS_MSIP.json
+    contact: ampel@desy.de
+    access:
+    - ZTF
+    - ZTF_PUB
+    policy: []
+    template: ztf_uw_public
 unit:
   controller: {}
-  admin: {}
-  base: {}
+  admin:
+    ZiStockIngester:
+      fqn: ampel.ztf.ingest.ZiStockIngester
+      base:
+      - StockIngester
+      - AbsStockIngester
+      - AbsIngester
+      distrib: ampel-ztf
+      file: conf/ampel-ztf/ampel.json
+    ZiAlertContentIngester:
+      fqn: ampel.ztf.ingest.ZiAlertContentIngester
+      base:
+      - AbsAlertContentIngester
+      - AbsIngester
+      distrib: ampel-ztf
+      file: conf/ampel-ztf/ampel.json
+    PhotoCompoundIngester:
+      fqn: ampel.ingest.PhotoCompoundIngester
+      base:
+      - AbsCompoundIngester
+      - AbsIngester
+      distrib: ampel-photometry
+      file: conf/ampel-photometry/ampel.json
+    PhotoT2Ingester:
+      fqn: ampel.ingest.PhotoT2Ingester
+      base:
+      - AbsStateT2Ingester
+      - AbsT2Ingester
+      - AbsIngester
+      distrib: ampel-photometry
+      file: conf/ampel-photometry/ampel.json
+  base:
+    ZiT1Combiner:
+      fqn: ampel.ztf.ingest.ZiT1Combiner
+      base:
+      - T1PhotoCombiner
+      - T1DefaultCombiner
+      - AbsT1Unit
+      distrib: ampel-ztf
+      file: conf/ampel-ztf/ampel.json
   core: {}
   aux: {}
 alias:
@@ -69,3 +131,4 @@ alias:
   t3: {}
 resource:
   mongo: mongodb://localhost:27017
+  ampel-ztf/archive: denada
