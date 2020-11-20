@@ -36,6 +36,7 @@ setup(
 			"pytest",
 			"pytest-timeout",
 			"pytest-asyncio",
+			"pytest-mock",
 			"mongomock",
 			"sqlalchemy-stubs",
 		]
