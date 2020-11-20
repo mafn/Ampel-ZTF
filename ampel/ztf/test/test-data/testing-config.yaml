@@ -122,6 +122,14 @@ unit:
       - AbsT1Unit
       distrib: ampel-ztf
       file: conf/ampel-ztf/ampel.json
+    DemoLightCurveT2Unit:
+      fqn: ampel.demo.unit.base.DemoLightCurveT2Unit
+      base:
+      - AbsLightCurveT2Unit
+      - AbsCustomStateT2Unit
+      distrib: ampel-photometry
+      file: conf/ampel-photometry/ampel.yaml
+      hash: 8908276891490169
   core: {}
   aux: {}
 alias:
@@ -132,3 +140,6 @@ alias:
 resource:
   mongo: mongodb://localhost:27017
   ampel-ztf/archive: denada
+  ampel-ztf/kafka:
+    broker: gregor
+    group: samsa

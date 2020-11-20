@@ -8,9 +8,18 @@
 # Last Modified By	: Jakob van Santen <jakob.van.santen@desy.de>
 
 from typing import Dict, Any, ClassVar, List, Union, Optional, Sequence, Literal
+from pydantic import validator
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.config.builder.FirstPassConfig import FirstPassConfig
 from ampel.model.template.AbsLegacyChannelTemplate import AbsLegacyChannelTemplate
+from ampel.model.StrictModel import StrictModel
+from ampel.model.UnitModel import UnitModel
+
+class LegacyT2ComputeModel(StrictModel):
+	#: run these units on alerts from the stream
+	alerts: List[UnitModel] = []
+	#: run these units on archival light curves
+	archive: List[UnitModel] = []
 
 class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 	"""
@@ -31,6 +40,16 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 		"ztf_uw_public": ["ZTF", "ZTF_PUB"],
 		"ztf_uw_caltech": ["ZTF", "ZTF_PUB"]
 	}
+	
+	#: T2 units to trigger when transient is updated
+	t2_compute: Union[List[UnitModel],LegacyT2ComputeModel] = []
+
+	# prevent validator from wrapping LegacyT2ComputeModel in list
+	@validator('t2_compute', pre=True, each_item=False)
+	def cast_to_list_if_required(cls, v):
+		if isinstance(v, dict) and "unit" in v:
+			return [v]
+		return v
 
 	# Mandatory implementation
 	def get_channel(self, logger: AmpelLogger) -> Dict[str, Any]:
@@ -54,7 +73,10 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 				**{"name": process_name, "tier": 3}
 			}))
 
+
 		kafka_config = first_pass_config['resource']['ampel-ztf/kafka']
+		t0_ingester = "ZiAlertContentIngester"
+		t1_ingester = ("PhotoCompoundIngester", {"combiner": {"unit": "ZiT1Combiner"}})
 		ret.insert(0,
 			self.craft_t0_process(
 				first_pass_config,
@@ -69,11 +91,20 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 					}
 				},
 				stock_ingester = "ZiStockIngester",
-				t0_ingester = "ZiAlertContentIngester",
-				t1_ingester = ("PhotoCompoundIngester", {"combiner": {"unit": "ZiT1Combiner"}}),
+				t0_ingester = t0_ingester,
+				t1_ingester = t1_ingester,
+				t1_standalone_ingester = (
+					"ZiT1ArchivalCompoundIngester",
+					{
+						"datapoint_ingester": t0_ingester,
+						"compound_ingester": {"unit": t1_ingester[0], "config": t1_ingester[1]}
+					}
+				),
 				t2_state_ingester = ("PhotoT2Ingester", {"tags": ["ZTF"]}),
 				t2_point_ingester = ("DualPointT2Ingester", {"tags": ["ZTF"]}),
 				t2_stock_ingester = ("StockT2Ingester", {"tags": ["ZTF"]}),
+				t2_compute_from_t0 = self.t2_compute.alerts if isinstance(self.t2_compute, LegacyT2ComputeModel) else self.t2_compute,
+				t2_compute_from_t1 = self.t2_compute.archive if isinstance(self.t2_compute, LegacyT2ComputeModel) else [],
 			)
 		)
 
