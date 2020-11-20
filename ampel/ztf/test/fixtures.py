@@ -1,9 +1,10 @@
+from functools import partial
 from os import environ
 from os.path import dirname, join
 from pathlib import Path
-from functools import partial
 
 import mongomock
+import pymongo
 import pytest
 
 from ampel.alert.load.TarAlertLoader import TarAlertLoader
