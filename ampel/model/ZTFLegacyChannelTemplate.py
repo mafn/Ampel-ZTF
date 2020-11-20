@@ -42,7 +42,7 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 	}
 	
 	#: T2 units to trigger when transient is updated
-	t2_compute: Union[List[UnitModel],LegacyT2ComputeModel] = []
+	t2_compute: Union[List[UnitModel],LegacyT2ComputeModel] = [] # type: ignore[assignment]
 
 	# prevent validator from wrapping LegacyT2ComputeModel in list
 	@validator('t2_compute', pre=True, each_item=False)
