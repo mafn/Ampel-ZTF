@@ -450,11 +450,11 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         }
 
         assert view.stock, f"{self.__class__} requires stock records"
-        assert view.stock["channel"] is not None
         filter_ids = {
             name: await self.get_by_name("filters", name)
             for name in (
-                filters or [f"AMPEL.{channel}" for channel in view.stock["channel"]]
+                filters
+                or [f"AMPEL.{channel}" for channel in ampel_iter(view.stock["channel"])]
             )
         }
         group_ids = {await self.get_by_name("groups", name) for name in (groups or [])}
