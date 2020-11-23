@@ -60,6 +60,10 @@ class FritzReport(SkyPortalClient, AbsT3DataAppender):
         else:
             record["extra"][self.__class__.__name__] = item
 
+    async def update_records(self, records: Iterable[AmpelBuffer]) -> None:
+        async with self.session():
+            await asyncio.gather(*[self.update_record(record) for record in records])
+
     def complement(self, records: Iterable[AmpelBuffer]) -> None:
         # Patch event loop to be reentrant if it is already running, e.g.
         # within a notebook
@@ -69,4 +73,4 @@ class FritzReport(SkyPortalClient, AbsT3DataAppender):
         except RuntimeError:
             # second call raises: RuntimeError: There is no current event loop in thread 'MainThread'.
             ...
-        asyncio.run(asyncio.gather(*[self.update_record(record) for record in records]))
+        asyncio.run(self.update_records(records))
