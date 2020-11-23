@@ -484,7 +484,13 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             "dec_dis": pps[0]["body"]["dec"],
             "origin": "Ampel",
             "score": max(drb)
-            if (drb := [pp["body"].get("drb", pp["body"]["rb"]) for pp in pps])
+            if (
+                drb := [
+                    rb
+                    for pp in pps
+                    if (rb := pp["body"].get("drb", pp["body"]["rb"])) is not None
+                ]
+            )
             else None,
             "detect_photometry_count": len(pps),
             "transient": True,  # sure, why not
