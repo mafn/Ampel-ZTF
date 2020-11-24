@@ -87,7 +87,8 @@ class PotemkinZTFAlertStreamController(ZTFAlertStreamController):
         print(f"{os.getpid()} is done!")
         return True
 
-def test_scale(config):
+@pytest.mark.asyncio
+async def test_scale(config):
     processes = [t0_process({
         "channel": name,
         "active": True,
@@ -98,17 +99,38 @@ def test_scale(config):
     controller = make_controller(config, processes, PotemkinZTFAlertStreamController)
     assert controller.processes[0].active
     
-    async def main():
-        try:
-            r = asyncio.create_task(controller.run())
-            await asyncio.sleep(0.5)
-            controller.scale(multiplier=2)
-            await asyncio.sleep(2)
-            controller.scale(multiplier=3)
-            await asyncio.sleep(2)
-            controller.scale(multiplier=1)
-            await asyncio.sleep(1)
-        finally:
-            controller.stop()
-        await r
-    asyncio.run(main())
+    try:
+        r = asyncio.create_task(controller.run())
+        await asyncio.sleep(0.5)
+        controller.scale(multiplier=2)
+        await asyncio.sleep(2)
+        controller.scale(multiplier=3)
+        await asyncio.sleep(2)
+        controller.scale(multiplier=1)
+        await asyncio.sleep(1)
+    finally:
+        controller.stop()
+    await r
+
+@pytest.mark.asyncio
+async def test_stop(config):
+    processes = [t0_process({
+        "channel": name,
+        "active": True,
+        "auto_complete": False,
+        "template": "ztf_uw_public",
+        "t0_filter": {"unit": "NoFilter"}
+    }) for name in ("foo", "bar")]
+    controller = make_controller(config, processes, PotemkinZTFAlertStreamController)
+    controller.multiplier = 1
+    assert controller.processes[0].active
+
+    r = asyncio.create_task(controller.run())
+    try:
+        await asyncio.wait_for(asyncio.shield(r), 0.5)
+    except asyncio.exceptions.TimeoutError:
+        ...
+    controller.stop()
+    assert isinstance((await r)[0], asyncio.CancelledError)
+
+

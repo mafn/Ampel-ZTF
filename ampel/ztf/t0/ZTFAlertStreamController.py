@@ -166,6 +166,8 @@ class ZTFAlertStreamController(AbsProcessController):
         """Stop scheduling new processes."""
         assert name is None
         self._process.active = False
+        self.multiplier = 0
+        self._scale_event.set()
 
     def scale(self, name: Optional[str]=None, multiplier: int=1):
         if multiplier < 1:
@@ -202,7 +204,7 @@ class ZTFAlertStreamController(AbsProcessController):
                     done, pending = await asyncio.wait( #  type: ignore[assignment]
                         pending, return_when="FIRST_COMPLETED"
                     ) 
-                    for task in done:
+                    for task in list(done):
                         if task.get_name() == "scale":
                             if self._scale_event.is_set():
                                 print(f"scale {len(pending)} -> {self.multiplier}")
@@ -211,6 +213,7 @@ class ZTFAlertStreamController(AbsProcessController):
                                 for t in to_kill:
                                     t.cancel()
                                 await asyncio.gather(*to_kill, return_exceptions=True)
+                                done.update(to_kill)
                                 # scale up
                                 for _ in range(self.multiplier-len(pending)):
                                     pending.add(launch())
@@ -228,10 +231,12 @@ class ZTFAlertStreamController(AbsProcessController):
         finally:
             # force scale future to come due
             self._scale_event.set()
-            return await asyncio.gather(*done.union(pending), return_exceptions=True)
+            tasks = list(done.union(pending))
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            return [r for t,r in zip(tasks,results) if t.get_name() != "scale"]
 
     @staticmethod
-    @concurrent.process
+    @concurrent.process(timeout=60)
     def run_mp_process(
         config: Dict[str, Any],
         secrets: Optional[AbsSecretProvider],
