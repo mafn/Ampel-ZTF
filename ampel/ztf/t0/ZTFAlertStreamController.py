@@ -167,7 +167,8 @@ class ZTFAlertStreamController(AbsProcessController):
         assert name is None
         self._process.active = False
         self.multiplier = 0
-        self._scale_event.set()
+        if self._scale_event:
+            self._scale_event.set()
 
     def scale(self, name: Optional[str]=None, multiplier: int=1):
         if multiplier < 1:
