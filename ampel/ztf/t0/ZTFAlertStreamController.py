@@ -122,8 +122,7 @@ class ZTFAlertStreamController(AbsProcessController):
         super().__init__(**kwargs)
 
         self._scale_event : Optional[asyncio.Event] = None
-        self._process = self.merge_processes(list(self.processes))
-        self._process.name = self.source.label()
+        self.update(self.config, self.secrets, self.processes)
 
     def update(self,
         config: AmpelConfig,
@@ -189,12 +188,16 @@ class ZTFAlertStreamController(AbsProcessController):
         assert self._scale_event is None, "run() is not reentrant"
         self._scale_event = asyncio.Event()
         def launch() -> asyncio.Task:
-            return self.run_mp_process(
+            counter = AbsProcessController.process_count.labels(self._process.tier, self._process.name)
+            t = self.run_mp_process(
                 self.config.get(),
                 self.secrets,
                 self._process.dict(),
                 self.source.dict(exclude_defaults=False),
             )
+            counter.inc()
+            t.add_done_callback(lambda t: counter.dec())
+            return t
         assert self._process.active
         pending = {launch() for _ in range(self.multiplier)}
         pending.add(asyncio.create_task(self._scale_event.wait(), name="scale"))
