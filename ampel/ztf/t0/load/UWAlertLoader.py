@@ -46,36 +46,10 @@ class UWAlertLoader:
 
 		self.archive_updater = archive_updater
 
-		if statistics_interval > 0:
-			from ampel.config.AmpelConfig import AmpelConfig
-			from ampel.metrics.GraphiteFeeder import GraphiteFeeder
-			self.graphite = GraphiteFeeder(
-				AmpelConfig.get('resource.graphite.default'),
-				autoreconnect = True
-			)
-			config['stats_cb'] = self.report_statistics
-			config['statistics.interval.ms'] = 1000*statistics_interval
-		else:
-			self.graphite = None
-
 		self._consumer = AllConsumingConsumer(
 			bootstrap, timeout=timeout, topics=topics, **config
 		)
 
-	def report_statistics(self, payload):
-		if self.graphite is None:
-			return
-		try:
-			stats = json.loads(payload)
-			offsets = {
-				topic: sum(p['hi_offset']-p['lo_offset'] for p in topic_data['partitions'].values() if p.get('hi_offset',-1) >= 0)
-				for topic, topic_data in stats['topics'].items()
-			}
-			self.graphite.add_stats(offsets, prefix='ampel.ztf.kafka.uw.topics')
-			self.graphite.send()
-		except Exception as e:
-			log.error(e)
-			return
 
 	def alerts(self, limit=None):
 		"""
