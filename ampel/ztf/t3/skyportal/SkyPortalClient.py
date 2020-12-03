@@ -40,12 +40,28 @@ from ampel.log.AmpelLogger import AmpelLogger
 from ampel.model.Secret import Secret
 from ampel.t2.T2RunState import T2RunState
 from ampel.util.collections import ampel_iter
+from ampel.metrics.AmpelMetricsRegistry import AmpelMetricsRegistry
 
 if TYPE_CHECKING:
     from ampel.config.AmpelConfig import AmpelConfig
     from ampel.content.DataPoint import DataPoint
     from ampel.content.T2Record import T2Record
     from ampel.view.TransientView import TransientView
+
+
+stat_http_errors = AmpelMetricsRegistry.counter(
+    "http_request_errors",
+    "HTTP request failures",
+    subsystem=None,
+    labelnames=("method", "endpoint"),
+)
+stat_http_time = AmpelMetricsRegistry.histogram(
+    "http_request_time",
+    "Duration of HTTP requests",
+    unit="seconds",
+    subsystem=None,
+    labelnames=("method", "endpoint"),
+)
 
 
 def encode_t2_body(t2: "T2Record") -> str:
@@ -169,20 +185,26 @@ class SkyPortalClient(AmpelBaseModel):
             url = self.base_url + endpoint
         else:
             url = self.base_url + "/api/" + endpoint
-        async with self._session.request(
-            verb, url, **{**self._request_kwargs, **kwargs}
-        ) as response:
-            if _decode_json:
-                try:
-                    payload = await response.json()
-                except:
-                    # only use status code if response can't be read
-                    response.raise_for_status()
-                if raise_exc and payload["status"] != "success":
-                    raise SkyPortalAPIError(payload["message"])
-                return payload
-            else:
-                return response
+        labels = {"endpoint": endpoint.split("/")[0], "method": verb}
+        with stat_http_time.labels(labels).time(), stat_http_errors.labels(
+            labels
+        ).count_exceptions(
+            (aiohttp.ClientResponseError, aiohttp.ClientConnectionError)
+        ):
+            async with self._session.request(
+                verb, url, **{**self._request_kwargs, **kwargs}
+            ) as response:
+                if _decode_json:
+                    try:
+                        payload = await response.json()
+                    except:
+                        # only use status code if response can't be read
+                        response.raise_for_status()
+                    if raise_exc and payload["status"] != "success":
+                        raise SkyPortalAPIError(payload["message"])
+                    return payload
+                else:
+                    return response
 
     async def get_id(self, endpoint, params, default=None):
         """Query for an object by id, inserting it if not found"""
