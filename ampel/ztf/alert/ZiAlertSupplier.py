@@ -46,7 +46,7 @@ class ZiAlertSupplier(AbsAlertSupplier[PhotoAlert]):
 			for el in d['prv_candidates']:
 
 				# Upperlimit
-				if el['candid'] is None:
+				if el.get('candid') is None:
 
 					# rarely, meaningless upper limits with negativ
 					# diffmaglim are provided by IPAC
