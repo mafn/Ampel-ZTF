@@ -36,7 +36,7 @@ class ZiT0PhotoPointShaper(AbsT0Unit):
 
 		ret_list: List[DataPoint] = []
 		setitem = dict.__setitem__
-		delitem = dict.__delitem__
+		popitem = dict.pop
 
 		for photo_dict in arg:
 
@@ -57,8 +57,8 @@ class ZiT0PhotoPointShaper(AbsT0Unit):
 				}
 			)
 
-			delitem(photo_dict, 'candid')
-			delitem(photo_dict, 'programpi')
+			popitem(photo_dict, 'candid', None)
+			popitem(photo_dict, 'programpi', None)
 
 
 		return ret_list
