@@ -1,4 +1,5 @@
 import itertools
+from collections import defaultdict
 
 import pytest
 
@@ -12,8 +13,8 @@ from ampel.model.AlertProcessorDirective import AlertProcessorDirective
 from ampel.model.UnitModel import UnitModel
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
 from ampel.ztf.ingest.ZiAlertContentIngester import ZiAlertContentIngester
-from ampel.ztf.ingest.ZiT1Combiner import ZiT1Combiner
 from ampel.ztf.ingest.ZiT1ArchivalCompoundIngester import ZiT1ArchivalCompoundIngester
+from ampel.ztf.ingest.ZiT1Combiner import ZiT1Combiner
 
 
 def _make_ingester(context):
@@ -49,6 +50,43 @@ def raw_alert_dicts(loader):
         yield supplier.deserialize(payload)
 
 
+def consolidated_alert(alerts):
+    """
+    Make one mega-alert containing all photopoints for an object, similar to
+    the one returned by ArchiveDB.get_photopoints_for_object
+    """
+    candidates = []
+    prv_candidates = []
+    upper_limits = []
+    for alert in alerts:
+        oid = alert["objectId"]
+        candidates.append((oid, alert["candidate"]))
+        for prv in alert["prv_candidates"]:
+            if prv.get("magpsf") is None:
+                upper_limits.append((oid, prv))
+            else:
+                prv_candidates.append((oid, prv))
+    # ensure exactly one observation per jd. in case of conflicts, sort by
+    # candidate > prv_candidate > upper_limit, then pid
+    photopoints = defaultdict(dict)
+    for row in ([upper_limits], [prv_candidates], [candidates]):
+        for pp in sorted(row[0], key=lambda pp: (pp[0], pp[1]["jd"], pp[1]["pid"])):
+            photopoints[pp[0]][pp[1]["jd"]] = pp[1]
+    assert len(photopoints) == 1
+    objectId = list(photopoints.keys())[0]
+    datapoints = sorted(
+        photopoints[objectId].values(), key=lambda pp: pp["jd"], reverse=True
+    )
+    candidate = datapoints.pop(0)
+    return {
+        "objectId": objectId,
+        "candid": candidate["candid"],
+        "programid": candidate["programid"],
+        "candidate": candidate,
+        "prv_candidates": datapoints,
+    }
+
+
 def test_instantiate(patch_mongo, dev_context, mocker):
     mock = mocker.patch("ampel.ztf.ingest.ZiT1ArchivalCompoundIngester.ArchiveDB")
     _make_ingester(dev_context)
@@ -63,8 +101,8 @@ def mock_ingester(patch_mongo, dev_context, mocker, avro_packets):
     # mock archivedb to return first alert
     ingester.archive.configure_mock(
         **{
-            "get_alerts_for_object.return_value": raw_alert_dicts(
-                itertools.islice(avro_packets(), 0, 1)
+            "get_photopoints_for_object.return_value": consolidated_alert(
+                raw_alert_dicts(itertools.islice(avro_packets(), 0, 1))
             )
         }
     )
@@ -197,8 +235,8 @@ def test_integration(patch_mongo, dev_context, mocker, avro_packets):
     # mock archivedb to return first alert
     ingester.archive.configure_mock(
         **{
-            "get_alerts_for_object.return_value": raw_alert_dicts(
-                itertools.islice(avro_packets(), 0, 1)
+            "get_photopoints_for_object.return_value": consolidated_alert(
+                raw_alert_dicts(itertools.islice(avro_packets(), 0, 1))
             )
         }
     )

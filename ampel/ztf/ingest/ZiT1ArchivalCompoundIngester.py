@@ -113,10 +113,13 @@ class ZiT1ArchivalCompoundIngester(AbsCompoundIngester[PhotoCompoundBluePrint]):
     ) -> None:
         # Ingest photopoints from earlier alerts
         self.alert_supplier.set_alert_source(
-            self.archive.get_alerts_for_object(
-                to_ztf_id(stock_id),
-                jd_end=self.get_earliest_jd(stock_id, datapoints),
-                with_history=True,
+            iter(
+                [
+                    self.archive.get_photopoints_for_object(
+                        to_ztf_id(stock_id),
+                        jd_end=self.get_earliest_jd(stock_id, datapoints),
+                    )
+                ]
             )
         )
         # FIXME: do some logd magic to record these in the journal
