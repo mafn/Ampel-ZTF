@@ -224,6 +224,10 @@ class ZTFAlertStreamController(AbsProcessController):
                                 self._scale_event.clear()
                             pending.add(asyncio.create_task(self._scale_event.wait(), name="scale"))
                         else:
+                            if (exc := task.exception()):
+                                AbsProcessController.process_exceptions.labels(self._process.tier, self._process.name).inc()
+                                print(exc)
+                                await asyncio.sleep(10)
                             # start a fresh replica for each processor that
                             # returned True. NB: +1 for scale wait task
                             if (task.exception() or task.result()) and len(pending) < self.multiplier+1:
