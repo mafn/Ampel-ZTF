@@ -185,9 +185,9 @@ class SkyPortalClient(AmpelBaseModel):
             url = self.base_url + endpoint
         else:
             url = self.base_url + "/api/" + endpoint
-        labels = {"endpoint": endpoint.split("/")[0], "method": verb}
-        with stat_http_time.labels(labels).time(), stat_http_errors.labels(
-            labels
+        labels = (verb, endpoint.split("/")[0])
+        with stat_http_time.labels(*labels).time(), stat_http_errors.labels(
+            *labels
         ).count_exceptions(
             (aiohttp.ClientResponseError, aiohttp.ClientConnectionError)
         ):
