@@ -9,10 +9,66 @@
 
 import enum
 import sys
+import time
 import uuid
 from typing import Optional
 
 import confluent_kafka
+
+from ampel.metrics.AmpelMetricsRegistry import AmpelMetricsRegistry
+
+
+class KafkaMetrics:
+    instance = None
+
+    @classmethod
+    def instance(cls):
+        if cls.instance is None:
+            cls.instance = cls()
+        return cls.instance
+
+    def __init__(self):
+        self._metrics = {
+            k: AmpelMetricsRegistry.gauge(k, "", subsystem="kafka")
+            for k in (
+                "fetchq_cnt",
+                "fetchq_size",
+                "consumer_lag",
+                "rxmsgs",
+                "rxbytes",
+                "msgs_inflight",
+            )
+        }
+        for action in "created", "consumed":
+            self._metrics[f"last_message_{action}"] = AmpelMetricsRegistry.histogram(
+                f"last_message_{action}",
+                f"Timestamp when the most recent message was {action}",
+                unit="timestamp",
+                subsystem="kafka",
+                multiprocess_mode="max",
+            )
+
+    def on_stats_callback(self, payload):
+        stats = {}
+        for topic in json.loads(payload)["topics"].values():
+            for partition in topic["partitions"].values():
+                for k, v in partition.items():
+                    if isinstance(v, int) and v != -1001 and k not in skip:
+                        if k in stats:
+                            stats[k] += v
+                        else:
+                            stats[k] = v
+        for k, v in stats.values():
+            if not k in self._metrics:
+                continue
+            self._metrics[k].set(v)
+
+    def on_consume(self, message):
+        kind, ts = message.timestamp()
+        if kind == confluent_kafka.TIMESTAMP_CREATE_TIME:
+            self._metrics["last_message_created"].set(ts / 1000)
+        self._metrics["last_message_consumed"].set(time.time())
+
 
 KafkaErrorCode = enum.IntEnum(  # type: ignore[misc]
     "KafkaErrorCode",
@@ -40,6 +96,7 @@ class AllConsumingConsumer:
     def __init__(self, broker, timeout=None, topics=["^ztf_.*"], **consumer_config):
         """ """
 
+        self._metrics = KafkaMetrics.instance()
         config = {
             "bootstrap.servers": broker,
             "default.topic.config": {"auto.offset.reset": "smallest"},
@@ -51,10 +108,10 @@ class AllConsumingConsumer:
             "enable.partition.eof": False,  # don't emit messages on EOF
             "topic.metadata.refresh.interval.ms": 1000,  # fetch new metadata every second to pick up topics quickly
             # "debug": "all",
+            "stats_cb": self._metrics.on_stats_callback,
+            "statistics.interval.ms": 10000,
         }
         config.update(**consumer_config)
-        if "stats_cb" in config and "statistics.interval.ms" not in config:
-            config["statistics.interval.ms"] = 60000
         self._consumer = confluent_kafka.Consumer(**config)
 
         self._consumer.subscribe(topics)
@@ -119,4 +176,5 @@ class AllConsumingConsumer:
             raise KafkaError(message.error())
         else:
             self._last_message = message
+            self._metrics.on_consume(message)
             return message

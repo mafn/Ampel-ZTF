@@ -25,7 +25,6 @@ class UWAlertLoader:
 		bootstrap='partnership.alerts.ztf.uw.edu:9092', 
 		group_name=uuid.uuid1(), 
 		archive_updater=None,
-		statistics_interval=0,
 		timeout=1
 	):
 		"""
@@ -49,7 +48,6 @@ class UWAlertLoader:
 		self._consumer = AllConsumingConsumer(
 			bootstrap, timeout=timeout, topics=topics, **config
 		)
-
 
 	def alerts(self, limit=None):
 		"""
