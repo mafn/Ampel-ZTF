@@ -8,6 +8,7 @@
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 import enum
+import json
 import sys
 import time
 import uuid
@@ -19,17 +20,31 @@ from ampel.metrics.AmpelMetricsRegistry import AmpelMetricsRegistry
 
 
 class KafkaMetrics:
-    instance = None
+    _instance = None
 
     @classmethod
     def instance(cls):
-        if cls.instance is None:
-            cls.instance = cls()
-        return cls.instance
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
 
     def __init__(self):
         self._metrics = {
-            k: AmpelMetricsRegistry.gauge(k, "", subsystem="kafka")
+            # metrics relevant for read performance
+            # see: https://github.com/edenhill/librdkafka/blob/master/STATISTICS.md
+            # the most important of these is consumer_lag. to get an accurate count
+            # from N balanced consumers running in separate processes, we have to:
+            # - label by topic and partition (toppar)
+            # - set gauge to -1 if this client is not assigned to the toppar
+            # - create gauge in max mode (taking aggregated value for each toppar from the assigned process only)
+            # - query sum(ampel_kafka_consumer_lag != -1) without (partition,topic)
+            k: AmpelMetricsRegistry.gauge(
+                k,
+                "",
+                subsystem="kafka",
+                labelnames=("topic", "partition"),
+                multiprocess_mode="max",
+            )
             for k in (
                 "fetchq_cnt",
                 "fetchq_size",
@@ -40,7 +55,7 @@ class KafkaMetrics:
             )
         }
         for action in "created", "consumed":
-            self._metrics[f"last_message_{action}"] = AmpelMetricsRegistry.histogram(
+            self._metrics[f"last_message_{action}"] = AmpelMetricsRegistry.gauge(
                 f"last_message_{action}",
                 f"Timestamp when the most recent message was {action}",
                 unit="timestamp",
@@ -49,19 +64,12 @@ class KafkaMetrics:
             )
 
     def on_stats_callback(self, payload):
-        stats = {}
         for topic in json.loads(payload)["topics"].values():
             for partition in topic["partitions"].values():
                 for k, v in partition.items():
-                    if isinstance(v, int) and v != -1001 and k not in skip:
-                        if k in stats:
-                            stats[k] += v
-                        else:
-                            stats[k] = v
-        for k, v in stats.values():
-            if not k in self._metrics:
-                continue
-            self._metrics[k].set(v)
+                    if metric := self._metrics.get(k):
+                        # only record value for assigned partitions (i.e. where desired is True)
+                        metric.labels(topic["topic"], partition["partition"]).set(v if partition["desired"] else -1)
 
     def on_consume(self, message):
         kind, ts = message.timestamp()
