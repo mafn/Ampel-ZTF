@@ -9,6 +9,7 @@
 
 import asyncio
 import copy
+import logging
 from functools import partial
 from os.path import basename 
 from typing import Any, Dict, List, Literal, Optional, Union, Iterable, Set, Sequence
@@ -31,6 +32,9 @@ from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
 from ampel.ztf.t0.load.UWAlertLoader import UWAlertLoader
 from ampel.ztf.archive.ArchiveDB import ArchiveDB
 from ampel.ztf.t0.ArchiveUpdater import ArchiveUpdater
+
+
+log = logging.getLogger(__name__)
 
 
 class ArchiveSink(StrictModel):
@@ -211,7 +215,7 @@ class ZTFAlertStreamController(AbsProcessController):
                     for task in list(done):
                         if task.get_name() == "scale":
                             if self._scale_event.is_set():
-                                print(f"scale {len(pending)} -> {self.multiplier}")
+                                log.info(f"scale {len(pending)} -> {self.multiplier}")
                                 # scale down
                                 to_kill = {pending.pop() for _ in range(len(pending)-self.multiplier)}
                                 for t in to_kill:
@@ -226,7 +230,7 @@ class ZTFAlertStreamController(AbsProcessController):
                         else:
                             if (exc := task.exception()):
                                 AbsProcessController.process_exceptions.labels(self._process.tier, self._process.name).inc()
-                                print(exc)
+                                log.warn("AlertProcessor failed", exc_info=exc)
                                 await asyncio.sleep(10)
                             # start a fresh replica for each processor that
                             # returned True. NB: +1 for scale wait task
