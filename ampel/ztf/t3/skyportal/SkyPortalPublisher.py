@@ -22,8 +22,6 @@ if TYPE_CHECKING:
 
 class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
 
-    #: Number of connections per (host,port) pair
-    max_parallel_connections: int = 1
     #: Save sources to these groups
     groups: Optional[List[str]]
 

@@ -132,6 +132,8 @@ class SkyPortalClient(AmpelBaseModel):
     base_url: AnyHttpUrl
     #: API token
     token: Secret[str]
+    #: Maximum number of in-flight requests
+    max_parallel_connections: int = 1
 
     @validator("base_url")
     def check_path(cls, v):
@@ -145,6 +147,7 @@ class SkyPortalClient(AmpelBaseModel):
         }
         self._ids: Dict[str, Dict[str, int]] = {}
         self._session: Optional[aiohttp.ClientSession] = None
+        self._semaphore = asyncio.Semaphore(self.max_parallel_connections)
 
     @asynccontextmanager
     async def session(self, limit_per_host=0):
@@ -203,29 +206,30 @@ class SkyPortalClient(AmpelBaseModel):
         else:
             url = self.base_url + "/api/" + endpoint
         labels = (verb, endpoint.split("/")[0])
-        with stat_http_time.labels(*labels).time(), stat_http_errors.labels(
-            *labels
-        ).count_exceptions(
-            (
-                aiohttp.ClientResponseError,
-                aiohttp.ClientConnectionError,
-                asyncio.TimeoutError,
-            )
-        ), stat_concurrent_requests.labels(
-            *labels
-        ).track_inprogress():
-            async with self._session.request(
-                verb, url, **{**self._request_kwargs, **kwargs}
-            ) as response:
-                if response.status >= 500:
-                    response.raise_for_status()
-                if _decode_json:
-                    payload = await response.json()
-                    if raise_exc and payload["status"] != "success":
-                        raise SkyPortalAPIError(payload["message"])
-                    return payload
-                else:
-                    return response
+        async with self._semaphore:
+            with stat_http_time.labels(*labels).time(), stat_http_errors.labels(
+                *labels
+            ).count_exceptions(
+                (
+                    aiohttp.ClientResponseError,
+                    aiohttp.ClientConnectionError,
+                    asyncio.TimeoutError,
+                )
+            ), stat_concurrent_requests.labels(
+                *labels
+            ).track_inprogress():
+                async with self._session.request(
+                    verb, url, **{**self._request_kwargs, **kwargs}
+                ) as response:
+                    if response.status >= 500:
+                        response.raise_for_status()
+                    if _decode_json:
+                        payload = await response.json()
+                        if raise_exc and payload["status"] != "success":
+                            raise SkyPortalAPIError(payload["message"])
+                        return payload
+                    else:
+                        return response
 
     async def get_id(self, endpoint, params, default=None):
         """Query for an object by id, inserting it if not found"""
