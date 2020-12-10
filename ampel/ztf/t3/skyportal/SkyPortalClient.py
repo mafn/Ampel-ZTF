@@ -28,20 +28,20 @@ from typing import (
     Union,
 )
 
-from pydantic import AnyHttpUrl, validator
 import aiohttp
 import backoff
 import numpy as np
 from astropy.io import fits
 from matplotlib.colors import Normalize
 from matplotlib.figure import Figure
+from pydantic import AnyHttpUrl, validator
 
 from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.log.AmpelLogger import AmpelLogger
+from ampel.metrics.AmpelMetricsRegistry import AmpelMetricsRegistry
 from ampel.model.Secret import Secret
 from ampel.t2.T2RunState import T2RunState
 from ampel.util.collections import ampel_iter
-from ampel.metrics.AmpelMetricsRegistry import AmpelMetricsRegistry
 
 if TYPE_CHECKING:
     from ampel.config.AmpelConfig import AmpelConfig
@@ -171,7 +171,11 @@ class SkyPortalClient(AmpelBaseModel):
 
     @backoff.on_exception(
         backoff.expo,
-        (aiohttp.ClientResponseError, aiohttp.ClientConnectionError),
+        (
+            aiohttp.ClientResponseError,
+            aiohttp.ClientConnectionError,
+            asyncio.TimeoutError,
+        ),
         max_time=300,
     )
     async def request(
@@ -199,12 +203,10 @@ class SkyPortalClient(AmpelBaseModel):
             async with self._session.request(
                 verb, url, **{**self._request_kwargs, **kwargs}
             ) as response:
+                if resonse.status >= 500:
+                    response.raise_for_status()
                 if _decode_json:
-                    try:
-                        payload = await response.json()
-                    except:
-                        # only use status code if response can't be read
-                        response.raise_for_status()
+                    payload = await response.json()
                     if raise_exc and payload["status"] != "success":
                         raise SkyPortalAPIError(payload["message"])
                     return payload
