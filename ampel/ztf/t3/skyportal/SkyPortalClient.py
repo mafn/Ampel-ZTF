@@ -147,7 +147,7 @@ class SkyPortalClient(AmpelBaseModel):
         }
         self._ids: Dict[str, Dict[str, int]] = {}
         self._session: Optional[aiohttp.ClientSession] = None
-        self._semaphore = asyncio.Semaphore(self.max_parallel_connections)
+        self._semaphore: Optional[asyncio.Semaphore] = None
 
     @asynccontextmanager
     async def session(self, limit_per_host=0):
@@ -155,8 +155,10 @@ class SkyPortalClient(AmpelBaseModel):
             connector=aiohttp.TCPConnector(limit_per_host=limit_per_host)
         ) as session:
             self._session = session
+            self._semaphore = asyncio.Semaphore(self.max_parallel_connections)
             yield self
             self._session = None
+            self._semaphore = None
 
     @overload
     async def request(
@@ -197,7 +199,7 @@ class SkyPortalClient(AmpelBaseModel):
         _decode_json: Optional[bool] = True,
         **kwargs: Dict[str, Any],
     ) -> Union[aiohttp.ClientResponse, Dict[str, Any]]:
-        if self._session is None:
+        if self._session is None or self._semaphore is None:
             raise ValueError(
                 "call operations within an `async with self.session()` block"
             )
