@@ -28,6 +28,7 @@ from typing import (
     Union,
 )
 
+from pydantic import AnyHttpUrl, validator
 import aiohttp
 import backoff
 import numpy as np
@@ -120,9 +121,13 @@ class SkyPortalAPIError(IOError):
 class SkyPortalClient(AmpelBaseModel):
 
     #: Base URL of SkyPortal server
-    base_url: str = "http://localhost:9000"
+    base_url: AnyHttpUrl
     #: API token
     token: Secret[str]
+
+    @validator("base_url")
+    def check_path(cls, v):
+        assert not v.path, "url must not have a path component"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
