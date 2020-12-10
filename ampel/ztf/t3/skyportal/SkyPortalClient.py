@@ -63,6 +63,13 @@ stat_http_time = AmpelMetricsRegistry.histogram(
     subsystem=None,
     labelnames=("method", "endpoint"),
 )
+stat_concurrent_requests = AmpelMetricsRegistry.gauge(
+    "http_requests_inprogress",
+    "Number of HTTP requests in flight",
+    subsystem=None,
+    labelnames=("method", "endpoint"),
+    multiprocess_mode="livesum",
+)
 
 
 def encode_t2_body(t2: "T2Record") -> str:
@@ -198,8 +205,14 @@ class SkyPortalClient(AmpelBaseModel):
         with stat_http_time.labels(*labels).time(), stat_http_errors.labels(
             *labels
         ).count_exceptions(
-            (aiohttp.ClientResponseError, aiohttp.ClientConnectionError)
-        ):
+            (
+                aiohttp.ClientResponseError,
+                aiohttp.ClientConnectionError,
+                asyncio.TimeoutError,
+            )
+        ), stat_concurrent_requests.labels(
+            *labels
+        ).track_inprogress():
             async with self._session.request(
                 verb, url, **{**self._request_kwargs, **kwargs}
             ) as response:
