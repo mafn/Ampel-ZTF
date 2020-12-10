@@ -6,6 +6,7 @@
 # Last Modified Date: 16.09.2020
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
+import asyncio
 import base64
 import gzip
 import io
@@ -216,7 +217,7 @@ class SkyPortalClient(AmpelBaseModel):
             async with self._session.request(
                 verb, url, **{**self._request_kwargs, **kwargs}
             ) as response:
-                if resonse.status >= 500:
+                if response.status >= 500:
                     response.raise_for_status()
                 if _decode_json:
                     payload = await response.json()
