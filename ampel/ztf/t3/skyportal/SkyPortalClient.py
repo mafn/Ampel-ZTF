@@ -57,6 +57,12 @@ stat_http_errors = AmpelMetricsRegistry.counter(
     subsystem=None,
     labelnames=("method", "endpoint"),
 )
+stat_http_responses = AmpelMetricsRegistry.counter(
+    "http_responses",
+    "HTTP responses successfully recieved",
+    subsystem=None,
+    labelnames=("method", "endpoint"),
+)
 stat_http_time = AmpelMetricsRegistry.histogram(
     "http_request_time",
     "Duration of HTTP requests",
@@ -225,6 +231,7 @@ class SkyPortalClient(AmpelBaseModel):
                 ) as response:
                     if response.status >= 500:
                         response.raise_for_status()
+                    stat_http_responses.labels(*labels).inc()
                     if _decode_json:
                         payload = await response.json()
                         if raise_exc and payload["status"] != "success":
