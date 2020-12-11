@@ -644,7 +644,6 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             t["type"] for t in response["data"]["thumbnails"]
         } if response["status"] == "success" else set()
         for candid, cutouts in (view.extra or {}).get("ZTFCutoutImages", {}).items():
-            photometry_id = photometry_ids[datapoint_ids.index(candid)]
             for kind, blob in cutouts.items():
                 if CUTOUT_TYPES[kind] in existing_cutouts:
                     continue
