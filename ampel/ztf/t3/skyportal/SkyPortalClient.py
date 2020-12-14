@@ -11,6 +11,7 @@ import base64
 import gzip
 import io
 import json
+import math
 import time
 from collections import defaultdict
 from contextlib import asynccontextmanager
@@ -79,6 +80,17 @@ stat_concurrent_requests = AmpelMetricsRegistry.gauge(
 )
 
 
+def sanitize_json(obj):
+    if isinstance(obj, dict):
+        return {k: sanitize_json(v) for k, v in obj.items()}
+    elif isinstance(obj, (tuple, list)):
+        return [sanitize_json(v) for v in obj]
+    elif isinstance(obj, float) and math.isnan(obj):
+        return None
+    else:
+        return obj
+
+
 def encode_t2_body(t2: "T2Record") -> str:
     assert t2["body"] is not None
     doc = t2["body"][-1]
@@ -86,7 +98,7 @@ def encode_t2_body(t2: "T2Record") -> str:
         json.dumps(
             {
                 "timestamp": datetime.fromtimestamp(doc["ts"]).isoformat(),
-                **{k: v for k, v in doc.items() if k != "ts"},
+                **{k: sanitize_json(v) for k, v in doc.items() if k != "ts"},
             },
             default=lambda o: None,
         ).encode()
