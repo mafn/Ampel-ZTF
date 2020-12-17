@@ -7,7 +7,7 @@
 # Last Modified Date: 16.12.2020
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
-from typing import Any, ClassVar, Dict, List, Literal, Optional
+from typing import Any, Dict, List
 
 from ampel.abstract.AbsLightCurveT2Unit import AbsLightCurveT2Unit
 from ampel.type import T2UnitResult
@@ -23,16 +23,24 @@ class T2LightCurveSummary(AbsLightCurveT2Unit):
     datapoints for each stock.
     """
 
-    ingest: ClassVar[Dict[str, Any]] = {"upper_limits": False}
-
     #: Fields to extract from the latest candidate
-    fields: List[str] = ["drb", "ra", "dec"]
+    fields: List[str] = [
+        "drb",
+        "ra",
+        "dec",
+        "magpsf",
+        "sgscore1",
+        "distnr",
+        "distpsnr1",
+    ]
+    #: Minimum magnitude of nondetections
+    limiting_magnitude: float = 19.5
 
     def run(self, lightcurve: LightCurve) -> T2UnitResult:
         result: Dict[str, Any] = {
-            "detections": len(lightcurve.get_photopoints() or []),
+            "num_detections": len(lightcurve.get_photopoints() or []),
         }
-        if (pps := lightcurve.get_photopoints()):
+        if (pps := lightcurve.get_photopoints()) :
             first, latest = pps[0]["body"], pps[-1]["body"]
             result["first_detection"] = first["jd"]
             result["ra_dis"], result["dec_dis"] = first["ra"], first["dec"]
@@ -40,5 +48,31 @@ class T2LightCurveSummary(AbsLightCurveT2Unit):
             result["last_detection"] = latest["body"]["jd"]
             for k in self.fields:
                 result[k] = latest.get(k)
+
+            # find the last strong upper limit before the first detection
+            if last_significant_nondetection := next(
+                reversed(
+                    lightcurve.get_upperlimits(
+                        [
+                            {
+                                "attribute": "jd",
+                                "operator": "<",
+                                "value": result["first_detection"],
+                            },
+                            {
+                                "attribute": "diffmaglim",
+                                "operator": ">",
+                                "value": self.limiting_magnitude,
+                            },
+                        ]
+                    )
+                    or []
+                ),
+                None,
+            ):
+                for field in ("jd", "fid", "diffmaglim"):
+                    result[
+                        f"last_significant_nondetection_{field}"
+                    ] = last_significant_nondetection["body"][field]
 
         return result
