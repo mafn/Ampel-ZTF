@@ -7,7 +7,6 @@
 			"ampel.ztf.ingest.ZiT1ArchivalCompoundIngester",
 			"ampel.ztf.alert.ZTFGeneralActiveAlertRegister",
 			"ampel.ztf.alert.ZTFGeneralAlertRegister",
-			"ampel.ztf.t2.T2LightCurveSummary",
 			"ampel.ztf.t3.complement.ZTFCutoutImages",
 			"ampel.ztf.t3.complement.FritzReport",
 			"ampel.ztf.t3.select.T3AdHocStockSelector",
@@ -15,6 +14,7 @@
 		],
 		"base": [
 			"ampel.ztf.ingest.ZiT1Combiner",
+			"ampel.ztf.t2.T2LightCurveSummary",
 			"ampel.ztf.t3.skyportal.SkyPortalPublisher"
 		],
 		"aux": ["ampel.ztf.alert.ZiAlertSupplier"]
