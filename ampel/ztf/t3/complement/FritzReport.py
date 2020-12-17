@@ -11,6 +11,7 @@ import asyncio
 from typing import Any, Dict, Iterable, Optional, Tuple
 
 import nest_asyncio
+from pydantic.tools import parse_obj_as
 
 from ampel.core.AmpelBuffer import AmpelBuffer
 from ampel.model.Secret import Secret
@@ -28,7 +29,7 @@ class FritzReport(SkyPortalClient, AbsT3DataAppender):
     """
 
     #: Base URL of SkyPortal server
-    base_url: AnyHttpUrl = AnyHttpUrl("https://fritz.science")
+    base_url: AnyHttpUrl = parse_obj_as(AnyHttpUrl, "https://fritz.science")
     #: API token
     token: Secret[str] = {"key": "fritz/jno/ampelbot"}  # type: ignore[assignment]
 
