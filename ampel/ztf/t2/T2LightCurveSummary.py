@@ -45,7 +45,7 @@ class T2LightCurveSummary(AbsLightCurveT2Unit):
             result["first_detection"] = first["jd"]
             result["ra_dis"], result["dec_dis"] = first["ra"], first["dec"]
 
-            result["last_detection"] = latest["body"]["jd"]
+            result["last_detection"] = latest["jd"]
             for k in self.cols:
                 result[k] = latest.get(k)
 
