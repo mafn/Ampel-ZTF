@@ -25,6 +25,7 @@ setup(
 		"ampel-interface",
 		"ampel-alerts",
 		"ampel-photometry",
+                "astropy",
 		"confluent-kafka",
 		"psycopg2-binary",
 		"sqlalchemy",
