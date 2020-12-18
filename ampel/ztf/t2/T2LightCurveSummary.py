@@ -24,7 +24,7 @@ class T2LightCurveSummary(AbsLightCurveT2Unit):
     """
 
     #: Fields to extract from the latest candidate
-    fields: List[str] = [
+    cols: List[str] = [
         "drb",
         "ra",
         "dec",
@@ -46,7 +46,7 @@ class T2LightCurveSummary(AbsLightCurveT2Unit):
             result["ra_dis"], result["dec_dis"] = first["ra"], first["dec"]
 
             result["last_detection"] = latest["body"]["jd"]
-            for k in self.fields:
+            for k in self.cols:
                 result[k] = latest.get(k)
 
             # find the last strong upper limit before the first detection
