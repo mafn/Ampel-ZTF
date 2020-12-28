@@ -42,6 +42,7 @@ from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.metrics.AmpelMetricsRegistry import AmpelMetricsRegistry
 from ampel.model.Secret import Secret
+from ampel.protocol.LoggerProtocol import LoggerProtocol
 from ampel.t2.T2RunState import T2RunState
 from ampel.util.collections import ampel_iter
 
@@ -424,7 +425,7 @@ class PostReport(TypedDict):
 
 class BaseSkyPortalPublisher(SkyPortalClient):
 
-    logger: AmpelLogger
+    logger: LoggerProtocol
 
     def __init__(self, **kwargs):
         if not "logger" in kwargs:
