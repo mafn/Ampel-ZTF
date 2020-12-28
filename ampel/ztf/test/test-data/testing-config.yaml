@@ -130,6 +130,14 @@ unit:
       distrib: ampel-photometry
       file: conf/ampel-photometry/ampel.yaml
       hash: 8908276891490169
+    T2LightCurveSummary:
+      fqn: ampel.ztf.t2.T2LightCurveSummary
+      base:
+      - AbsLightCurveT2Unit
+      - AbsCustomStateT2Unit
+      distrib: ampel-ztf
+      file: conf/ampel-ztf/ampel.json
+      hash: 32143468895309973
   core: {}
   aux: {}
 alias:

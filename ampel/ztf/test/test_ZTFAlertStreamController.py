@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import os
 import time
 
@@ -14,9 +15,8 @@ from ampel.util import concurrent
 from ampel.ztf.t0.ZTFAlertStreamController import ZTFAlertStreamController
 
 
-def t0_process(kwargs):
-    first_pass_config = FirstPassConfig()
-    first_pass_config["resource"]["ampel-ztf/kafka"] = {"group": "nonesuch"}
+def t0_process(kwargs, first_pass_config):
+    first_pass_config["resource"]["ampel-ztf/kafka"] = {"group": "nonesuch", "broker": "nonesuch:9092"}
     return ProcessModel(
         **ZTFLegacyChannelTemplate(**kwargs).get_processes(
             AmpelLogger.get_logger(), first_pass_config
@@ -34,26 +34,15 @@ def make_controller(config, processes, klass=ZTFAlertStreamController):
 
 
 @pytest.fixture
-def first_pass_config():
-    return {
-        "resource": {
-            "ampel-ztf/kafka": {"broker": "nonesuch:9092", "group": "nonesuch",}
-        }
-    }
-    first_pass_config = FirstPassConfig()
+def config(first_pass_config):
     first_pass_config["resource"]["ampel-ztf/kafka"] = {
         "broker": "nonesuch:9092",
         "group": "nonesuch",
     }
-    return first_pass_config
-
-
-@pytest.fixture
-def config(first_pass_config):
     return AmpelConfig(dict(first_pass_config))
 
 
-def test_merge_processes(config):
+def test_merge_processes(config, first_pass_config):
     # matching processes
     processes = [
         t0_process(
@@ -62,7 +51,8 @@ def test_merge_processes(config):
                 "auto_complete": False,
                 "template": "ztf_uw_public",
                 "t0_filter": {"unit": "NoFilter"},
-            }
+            },
+            first_pass_config,
         )
         for name in ("foo", "bar")
     ]
@@ -86,7 +76,8 @@ def test_merge_processes(config):
                 "auto_complete": False,
                 "template": stream,
                 "t0_filter": {"unit": "NoFilter"},
-            }
+            },
+            first_pass_config,
         )
         for name, stream in zip(("foo", "bar"), ("ztf_uw_private", "ztf_uw_public"))
     ]
@@ -107,7 +98,7 @@ class PotemkinZTFAlertStreamController(ZTFAlertStreamController):
 
 
 @pytest.fixture
-def potemkin_controller(config):
+def potemkin_controller(config, first_pass_config):
     processes = [
         t0_process(
             {
@@ -116,7 +107,8 @@ def potemkin_controller(config):
                 "auto_complete": False,
                 "template": "ztf_uw_public",
                 "t0_filter": {"unit": "NoFilter"},
-            }
+            },
+            first_pass_config,
         )
         for name in ("foo", "bar")
     ]

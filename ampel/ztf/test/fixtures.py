@@ -6,6 +6,7 @@ from pathlib import Path
 import mongomock
 import pymongo
 import pytest
+import yaml
 
 from ampel.alert.load.TarAlertLoader import TarAlertLoader
 from ampel.config.AmpelConfig import AmpelConfig
@@ -197,3 +198,9 @@ def superseded_packets():
     return partial(
         TarAlertLoader, Path(__file__).parent / "test-data" / "ZTF18acruwxq.tar.gz"
     )
+
+
+@pytest.fixture
+def first_pass_config():
+    with open(Path(__file__).parent / "test-data" / "testing-config.yaml") as f:
+        return yaml.safe_load(f)

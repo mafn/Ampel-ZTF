@@ -10,11 +10,6 @@ from ampel.log.AmpelLogger import AmpelLogger
 def logger():
     return AmpelLogger.get_logger()
 
-@pytest.fixture
-def first_pass_config():
-    with open(Path(__file__).parent / "test-data" / "testing-config.yaml") as f:
-        return yaml.safe_load(f)
-
 def test_alert_only(logger, first_pass_config):
     template = ZTFLegacyChannelTemplate(
         **{
@@ -31,7 +26,9 @@ def test_alert_only(logger, first_pass_config):
     directive = AlertProcessorDirective(**process["processor"]["config"]["directives"][0])
     assert directive.t0_add
     assert directive.stock_update
-    assert not directive.t0_add.t1_combine
+    assert len(directive.t0_add.t1_combine) == 1
+    assert len(units := directive.t0_add.t1_combine[0].t2_compute.units) == 1
+    assert units[0].unit == "T2LightCurveSummary"
     assert not directive.t1_combine
 
 def test_alert_t2(logger, first_pass_config):
@@ -52,8 +49,8 @@ def test_alert_t2(logger, first_pass_config):
     assert directive.t0_add
     assert directive.stock_update
     assert len(directive.t0_add.t1_combine) == 1
-    assert len(units := directive.t0_add.t1_combine[0].t2_compute.units) == 1
-    assert units[0].unit == "DemoLightCurveT2Unit"
+    assert len(units := directive.t0_add.t1_combine[0].t2_compute.units) == 2
+    assert {u.unit for u in units} == {"DemoLightCurveT2Unit", "T2LightCurveSummary"}
     assert not directive.t1_combine
 
 def test_archive_t2(logger, first_pass_config):
@@ -73,7 +70,8 @@ def test_archive_t2(logger, first_pass_config):
     directive = AlertProcessorDirective(**process["processor"]["config"]["directives"][0])
     assert directive.t0_add
     assert directive.stock_update
+    assert len(units := directive.t0_add.t1_combine[0].t2_compute.units) == 1
+    assert units[0].unit == "T2LightCurveSummary"
     assert len(directive.t1_combine) == 1
     assert len(units := directive.t1_combine[0].t2_compute.units) == 1
     assert units[0].unit == "DemoLightCurveT2Unit"
-    assert not directive.t0_add.t1_combine
