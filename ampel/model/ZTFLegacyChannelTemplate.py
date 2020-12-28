@@ -42,7 +42,7 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 	}
 	
 	#: T2 units to trigger when transient is updated
-	t2_compute: Union[List[UnitModel],LegacyT2ComputeModel] = [] # type: ignore[assignment]
+	t2_compute: Union[List[UnitModel],LegacyT2ComputeModel] = LegacyT2ComputeModel(alerts=[UnitModel(unit="T2LightCurveSummary")]) # type: ignore[assignment]
 
 	# prevent validator from wrapping LegacyT2ComputeModel in list
 	@validator('t2_compute', pre=True, each_item=False)
@@ -77,6 +77,11 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 		kafka_config = first_pass_config['resource']['ampel-ztf/kafka']
 		t0_ingester = "ZiAlertContentIngester"
 		t1_ingester = ("PhotoCompoundIngester", {"combiner": {"unit": "ZiT1Combiner"}})
+		# Add a T2LightCurveSummary if it does not already exist
+		t2_compute_from_t0 = self.t2_compute.alerts if isinstance(self.t2_compute, LegacyT2ComputeModel) else self.t2_compute
+		t2_compute_from_t1 = self.t2_compute.archive if isinstance(self.t2_compute, LegacyT2ComputeModel) else []
+		if not any(model.unit == "T2LightCurveSummary" for model in t2_compute_from_t0):
+			t2_compute_from_t0.append(UnitModel(unit="T2LightCurveSummary"))
 		ret.insert(0,
 			self.craft_t0_process(
 				first_pass_config,
@@ -103,8 +108,8 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 				t2_state_ingester = ("PhotoT2Ingester", {"tags": ["ZTF"]}),
 				t2_point_ingester = ("DualPointT2Ingester", {"tags": ["ZTF"]}),
 				t2_stock_ingester = ("StockT2Ingester", {"tags": ["ZTF"]}),
-				t2_compute_from_t0 = self.t2_compute.alerts if isinstance(self.t2_compute, LegacyT2ComputeModel) else self.t2_compute,
-				t2_compute_from_t1 = self.t2_compute.archive if isinstance(self.t2_compute, LegacyT2ComputeModel) else [],
+				t2_compute_from_t0 = t2_compute_from_t0,
+				t2_compute_from_t1 = t2_compute_from_t1,
 			)
 		)
 
