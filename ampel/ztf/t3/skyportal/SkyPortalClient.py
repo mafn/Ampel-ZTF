@@ -36,7 +36,8 @@ import numpy as np
 from astropy.io import fits
 from matplotlib.colors import Normalize
 from matplotlib.figure import Figure
-from pydantic import AnyHttpUrl, validator
+from pydantic import AnyHttpUrl
+import pydantic.errors
 
 from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.log.AmpelLogger import AmpelLogger
@@ -47,6 +48,10 @@ from ampel.t2.T2RunState import T2RunState
 from ampel.util.collections import ampel_iter
 
 if TYPE_CHECKING:
+    from pydantic import AnyUrl
+    from pydantic.fields import ModelField
+    from pydantic.main import BaseConfig
+
     from ampel.config.AmpelConfig import AmpelConfig
     from ampel.content.DataPoint import DataPoint
     from ampel.content.T2Record import T2Record
@@ -145,18 +150,33 @@ class SkyPortalAPIError(IOError):
     ...
 
 
+class UrlPathError(pydantic.errors.UrlError):
+    code = "url.path"
+    msg_template = "URL path must be empty, not {path!r}"
+
+class BaseHttpUrl(AnyHttpUrl):
+    """An http(s) URL with path unset"""
+
+    @classmethod
+    def validate(cls, value: Any, field: 'ModelField', config: 'BaseConfig') -> 'AnyUrl':
+        url = super().validate(value, field, config)
+        if url.path is not None:
+            raise UrlPathError(path=url.path)
+        return url
+    # @classmethod
+    # def validate_parts(cls, parts: Dict[str, str]) -> Dict[str, str]:
+    #     parts["path"] = None
+    #     return super().validate_parts(parts)
+
+
 class SkyPortalClient(AmpelBaseModel):
 
     #: Base URL of SkyPortal server
-    base_url: AnyHttpUrl
+    base_url: BaseHttpUrl
     #: API token
     token: Secret[str]
     #: Maximum number of in-flight requests
     max_parallel_connections: int = 1
-
-    @validator("base_url")
-    def check_path(cls, v):
-        assert not v.path, "url must not have a path component"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)

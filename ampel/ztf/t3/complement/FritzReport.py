@@ -17,7 +17,7 @@ from ampel.core.AmpelBuffer import AmpelBuffer
 from ampel.model.Secret import Secret
 from ampel.t3.complement.AbsT3DataAppender import AbsT3DataAppender
 from ampel.ztf.t3.skyportal.SkyPortalClient import (
-    AnyHttpUrl,
+    BaseHttpUrl,
     SkyPortalAPIError,
     SkyPortalClient,
 )
@@ -29,7 +29,7 @@ class FritzReport(SkyPortalClient, AbsT3DataAppender):
     """
 
     #: Base URL of SkyPortal server
-    base_url: AnyHttpUrl = parse_obj_as(AnyHttpUrl, "https://fritz.science")
+    base_url: BaseHttpUrl = parse_obj_as(BaseHttpUrl, "https://fritz.science")
     #: API token
     token: Secret[str] = {"key": "fritz/jno/ampelbot"}  # type: ignore[assignment]
 
