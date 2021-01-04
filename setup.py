@@ -31,6 +31,7 @@ setup(
 		"sqlalchemy",
 		"aiohttp",
 		"nest_asyncio",
+		"backoff",
 	],
 	extras_require = {
 		"testing": [
