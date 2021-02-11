@@ -44,7 +44,7 @@ from ampel.log.AmpelLogger import AmpelLogger
 from ampel.metrics.AmpelMetricsRegistry import AmpelMetricsRegistry
 from ampel.model.Secret import Secret
 from ampel.protocol.LoggerProtocol import LoggerProtocol
-from ampel.t2.T2RunState import T2RunState
+from ampel.enum.T2RunState import T2RunState
 from ampel.util.collections import ampel_iter
 
 if TYPE_CHECKING:
