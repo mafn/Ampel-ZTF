@@ -32,6 +32,7 @@ setup(
 		"aiohttp",
 		"nest_asyncio",
 		"backoff",
+                "matplotlib",
 	],
 	extras_require = {
 		"testing": [
