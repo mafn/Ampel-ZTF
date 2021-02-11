@@ -28,7 +28,7 @@ setup(
                 "astropy",
 		"confluent-kafka",
 		"psycopg2-binary",
-		"sqlalchemy",
+		"sqlalchemy>=1.3,<1.4",
 		"aiohttp",
 		"nest_asyncio",
 		"backoff",
@@ -41,7 +41,7 @@ setup(
 			"pytest-asyncio",
 			"pytest-mock",
 			"mongomock",
-			"sqlalchemy-stubs",
+			"sqlalchemy-stubs==0.3",
 		]
 	},
 	entry_points = {
