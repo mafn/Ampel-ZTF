@@ -17,7 +17,10 @@
 			"ampel.ztf.t2.T2LightCurveSummary",
 			"ampel.ztf.t3.skyportal.SkyPortalPublisher"
 		],
-		"aux": ["ampel.ztf.alert.ZiAlertSupplier"]
+		"aux": [
+			"ampel.ztf.alert.ZiAlertSupplier",
+			"ampel.ztf.util.ZTFIdMapper"
+		]
 	},
 	"template": {
 		"ztf_uw_private": "ampel.model.ZTFLegacyChannelTemplate",
