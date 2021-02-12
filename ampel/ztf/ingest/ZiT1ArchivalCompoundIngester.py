@@ -11,7 +11,7 @@ from ampel.model.UnitModel import UnitModel
 from ampel.type import ChannelId, StockId
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
 from ampel.ztf.archive.ArchiveDB import ArchiveDB
-from ampel.ztf.utils import to_ztf_id
+from ampel.ztf.util.ZTFIdMapper import to_ztf_id
 
 
 class ZiT1ArchivalCompoundIngester(AbsCompoundIngester[PhotoCompoundBluePrint]):

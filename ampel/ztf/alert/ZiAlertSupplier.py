@@ -8,7 +8,7 @@
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from typing import Literal, List, Union, Callable, Any, Dict
-from ampel.ztf.utils import to_ampel_id
+from ampel.ztf.util.ZTFIdMapper import to_ampel_id
 from ampel.alert.PhotoAlert import PhotoAlert
 from ampel.view.ReadOnlyDict import ReadOnlyDict
 from ampel.abstract.AbsAlertSupplier import AbsAlertSupplier

@@ -9,7 +9,7 @@
 
 from typing import Dict, List, Any, Union
 from ampel.type import StockId
-from ampel.ztf.utils import to_ztf_id
+from ampel.ztf.util.ZTFIdMapper import to_ztf_id
 from ampel.ingest.StockIngester import StockIngester
 
 

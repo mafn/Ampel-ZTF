@@ -13,7 +13,7 @@ from pymongo.cursor import Cursor
 
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.t3.select.AbsT3Selector import AbsT3Selector
-from ampel.ztf.utils import to_ampel_id
+from ampel.ztf.util.ZTFIdMapper import to_ampel_id
 
 
 class T3AdHocStockSelector(AbsT3Selector):
