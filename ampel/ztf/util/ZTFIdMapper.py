@@ -7,7 +7,7 @@
 # Last Modified Date: 12.02.2021
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
-from typing import List, Union, Iterable
+from typing import List, Union, Iterable, overload, cast
 from ampel.type import StrictIterable, StockId
 from ampel.abstract.AbsIdMapper import AbsIdMapper
 
@@ -22,8 +22,18 @@ dec_ztf_years = {i: str(i + 17) for i in range(16)}
 
 class ZTFIdMapper(AbsIdMapper):
 
+	@overload
 	@classmethod
-	def to_ampel_id(cls, ztf_id: Union[str, StrictIterable[str]]) -> Union[int, List[int]]:
+	def to_ampel_id(cls, ztf_id: str) -> int:
+		...
+
+	@overload
+	@classmethod
+	def to_ampel_id(cls, ztf_id: StrictIterable[str]) -> List[int]:
+		...
+
+	@classmethod
+	def to_ampel_id(cls, ztf_id: Union[str, StrictIterable[str]]) -> Union[int, List[int]]: # type: ignore[override]
 		"""
 		:returns: ampel id (positive integer).
 
@@ -94,19 +104,28 @@ class ZTFIdMapper(AbsIdMapper):
 			for i in rg:
 				num += ab[s2[i]] * powers[i]
 			return (num << 4) + enc_ztf_years[ztf_id[3:5]]
+		else:
+			return [cast(int, cls.to_ampel_id(name)) for name in ztf_id]
 
-		return [cls.to_ampel_id(name) for name in ztf_id]
+	@overload
+	@classmethod
+	def to_ext_id(cls, ampel_id: StockId) -> str:
+		...
 
+	@overload
+	@classmethod
+	def to_ext_id(cls, ampel_id: StrictIterable[StockId]) -> List[str]:
+		...
 
 	@classmethod
-	def to_ext_id(cls, ampel_id: Union[StockId, StrictIterable[StockId]]) -> Union[str, List[str]]:
+	def to_ext_id(cls, ampel_id: Union[StockId, StrictIterable[StockId]]) -> Union[str, List[str]]: # type: ignore[override]
 		"""
 		%timeit to_ext_id(274878346346)
 		1.54 µs ± 77.9 ns per loop (mean ± std. dev. of 7 runs, 1000000 loops each)
 		"""
 		# Handle sequences
 		if isinstance(ampel_id, Iterable) and not isinstance(ampel_id, str):
-			return [cls.to_ext_id(l) for l in ampel_id]
+			return [cast(str, cls.to_ext_id(l)) for l in ampel_id]
 		elif isinstance(ampel_id, int):
 
 			# int('00001111', 2) bitmask equals 15
