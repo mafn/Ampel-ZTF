@@ -1,0 +1,53 @@
+[tool.poetry]
+name = "ampel-ztf"
+version = "0.7.1-alpha.0"
+description = "Zwicky Transient Facility support for the Ampel system"
+authors = ["Valery Brinnel"]
+license = "BSD-3-Clause"
+packages = [
+    {include = "ampel"}
+]
+include = [
+    'conf/*/*.json',
+    'conf/*/*/*.json',
+    'conf/*/*.yaml',
+    'conf/*/*/*.yaml',
+    'conf/*/*.yml',
+    'conf/*/*/*.yml',
+]
+
+[[tool.poetry.source]]
+name = "testpypi"
+url = "https://test.pypi.org/simple"
+
+[tool.poetry.dependencies]
+ampel-interface = {version = "^0.7", allow-prereleases = true, source = "testpypi"}
+ampel-core = {version = "^0.7", allow-prereleases = true, source = "testpypi"}
+ampel-photometry = {version = "^0.7.1-alpha.0", allow-prereleases = true, source = "testpypi"}
+ampel-alerts = {version = "^0.7.1-alpha.0", allow-prereleases = true, source = "testpypi"}
+python = "^3.8"
+sqlalchemy-stubs = "^0.4"
+astropy = "^4.2"
+matplotlib = "^3.3.4"
+SQLAlchemy = "~1.3"
+aiohttp = "^3.7.3"
+nest-asyncio = "^1.5.1"
+backoff = "^1.10.0"
+confluent-kafka = "^1.6.0"
+psycopg2-binary = "^2.8.6"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.2"
+pytest-cov = "^2.11.1"
+pytest-mock = "^3.5.1"
+mongomock = "^3.22.1"
+mypy = "^0.800"
+sqlalchemy-stubs = "^0.4"
+pytest-timeout = "^1.4.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.coverage.run]
+relative_files = true
