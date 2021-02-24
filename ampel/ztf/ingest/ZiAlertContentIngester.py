@@ -4,12 +4,11 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 14.12.2017
-# Last Modified Date: 21.03.2020
+# Last Modified Date: 18.02.2021
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 import itertools
 from pymongo import UpdateOne
-from bson import ObjectId
 from typing import Dict, List, Any
 from ampel.type import StockId
 from ampel.util.mappings import unflatten_dict
@@ -79,11 +78,11 @@ class ZiAlertContentIngester(AbsAlertContentIngester[PhotoAlert, DataPoint]):
 
 
 	def _project(self, doc, projection):
-		out : Dict[str, Any] = {}
+		out: Dict[str, Any] = {}
 		for key, spec in projection.items():
-			if not key in doc:
+			if key not in doc:
 				continue
-			
+
 			if isinstance(spec, dict):
 				item = doc[key]
 				if isinstance(item, list):
@@ -129,7 +128,7 @@ class ZiAlertContentIngester(AbsAlertContentIngester[PhotoAlert, DataPoint]):
 			# match also by rcid
 			key = (dp['body']['jd'], dp['body']['rcid'])
 
-			if not key in unique_dps:
+			if key not in unique_dps:
 				unique_dps[key] = dp['_id']
 			elif dp['_id'] > unique_dps[key]:
 				ids_dps_superseded[unique_dps[key]] = dp['_id']
@@ -145,17 +144,17 @@ class ZiAlertContentIngester(AbsAlertContentIngester[PhotoAlert, DataPoint]):
 
 		for dp in dps:
 			if dp['_id'] in ids_dps_to_insert:
-				base = {k: v for k,v in dp.items() if not k in {'tag', 'stock'}}
-				sets : Dict[str,Any] = {
+				base = {k: v for k, v in dp.items() if k not in {'tag', 'stock'}}
+				sets: Dict[str, Any] = {
 					'stock': stock_id,
 					'tag': {'$each': dp['tag']}
 				}
 				# If alerts were received out of order, this point may already
 				# be superseded.
 				if (
-					self.check_reprocessing
-					and dp['_id'] in ids_dps_superseded
-					and not 'SUPERSEDED' in dp['tag']
+					self.check_reprocessing and
+					dp['_id'] in ids_dps_superseded and
+					'SUPERSEDED' not in dp['tag']
 				):
 					# NB: here we modify the point in place, so the SUPERSEDED
 					# tag remains in place if there is a second pass
@@ -188,8 +187,8 @@ class ZiAlertContentIngester(AbsAlertContentIngester[PhotoAlert, DataPoint]):
 
 		for dp in (dps_db if self.check_reprocessing else []):
 			if (
-				dp['_id'] in ids_dps_superseded
-				and not 'SUPERSEDED' in dp['tag']
+				dp['_id'] in ids_dps_superseded and
+				'SUPERSEDED' not in dp['tag']
 			):
 				dp['tag'] = list(dp['tag']) + ['SUPERSEDED']
 				sets = {
@@ -223,7 +222,7 @@ class ZiAlertContentIngester(AbsAlertContentIngester[PhotoAlert, DataPoint]):
 				{
 					doc['_id']
 					for doc in self._photo_col.find({'stock': stock_id}, {'_id': 1})
-				}
+				} \
 				- (ids_dps_db | ids_dps_alert)
 			):
 				raise ConcurrentUpdateError(f"t0 collection contains {len(concurrent_updates)} extra photopoints: {concurrent_updates}")
@@ -232,17 +231,17 @@ class ZiAlertContentIngester(AbsAlertContentIngester[PhotoAlert, DataPoint]):
 		# the same way whether they were drawn from the db or from the alert.
 		datapoints = [
 			el for el in (
-			dps_db + [
-				self.project(dp)
-				for dp in dps if dp['_id'] in ids_dps_to_insert
-			]
+				dps_db + [
+					self.project(dp)
+					for dp in dps if dp['_id'] in ids_dps_to_insert
+				]
 			)
 			# Only return datapoints that were in the alert itself
 			# https://github.com/AmpelProject/Ampel-ZTF/issues/6
 			if el['_id'] in ids_dps_alert
 		]
 
-		return sorted(datapoints, key=lambda k: k['body']['jd'], reverse=True)
+		return sorted(datapoints, key=lambda k: k['body']['jd'])
 
 
 	def ingest(self, alert: PhotoAlert) -> List[DataPoint]:
@@ -257,7 +256,7 @@ class ZiAlertContentIngester(AbsAlertContentIngester[PhotoAlert, DataPoint]):
 
 		# IPAC occasionally issues multiple subtraction candidates for the same
 		# exposure and source, and these may be received in parallel by two
-		# AlertProcessors. 
+		# AlertProcessors.
 		for _ in range(10):
 			try:
 				return self._try_ingest(alert.stock_id, dps)

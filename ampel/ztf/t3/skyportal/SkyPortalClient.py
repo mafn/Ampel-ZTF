@@ -44,7 +44,7 @@ from ampel.log.AmpelLogger import AmpelLogger
 from ampel.metrics.AmpelMetricsRegistry import AmpelMetricsRegistry
 from ampel.model.Secret import Secret
 from ampel.protocol.LoggerProtocol import LoggerProtocol
-from ampel.t2.T2RunState import T2RunState
+from ampel.enum.T2RunState import T2RunState
 from ampel.util.collections import ampel_iter
 
 if TYPE_CHECKING:
@@ -54,6 +54,7 @@ if TYPE_CHECKING:
 
     from ampel.config.AmpelConfig import AmpelConfig
     from ampel.content.DataPoint import DataPoint
+    from ampel.content.T2Document import T2Document
     from ampel.content.T2Record import T2Record
     from ampel.view.TransientView import TransientView
 
@@ -97,7 +98,7 @@ def sanitize_json(obj):
         return obj
 
 
-def encode_t2_body(t2: "T2Record") -> str:
+def encode_t2_body(t2: "T2Document") -> str:
     assert t2["body"] is not None
     doc = t2["body"][-1]
     return base64.b64encode(
@@ -695,7 +696,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 ret["thumbnail_count"] += 1
 
         # represent latest T2 results as a comments
-        latest_t2: Dict[str, "T2Record"] = {}
+        latest_t2: Dict[str, "T2Document"] = {}
         for t2 in view.t2 or []:
             if t2["status"] != T2RunState.COMPLETED or not t2["body"]:
                 continue

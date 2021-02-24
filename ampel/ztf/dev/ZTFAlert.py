@@ -71,6 +71,7 @@ class ZTFAlert:
 
 		return LightCurve(
 			os.urandom(16), # CompoundId
+			pal.stock_id,
 			tuple(pps), # Photopoints
 			tuple(uls), # Upperlimit
 			0, # tier
