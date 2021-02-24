@@ -7,7 +7,7 @@
 # Last Modified Date: 11.08.2020
 # Last Modified By	: Jakob van Santen <jakob.van.santen@desy.de>
 
-from typing import Dict, Any, ClassVar, List, Union, Optional, Sequence, Literal
+from typing import Dict, Any, ClassVar, List, Union
 from pydantic import validator
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.config.builder.FirstPassConfig import FirstPassConfig
@@ -40,9 +40,9 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 		"ztf_uw_public": ["ZTF", "ZTF_PUB"],
 		"ztf_uw_caltech": ["ZTF", "ZTF_PUB"]
 	}
-	
+
 	#: T2 units to trigger when transient is updated
-	t2_compute: Union[List[UnitModel],LegacyT2ComputeModel] = LegacyT2ComputeModel(alerts=[UnitModel(unit="T2LightCurveSummary")]) # type: ignore[assignment]
+	t2_compute: Union[List[UnitModel], LegacyT2ComputeModel] = LegacyT2ComputeModel(alerts=[UnitModel(unit="T2LightCurveSummary")]) # type: ignore[assignment]
 
 	# prevent validator from wrapping LegacyT2ComputeModel in list
 	@validator('t2_compute', pre=True, each_item=False)

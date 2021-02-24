@@ -10,17 +10,12 @@
 import asyncio
 import copy
 import logging
-from functools import partial
-from os.path import basename 
-from typing import Any, Dict, List, Literal, Optional, Union, Iterable, Set, Sequence
-
-from pydantic import ValidationError
+from os.path import basename
+from typing import Any, Dict, List, Literal, Optional, Union, Set, Sequence
 
 from ampel.abstract.AbsProcessController import AbsProcessController
-from ampel.abstract.AbsProcessorUnit import AbsProcessorUnit
 from ampel.abstract.AbsSecretProvider import AbsSecretProvider
 from ampel.alert.load.TarAlertLoader import TarAlertLoader
-from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.config.AmpelConfig import AmpelConfig
 from ampel.core.AmpelContext import AmpelContext
 from ampel.model.ProcessModel import ProcessModel
@@ -125,7 +120,7 @@ class ZTFAlertStreamController(AbsProcessController):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-        self._scale_event : Optional[asyncio.Event] = None
+        self._scale_event: Optional[asyncio.Event] = None
         self.update(self.config, self.secrets, self.processes)
 
     def update(self,
@@ -150,7 +145,10 @@ class ZTFAlertStreamController(AbsProcessController):
 
         def strip(config):
             """Remove AlertProcessor config keys will be changed or merged"""
-            return {k: v for k, v in config.items() if k not in {"process_name", "publish_stats", "directives"}} if config else {}
+            return {
+                k: v for k, v in config.items()
+                if k not in {"process_name", "publish_stats", "directives"}
+            } if config else {}
 
         for pm in processes[1:]:
             # ensure that trailing AlertProcessor configs are compatible
@@ -165,7 +163,7 @@ class ZTFAlertStreamController(AbsProcessController):
 
         return process
 
-    def stop(self, name: Optional[str]=None) -> None:
+    def stop(self, name: Optional[str] = None) -> None:
         """Stop scheduling new processes."""
         assert name is None
         self._process.active = False
@@ -173,7 +171,7 @@ class ZTFAlertStreamController(AbsProcessController):
         if self._scale_event:
             self._scale_event.set()
 
-    def scale(self, name: Optional[str]=None, multiplier: int=1):
+    def scale(self, name: Optional[str] = None, multiplier: int = 1) -> None:
         if multiplier < 1:
             raise ValueError("multiplier must be nonnegative")
         assert self._scale_event
@@ -191,6 +189,7 @@ class ZTFAlertStreamController(AbsProcessController):
         """
         assert self._scale_event is None, "run() is not reentrant"
         self._scale_event = asyncio.Event()
+
         def launch() -> asyncio.Task:
             counter = AbsProcessController.process_count.labels(self._process.tier, self._process.name)
             t = self.run_mp_process(
@@ -209,21 +208,21 @@ class ZTFAlertStreamController(AbsProcessController):
         try:
             while self._process.active and len(pending) > 1:
                 try:
-                    done, pending = await asyncio.wait( #  type: ignore[assignment]
+                    done, pending = await asyncio.wait( # type: ignore[assignment]
                         pending, return_when="FIRST_COMPLETED"
-                    ) 
+                    )
                     for task in list(done):
                         if task.get_name() == "scale":
                             if self._scale_event.is_set():
                                 log.info(f"scale {len(pending)} -> {self.multiplier}")
                                 # scale down
-                                to_kill = {pending.pop() for _ in range(len(pending)-self.multiplier)}
+                                to_kill = {pending.pop() for _ in range(len(pending) - self.multiplier)}
                                 for t in to_kill:
                                     t.cancel()
                                 await asyncio.gather(*to_kill, return_exceptions=True)
                                 done.update(to_kill)
                                 # scale up
-                                for _ in range(self.multiplier-len(pending)):
+                                for _ in range(self.multiplier - len(pending)):
                                     pending.add(launch())
                                 self._scale_event.clear()
                             pending.add(asyncio.create_task(self._scale_event.wait(), name="scale"))
@@ -234,9 +233,9 @@ class ZTFAlertStreamController(AbsProcessController):
                                 await asyncio.sleep(10)
                             # start a fresh replica for each processor that
                             # returned True. NB: +1 for scale wait task
-                            if (task.exception() or task.result()) and len(pending) < self.multiplier+1:
+                            if (task.exception() or task.result()) and len(pending) < self.multiplier + 1:
                                 pending.add(launch())
-                except:
+                except Exception:
                     for t in pending:
                         t.cancel()
                     break
@@ -245,7 +244,7 @@ class ZTFAlertStreamController(AbsProcessController):
             self._scale_event.set()
             tasks = list(done.union(pending))
             results = await asyncio.gather(*tasks, return_exceptions=True)
-            return [r for t,r in zip(tasks,results) if t.get_name() != "scale"]
+            return [r for t, r in zip(tasks, results) if t.get_name() != "scale"]
 
     @staticmethod
     @concurrent.process(timeout=60)
@@ -257,9 +256,9 @@ class ZTFAlertStreamController(AbsProcessController):
     ) -> bool:
 
         try:
-            import setproctitle #  type: ignore
+            import setproctitle # type: ignore
             setproctitle.setproctitle(f"ampel.t{p['tier']}.{p['name']}")
-        except:
+        except Exception:
             ...
 
         from ampel.alert.AlertProcessor import AlertProcessor
