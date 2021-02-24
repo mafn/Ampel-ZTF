@@ -6,7 +6,7 @@
 # ZTF support for AMPEL
 
 <br><br>
-ZTF specific implementations for Ampel such as:
+ZTF-specific implementations for Ampel such as:
 
 - An _AlertSupplier_ compatible with IPAC generated alerts
 - Shaper classes for ingestion
