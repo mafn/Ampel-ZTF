@@ -34,10 +34,6 @@ include = [
     'conf/*/*/*.yml',
 ]
 
-[[tool.poetry.source]]
-name = "testpypi"
-url = "https://test.pypi.org/simple"
-
 [tool.poetry.dependencies]
 ampel-interface = {version = "^0.7.1-alpha.7", allow-prereleases = true}
 ampel-core = {version = "^0.7.1-alpha.1", allow-prereleases = true}
