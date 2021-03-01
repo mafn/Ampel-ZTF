@@ -18,4 +18,4 @@ class ZTFPeriodicSummaryT3(PeriodicSummaryT3):
     """
 
     tag: Dict = {"with": "ZTF", "without": "HAS_ERROR"}
-    load: Optional[Sequence[Union[str,LoaderDirective]]] = ["TRANSIENT", "T2RECORD"]
+    load: Optional[Sequence[Union[str, LoaderDirective]]] = ["TRANSIENT", "T2RECORD"]
