@@ -691,7 +691,7 @@ test = ["coverage", "flake8", "wheel"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "c2e2c3753697932a6c6a44792743d064beb6925852d76d6c0abcb179189eae13"
+content-hash = "c9d811ef0e0d582b052c0ac6a4ff1e02da818e216f6631858247c91739364416"
 
 [metadata.files]
 aiohttp = [
