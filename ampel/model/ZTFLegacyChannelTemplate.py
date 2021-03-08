@@ -81,7 +81,7 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 		t2_compute_from_t0 = self.t2_compute.alerts if isinstance(self.t2_compute, LegacyT2ComputeModel) else self.t2_compute
 		t2_compute_from_t1 = self.t2_compute.archive if isinstance(self.t2_compute, LegacyT2ComputeModel) else []
 		if not any(model.unit == "T2LightCurveSummary" for model in t2_compute_from_t0):
-			t2_compute_from_t0.append(UnitModel(unit="T2LightCurveSummary"))
+			t2_compute_from_t0.append(T2UnitModel(unit="T2LightCurveSummary"))
 		ret.insert(0,
 			self.craft_t0_process(
 				first_pass_config,
