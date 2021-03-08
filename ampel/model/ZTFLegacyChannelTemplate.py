@@ -11,15 +11,15 @@ from typing import Dict, Any, ClassVar, List, Union
 from pydantic import validator
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.config.builder.FirstPassConfig import FirstPassConfig
-from ampel.model.template.AbsLegacyChannelTemplate import AbsLegacyChannelTemplate
+from ampel.model.template.AbsLegacyChannelTemplate import AbsLegacyChannelTemplate, T2UnitModel
 from ampel.model.StrictModel import StrictModel
 from ampel.model.UnitModel import UnitModel
 
 class LegacyT2ComputeModel(StrictModel):
 	#: run these units on alerts from the stream
-	alerts: List[UnitModel] = []
+	alerts: List[T2UnitModel] = []
 	#: run these units on archival light curves
-	archive: List[UnitModel] = []
+	archive: List[T2UnitModel] = []
 
 class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 	"""
@@ -42,7 +42,7 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 	}
 
 	#: T2 units to trigger when transient is updated
-	t2_compute: Union[List[UnitModel], LegacyT2ComputeModel] = LegacyT2ComputeModel(alerts=[UnitModel(unit="T2LightCurveSummary")]) # type: ignore[assignment]
+	t2_compute: Union[List[T2UnitModel], LegacyT2ComputeModel] = LegacyT2ComputeModel(alerts=[T2UnitModel(unit="T2LightCurveSummary")]) # type: ignore[assignment]
 
 	# prevent validator from wrapping LegacyT2ComputeModel in list
 	@validator('t2_compute', pre=True, each_item=False)
