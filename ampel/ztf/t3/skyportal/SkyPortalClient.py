@@ -6,38 +6,21 @@
 # Last Modified Date: 16.09.2020
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
-import asyncio
-import base64
-import gzip
-import io
-import json
-import math
-import time
+import asyncio, base64, gzip, io, json, math, time, sys, aiohttp, backoff, pydantic.errors
+import numpy as np
+
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import (
-    Any,
-    Dict,
-    Generator,
-    List,
-    Optional,
-    overload,
-    Sequence,
-    Set,
-    TYPE_CHECKING,
-    TypedDict,
-    Union,
-)
-
-import aiohttp
-import backoff
-import numpy as np
 from astropy.io import fits
 from matplotlib.colors import Normalize
 from matplotlib.figure import Figure
 from pydantic import AnyHttpUrl
-import pydantic.errors
+if sys.version_info.minor > 8:
+	from typing import TypedDict
+else:
+	from typing_extensions import TypedDict
+from typing import Any, Dict, Generator, List, Optional, overload, Sequence, Set, TYPE_CHECKING, Union
 
 from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.log.AmpelLogger import AmpelLogger
@@ -55,7 +38,6 @@ if TYPE_CHECKING:
     from ampel.config.AmpelConfig import AmpelConfig
     from ampel.content.DataPoint import DataPoint
     from ampel.content.T2Document import T2Document
-    from ampel.content.T2Record import T2Record
     from ampel.view.TransientView import TransientView
 
 
@@ -123,7 +105,7 @@ def render_thumbnail(cutout_data: bytes) -> str:
     """
     with gzip.open(io.BytesIO(cutout_data), "rb") as f:
         with fits.open(f) as hdu:
-            header = hdu[0].header
+            # header = hdu[0].header
             img = np.flipud(hdu[0].data)
     mask = np.isfinite(img)
 
@@ -286,9 +268,9 @@ class SkyPortalClient(AmpelBaseModel):
             return response["data"]["id"]
 
     async def get_by_name(self, endpoint, name):
-        if not endpoint in self._ids:
+        if endpoint not in self._ids:
             self._ids[endpoint] = {}
-        if not name in self._ids[endpoint]:
+        if name not in self._ids[endpoint]:
             self._ids[endpoint][name] = await self._get_by_name(endpoint, name)
         return self._ids[endpoint][name]
 
@@ -449,7 +431,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
     logger: LoggerProtocol
 
     def __init__(self, **kwargs):
-        if not "logger" in kwargs:
+        if "logger" not in kwargs:
             kwargs["logger"] = AmpelLogger.get_logger()
         super().__init__(**kwargs)
 
@@ -492,7 +474,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         for tag in tags:
             try:
                 return await self.get_by_name("instrument", tag)
-            except:
+            except Exception:
                 ...
         raise KeyError(f"None of {tags} match a known instrument")
 
@@ -622,7 +604,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             new_filters.difference_update(fids)
             candidate_ids = (
                 await self.post(
-                    f"candidates",
+                    "candidates",
                     json={
                         "id": name,
                         "filter_ids": fids,
