@@ -50,6 +50,7 @@ backoff = "^1.10.0"
 confluent-kafka = "^1.6.0"
 psycopg2-binary = "^2.8.6"
 fastavro = "^1.3.2"
+requests = "^2.25.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"
