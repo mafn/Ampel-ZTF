@@ -11,15 +11,15 @@ from typing import Dict, Any, ClassVar, List, Union
 from pydantic import validator
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.config.builder.FirstPassConfig import FirstPassConfig
-from ampel.model.template.AbsLegacyChannelTemplate import AbsLegacyChannelTemplate
+from ampel.model.template.AbsLegacyChannelTemplate import AbsLegacyChannelTemplate, T2UnitModel
 from ampel.model.StrictModel import StrictModel
 from ampel.model.UnitModel import UnitModel
 
 class LegacyT2ComputeModel(StrictModel):
 	#: run these units on alerts from the stream
-	alerts: List[UnitModel] = []
+	alerts: List[T2UnitModel] = []
 	#: run these units on archival light curves
-	archive: List[UnitModel] = []
+	archive: List[T2UnitModel] = []
 
 class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 	"""
@@ -42,7 +42,7 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 	}
 
 	#: T2 units to trigger when transient is updated
-	t2_compute: Union[List[UnitModel], LegacyT2ComputeModel] = LegacyT2ComputeModel(alerts=[UnitModel(unit="T2LightCurveSummary")]) # type: ignore[assignment]
+	t2_compute: Union[List[T2UnitModel], LegacyT2ComputeModel] = LegacyT2ComputeModel(alerts=[T2UnitModel(unit="T2LightCurveSummary")]) # type: ignore[assignment]
 
 	# prevent validator from wrapping LegacyT2ComputeModel in list
 	@validator('t2_compute', pre=True, each_item=False)
@@ -81,7 +81,7 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 		t2_compute_from_t0 = self.t2_compute.alerts if isinstance(self.t2_compute, LegacyT2ComputeModel) else self.t2_compute
 		t2_compute_from_t1 = self.t2_compute.archive if isinstance(self.t2_compute, LegacyT2ComputeModel) else []
 		if not any(model.unit == "T2LightCurveSummary" for model in t2_compute_from_t0):
-			t2_compute_from_t0.append(UnitModel(unit="T2LightCurveSummary"))
+			t2_compute_from_t0.append(T2UnitModel(unit="T2LightCurveSummary"))
 		ret.insert(0,
 			self.craft_t0_process(
 				first_pass_config,
