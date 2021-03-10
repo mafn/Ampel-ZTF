@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ampel-ztf"
-version = "0.7.1-alpha.7"
+version = "0.7.1-alpha.8"
 description = "Zwicky Transient Facility support for the Ampel system"
 authors = [
     "Valery Brinnel",
@@ -36,7 +36,7 @@ include = [
 
 [tool.poetry.dependencies]
 ampel-interface = {version = "@0.7.1-alpha.7", allow-prereleases = true}
-ampel-core = "^0.7.1-alpha.4"
+ampel-core = {version = "@0.7.1-alpha.5", allow-prereleases = true}
 ampel-photometry = {version = "~0.7.1-alpha.0", allow-prereleases = true}
 ampel-alerts = {version = "~0.7.1-alpha.0", allow-prereleases = true}
 python = "^3.8"
