@@ -12,10 +12,10 @@ import requests
 from ampel.base.DataUnit import DataUnit
 from ampel.model.StrictModel import StrictModel
 
-from typing import Sequence, Dict, Any, Literal, TypedDict, Optional, List, Union
+from typing import Sequence, Dict, Any, Literal, TypedDict, Optional, List, Union, overload
 
 
-class ConeSearchModel(StrictModel):
+class ConeSearchRequest(TypedDict):
     """
     :param use: either extcats or catsHTM, depending on how the catalog is set up.
     :param rs_arcsec: search radius for the cone search, in arcseconds
@@ -53,9 +53,12 @@ class ConeSearchModel(StrictModel):
     name: str
     use: Literal["extcats", "catsHTM"]
     rs_arcsec: float
-    keys_to_append: Optional[Sequence[str]]
-    pre_filter: Optional[Dict[str, Any]]
-    post_filter: Optional[Dict[str, Any]]
+
+
+class ExtendedConeSearchRequest(ConeSearchRequest, total=False):
+    keys_to_append: Sequence[str]
+    pre_filter: Dict[str, Any]
+    post_filter: Dict[str, Any]
 
 
 class CatalogItem(TypedDict):
@@ -74,9 +77,27 @@ class CatalogMatchUnit(DataUnit):
     def session(self):
         return requests.Session()
 
+    @overload
     def _cone_search(
-        self, method, ra: float, dec: float, catalogs: Sequence[ConeSearchModel]
-    ) -> List[Union[bool, CatalogItem, List[CatalogItem]]]:
+        self, method: Literal["any"], ra: float, dec: float, catalogs: Sequence[ConeSearchRequest]
+    ) -> List[bool]:
+        ...
+    
+    @overload
+    def _cone_search(
+        self, method: Literal["nearest"], ra: float, dec: float, catalogs: Sequence[ConeSearchRequest]
+    ) -> List[Optional[CatalogItem]]:
+        ...
+    
+    @overload
+    def _cone_search(
+        self, method: Literal["all"], ra: float, dec: float, catalogs: Sequence[ConeSearchRequest]
+    ) -> List[Optional[List[CatalogItem]]]:
+        ...
+
+    def _cone_search(
+        self, method: Literal["any", "nearest", "all"], ra: float, dec: float, catalogs: Sequence[ConeSearchRequest]
+    ) -> Union[List[bool], List[Optional[CatalogItem]], List[Optional[List[CatalogItem]]]]:
         response = self.session.post(
             self.catalogmatch_service + f"/cone_search/{method}",
             json={
@@ -90,16 +111,16 @@ class CatalogMatchUnit(DataUnit):
         return response.json()
 
     def cone_search_any(
-        self, ra: float, dec: float, catalogs: Sequence[ConeSearchModel]
+        self, ra: float, dec: float, catalogs: Sequence[ConeSearchRequest]
     ) -> List[bool]:
         return self._cone_search("any", ra, dec, catalogs)
 
     def cone_search_nearest(
-        self, ra: float, dec: float, catalogs: Sequence[ConeSearchModel]
-    ) -> List[CatalogItem]:
+        self, ra: float, dec: float, catalogs: Sequence[ConeSearchRequest]
+    ) -> List[Optional[CatalogItem]]:
         return self._cone_search("nearest", ra, dec, catalogs)
 
     def cone_search_all(
-        self, ra: float, dec: float, catalogs: Sequence[ConeSearchModel]
-    ) -> List[List[CatalogItem]]:
+        self, ra: float, dec: float, catalogs: Sequence[ConeSearchRequest]
+    ) -> List[Optional[List[CatalogItem]]]:
         return self._cone_search("all", ra, dec, catalogs)
