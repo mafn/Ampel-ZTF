@@ -57,8 +57,8 @@ class ConeSearchRequest(TypedDict):
 
 class ExtendedConeSearchRequest(ConeSearchRequest, total=False):
     keys_to_append: Optional[Sequence[str]]
-    # pre_filter: Dict[str, Any]
-    # post_filter: Dict[str, Any]
+    pre_filter: Dict[str, Any]
+    post_filter: Dict[str, Any]
 
 
 class CatalogItem(TypedDict):

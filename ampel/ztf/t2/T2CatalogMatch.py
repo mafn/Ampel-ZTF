@@ -59,9 +59,8 @@ class CatalogModel(StrictModel):
     rs_arcsec: float
     catq_kwargs: Dict[str, Any] = Field({}, deprecated=True)
     keys_to_append: Optional[Sequence[str]]
-    # catalogmatch-service does not currently consume these
-    # pre_filter: Optional[Dict[str, Any]]
-    # post_filter: Optional[Dict[str, Any]]
+    pre_filter: Optional[Dict[str, Any]]
+    post_filter: Optional[Dict[str, Any]]
 
 
 class T2CatalogMatch(AbsPointT2Unit):
