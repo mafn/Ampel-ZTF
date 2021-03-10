@@ -56,7 +56,7 @@ class ConeSearchRequest(TypedDict):
 
 
 class ExtendedConeSearchRequest(ConeSearchRequest, total=False):
-    keys_to_append: Sequence[str]
+    keys_to_append: Optional[Sequence[str]]
     # pre_filter: Dict[str, Any]
     # post_filter: Dict[str, Any]
 
@@ -106,7 +106,6 @@ class CatalogMatchUnit(AmpelBaseModel):
                 "catalogs": catalogs,
             },
         )
-        print(response.json())
         response.raise_for_status()
         return response.json()
 
