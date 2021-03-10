@@ -8,12 +8,12 @@
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
 from functools import cached_property
-import requests
-from ampel.base.DataUnit import DataUnit
-from ampel.model.StrictModel import StrictModel
-
 from typing import Sequence, Dict, Any, Literal, TypedDict, Optional, List, Union, overload
 
+import requests
+
+from ampel.base.AmpelBaseModel import AmpelBaseModel
+from ampel.model.StrictModel import StrictModel
 
 class ConeSearchRequest(TypedDict):
     """
@@ -57,8 +57,8 @@ class ConeSearchRequest(TypedDict):
 
 class ExtendedConeSearchRequest(ConeSearchRequest, total=False):
     keys_to_append: Sequence[str]
-    pre_filter: Dict[str, Any]
-    post_filter: Dict[str, Any]
+    # pre_filter: Dict[str, Any]
+    # post_filter: Dict[str, Any]
 
 
 class CatalogItem(TypedDict):
@@ -66,7 +66,7 @@ class CatalogItem(TypedDict):
     dist_arcsec: float
 
 
-class CatalogMatchUnit(DataUnit):
+class CatalogMatchUnit(AmpelBaseModel):
     """
     A mixin providing catalog matching with catalogmatch-service
     """
