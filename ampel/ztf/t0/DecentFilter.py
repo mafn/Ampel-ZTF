@@ -8,16 +8,16 @@
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
 from numpy import exp, asarray
-from typing import Optional, Union
+from typing import Optional, Union, Dict, Any
 from astropy.table import Table
 from astropy.coordinates import SkyCoord
 
 from ampel.alert.PhotoAlert import PhotoAlert
 from ampel.abstract.AbsAlertFilter import AbsAlertFilter
-from ampel.contrib.hu.base.CatsHTMUnit import CatsHTMUnit
+from ampel.ztf.base.CatalogMatchUnit import CatalogMatchUnit
 
 
-class DecentFilter(CatsHTMUnit, AbsAlertFilter[PhotoAlert]):
+class DecentFilter(CatalogMatchUnit, AbsAlertFilter[PhotoAlert]):
     """
     General-purpose filter with ~ 0.6% acceptance. It selects alerts based on:
     * numper of previous detections
@@ -152,18 +152,18 @@ class DecentFilter(CatsHTMUnit, AbsAlertFilter[PhotoAlert]):
 
         return sg_confused and very_close
 
-    def is_star_in_gaia(self, transient) -> bool:
+    def is_star_in_gaia(self, transient: Dict[str, Any]) -> bool:
         """
         match tranient position with GAIA DR2 and uses parallax
         and proper motion to evaluate star-likeliness
         returns: True (is a star) or False otehrwise.
         """
 
-        transient_coords = SkyCoord(transient["ra"], transient["dec"], unit="deg")
-
-        srcs, colnames, colunits = self.catshtm.cone_search(
-            "GAIADR2", transient_coords.ra.rad, transient_coords.dec.rad, self.gaia_rs
-        )
+        srcs = self.cone_search_all(
+            transient["ra"],
+            transient["dec"],
+            [{"name": "GAIADR2", "use": "catsHTM", "rs_arcsec": self.gaia_rs}],
+        )[0]
 
         my_keys = [
             "RA",
@@ -178,14 +178,14 @@ class DecentFilter(CatsHTMUnit, AbsAlertFilter[PhotoAlert]):
             "ExcessNoiseSig",
         ]
 
-        if len(srcs) > 0:
+        if srcs:
 
-            gaia_tab = Table(asarray(srcs), names=colnames)
+            gaia_tab = Table([src["body"] for src in srcs])
             gaia_tab = gaia_tab[my_keys]
             gaia_coords = SkyCoord(gaia_tab["RA"], gaia_tab["Dec"], unit="rad")
 
             # compute distance
-            gaia_tab["DISTANCE"] = transient_coords.separation(gaia_coords).arcsec
+            gaia_tab["DISTANCE"] = [src["dist_arcsec"] for src in srcs]
             gaia_tab["DISTANCE_NORM"] = (
                 1.8 + 0.6 * exp((20 - gaia_tab["Mag_G"]) / 2.05) > gaia_tab["DISTANCE"]
             )

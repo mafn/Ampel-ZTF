@@ -5,6 +5,8 @@ import logging
 import requests
 
 from ampel.ztf.t2.T2CatalogMatch import T2CatalogMatch
+from ampel.ztf.t0.DecentFilter import DecentFilter
+
 from ampel.content.DataPoint import DataPoint
 
 
@@ -22,7 +24,7 @@ def catalogmatch_service_reachable():
         pytest.skip("https://ampel.zeuthen.desy.de/ is unreachable")
 
 
-def test_match(
+def test_catalogmatch(
     patch_mongo, dev_context, catalogmatch_config, catalogmatch_service_reachable
 ):
     unit = T2CatalogMatch(
@@ -49,3 +51,12 @@ def test_match(
             },
         },
     }
+
+def test_decentfilter_star_in_gaia(patch_mongo, dev_context):
+    with open(Path(__file__).parent / "test-data" / "decentfilter_config.yaml") as f:
+        config = yaml.safe_load(f)
+    unit = DecentFilter(
+        dev_context, logger=logging.getLogger(), **config
+    )
+    assert unit.is_star_in_gaia({"ra": 0.009437700971970959, "dec": -0.0008937364197194631})
+    assert not unit.is_star_in_gaia({"ra": 0, "dec": 0})
