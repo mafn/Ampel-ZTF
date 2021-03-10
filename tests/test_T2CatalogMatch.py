@@ -4,10 +4,16 @@ import yaml
 import logging
 import requests
 
+from ampel.ztf.t3.complement.TNSNames import TNSNames
+from ampel.ztf.t3.complement.TNSReports import TNSReports
 from ampel.ztf.t2.T2CatalogMatch import T2CatalogMatch
 from ampel.ztf.t0.DecentFilter import DecentFilter
 
 from ampel.content.DataPoint import DataPoint
+from ampel.content.StockDocument import StockDocument
+from ampel.content.T2Document import T2Document
+
+from ampel.core.AmpelBuffer import AmpelBuffer
 
 
 @pytest.fixture
@@ -52,11 +58,78 @@ def test_catalogmatch(
         },
     }
 
+
 def test_decentfilter_star_in_gaia(patch_mongo, dev_context):
     with open(Path(__file__).parent / "test-data" / "decentfilter_config.yaml") as f:
         config = yaml.safe_load(f)
-    unit = DecentFilter(
-        dev_context, logger=logging.getLogger(), **config
+    unit = DecentFilter(dev_context, logger=logging.getLogger(), **config)
+    assert unit.is_star_in_gaia(
+        {"ra": 0.009437700971970959, "dec": -0.0008937364197194631}
     )
-    assert unit.is_star_in_gaia({"ra": 0.009437700971970959, "dec": -0.0008937364197194631})
     assert not unit.is_star_in_gaia({"ra": 0, "dec": 0})
+
+
+def test_tnsnames(patch_mongo, dev_context) -> None:
+    unit = TNSNames(dev_context, logger=logging.getLogger())
+    buf = AmpelBuffer(
+        {
+            "id": 0,
+            "stock": StockDocument(
+                {
+                    "_id": 0,
+                    "tag": None,
+                    "channel": None,
+                    "journal": [],
+                    "modified": {},
+                    "created": {},
+                    "name": ["sourceysource"],
+                }
+            ),
+            "t2": [
+                T2Document(
+                    {
+                        "_id": 0,
+                        "unit": "T2LightCurveSummary",
+                        "body": [
+                            {"ts": 0, "result": {"ra": 0.518164, "dec": 0.361964}}
+                        ],
+                    }
+                )
+            ],
+        }
+    )
+    unit.complement([buf])
+    assert buf["stock"]["name"] == ("sourceysource", "TNS2020ubb")
+    assert not "extra" in buf
+
+    unit = TNSReports(dev_context, logger=logging.getLogger())
+    unit.complement([buf])
+    assert buf["stock"]["name"] == ("sourceysource", "TNS2020ubb")
+    assert buf["extra"] == {
+        "TNSReports": [
+            {
+                "decdeg_err": 2.5e-05,
+                "discmagfilter": {"id": 111, "name": "r", "family": "ZTF"},
+                "discoverer": "F. Forster, A. Munoz-Arancibia, F.E. Bauer, L. Hernandez-Garcia, L. Galbany, G. Pignata, E. Camacho, J. Silva-Farfan, A. Mourao, J. Arredondo, G. Cabrera-Vives, R. Carrasco-Davis, P.A. Estevez, P. Huijse, E. Reyes, I. Reyes, P. Sanchez-Saez, C. Valenzuela, E. Castillo, D. Ruz-Mieres, D. Rodriguez-Mancini, M. Catelan, S. Eyheramendy, M.J. Graham on behalf of the ALeRCE broker",
+                "discoverer_internal_name": "ZTF20acddzrd",
+                "discovery_data_source": {"groupid": 48, "group_name": "ZTF"},
+                "discoverydate": "2020-09-23T08:28:24.004000",
+                "discoverymag": 19.1521,
+                "end_prop_period": None,
+                "host_redshift": 0.301422,
+                "hostname": "WISEA J000204.63+002140.7",
+                "internal_names": "ZTF20acddzrd",
+                "name_prefix": "AT",
+                "object_type": {"name": None, "id": None},
+                "objid": 67022,
+                "objname": "2020ubb",
+                "public": 1,
+                "radeg_err": 2.5e-05,
+                "redshift": None,
+                "reporter": "ALeRCE",
+                "reporterid": 66140,
+                "reporting_group": {"groupid": 74, "group_name": "ALeRCE"},
+                "source": "bot",
+            }
+        ]
+    }
