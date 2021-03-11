@@ -1,3 +1,5 @@
+import json
+import subprocess
 from functools import partial
 from os import environ
 from os.path import dirname, join
@@ -12,163 +14,40 @@ from ampel.alert.load.TarAlertLoader import TarAlertLoader
 from ampel.config.AmpelConfig import AmpelConfig
 from ampel.dev.DevAmpelContext import DevAmpelContext
 
-
-@pytest.fixture(scope="session")
-def archive():
-    if "ARCHIVE_HOSTNAME" in environ and "ARCHIVE_PORT" in environ:
-        yield "postgresql://ampel@{}:{}/ztfarchive".format(
-            environ["ARCHIVE_HOSTNAME"], environ["ARCHIVE_PORT"]
-        )
-    else:
-        pytest.skip("Requires a Postgres database")
-
-
-@pytest.fixture
-def empty_archive(archive):
-    """
-    Yield archive database, dropping all rows when finished
-    """
-    from sqlalchemy import create_engine, MetaData
-
-    engine = create_engine(archive)
-    meta = MetaData()
-    meta.reflect(bind=engine)
-    try:
-        with engine.connect() as connection:
-            for name, table in meta.tables.items():
-                if name != "versions":
-                    connection.execute(table.delete())
-        yield archive
-    finally:
-        with engine.connect() as connection:
-            for name, table in meta.tables.items():
-                if name != "versions":
-                    connection.execute(table.delete())
-
-
-@pytest.fixture(scope="session")
-def kafka():
-    if "KAFKA_HOSTNAME" in environ and "KAFKA_PORT" in environ:
-        yield "{}:{}".format(environ["KAFKA_HOSTNAME"], environ["KAFKA_PORT"])
-    else:
-        pytest.skip("Requires a Kafka instance")
-
-
-@pytest.fixture(scope="session")
-def kafka_stream(kafka, alert_tarball):
-    import itertools
-
-    from confluent_kafka import Producer
-
-    from ampel.alert.load.TarballWalker import TarballWalker
-
-    atat = TarballWalker(alert_tarball)
-    print(kafka)
-    producer = Producer({"bootstrap.servers": kafka})
-    for i, fileobj in enumerate(itertools.islice(atat.get_files(), 0, 1000, 1)):
-        producer.produce("ztf_20180819_programid1", fileobj.read())
-        print(f"sent {i}")
-    producer.flush()
-    yield kafka
-
-
-@pytest.fixture(scope="session")
-def alert_tarball():
-    return join(dirname(__file__), "test-data", "ztf_public_20180819_mod1000.tar.gz")
-
-
-@pytest.fixture(
-    scope="session",
-    params=[
-        "ztf_20200106_programid2_zuds.tar.gz",
-        "ztf_20200106_programid2_zuds_stack.tar.gz",
-    ],
-)
-def zuds_alert_generator(request):
-    import itertools
-
-    import fastavro
-
-    from ampel.alert.load.TarballWalker import TarballWalker
-
-    def alerts(with_schema=False):
-        candids = set()
-        try:
-            atat = TarballWalker(join(dirname(__file__), "test-data", request.param))
-            for fileobj in itertools.islice(atat.get_files(), 0, 1000, 1):
-                reader = fastavro.reader(fileobj)
-                alert = next(reader)
-                if alert["candid"] in candids:
-                    continue
-                else:
-                    candids.add(alert["candid"])
-                if with_schema:
-                    yield alert, reader.writer_schema
-                else:
-                    yield alert
-        except FileNotFoundError:
-            raise pytest.skip("{} does not exist".format(request.param))
-
-    return alerts
-
-
-@pytest.fixture(scope="session")
-def alert_generator(alert_tarball):
-    import itertools
-
-    import fastavro
-
-    from ampel.alert.load.TarballWalker import TarballWalker
-
-    def alerts(with_schema=False):
-        atat = TarballWalker(alert_tarball)
-        for fileobj in itertools.islice(atat.get_files(), 0, 1000, 1):
-            reader = fastavro.reader(fileobj)
-            alert = next(reader)
-            if with_schema:
-                yield alert, reader.writer_schema
-            else:
-                yield alert
-
-    return alerts
-
-
-@pytest.fixture(scope="session")
-def lightcurve_generator(alert_generator):
-    from ampel.ztf.dev.ZTFAlert import ZTFAlert
-
-    def lightcurves():
-        for alert in alert_generator():
-            lightcurve = ZTFAlert.to_lightcurve(content=alert)
-            assert isinstance(lightcurve.get_photopoints(), tuple)
-            yield lightcurve
-
-    return lightcurves
-
-
 @pytest.fixture
 def patch_mongo(monkeypatch):
     monkeypatch.setattr("ampel.db.AmpelDB.MongoClient", mongomock.MongoClient)
 
+@pytest.fixture(scope="session")
+def mongod(pytestconfig):
+    if "MONGO_PORT" in environ:
+        yield "mongodb://localhost:{}".format(environ["MONGO_PORT"])
+        return
+
+    if not pytestconfig.getoption("--integration"):
+        raise pytest.skip("integration tests require --integration flag")
+    try:
+        container = subprocess.check_output(
+            ["docker", "run", "--rm", "-d", "-P", "mongo:4.4"]
+        ).strip().decode()
+    except FileNotFoundError:
+        pytest.skip("integration tests require docker")
+    try:
+        port = json.loads(subprocess.check_output(["docker", "inspect", container]))[0][
+            "NetworkSettings"
+        ]["Ports"]["27017/tcp"][0]["HostPort"]
+        yield f"mongodb://localhost:{port}"
+    finally:
+        subprocess.check_call(["docker", "stop", container])
 
 @pytest.fixture
-def dev_context():
+def dev_context(mongod):
     config = AmpelConfig.load(
         Path(__file__).parent / "test-data" / "testing-config.yaml",
     )
-    custom_conf = {}
-    if "MONGO_HOSTNAME" in environ:
-        custom_conf[
-            "resource.mongo"
-        ] = f"mongodb://{environ['MONGO_HOSTNAME']}:{environ.get('MONGO_PORT', 27017)}"
-    try:
-        return DevAmpelContext.new(
-            config=config, purge_db=True, custom_conf=custom_conf
-        )
-    except pymongo.errors.ServerSelectionTimeoutError:
-        raise pytest.skip(
-            f"No mongod listening on {(custom_conf or config).get('resource.mongo')}"
-        )
+    return DevAmpelContext.new(
+        config=config, purge_db=True, custom_conf={"resource.mongo": mongod}
+    )
 
 
 @pytest.fixture
