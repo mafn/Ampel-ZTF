@@ -21,7 +21,13 @@ def _make_ingester(context):
     run_id = 0
     logger = AmpelLogger.get_logger()
     updates_buffer = DBUpdatesBuffer(context.db, run_id=run_id, logger=logger)
-    logd = LogsBufferDict({"logs": [], "extra": {}, "err": False,})
+    logd = LogsBufferDict(
+        {
+            "logs": [],
+            "extra": {},
+            "err": False,
+        }
+    )
 
     ingester = context.loader.new_admin_unit(
         unit_model=UnitModel(unit=ZiT1ArchivalCompoundIngester),
@@ -88,24 +94,18 @@ def consolidated_alert(alerts):
 
 
 def test_instantiate(patch_mongo, dev_context, mocker):
-    mock = mocker.patch("ampel.ztf.ingest.ZiT1ArchivalCompoundIngester.ArchiveDB")
     _make_ingester(dev_context)
-    assert mock.called_once()
 
 
 @pytest.fixture
 def mock_ingester(patch_mongo, dev_context, mocker, avro_packets):
-    mock = mocker.patch("ampel.ztf.ingest.ZiT1ArchivalCompoundIngester.ArchiveDB")
-    ingester = _make_ingester(dev_context)
-    assert mock.called_once()
-    # mock archivedb to return first alert
-    ingester.archive.configure_mock(
-        **{
-            "get_photopoints_for_object.return_value": consolidated_alert(
-                raw_alert_dicts(itertools.islice(avro_packets(), 0, 1))
-            )
-        }
+    mocker.patch(
+        "ampel.ztf.ingest.ZiT1ArchivalCompoundIngester.ZiT1ArchivalCompoundIngester.get_photopoints",
+        return_value=consolidated_alert(
+            raw_alert_dicts(itertools.islice(avro_packets(), 0, 1))
+        ),
     )
+    ingester = _make_ingester(dev_context)
     return ingester
 
 
@@ -120,7 +120,7 @@ def test_ingest_previous_alerts(mock_ingester, avro_packets):
     )
 
     mock_ingester.ingest_previous_alerts(alerts[1].stock_id, datapoints)
-    assert mock_ingester.archive.get_alerts_for_object.called_once()
+    assert mock_ingester.get_photopoints.called_once()
 
     assert mock_ingester.context.db.get_collection("t0").count_documents({}) == sum(
         len(alert.dps) for alert in alerts[:2]
@@ -163,7 +163,7 @@ def test_ingest(mock_ingester, avro_packets):
         alerts[1].stock_id, datapoints, [("EXAMPLE_TNS_MSIP", True)]
     )
     assert (
-        not mock_ingester.archive.get_alerts_for_object.called
+        not mock_ingester.get_photopoints.called
     ), "short-cut if no channels match"
     assert blueprint == type(blueprint)(), "default (empty) blueprint returned"
 
@@ -172,7 +172,7 @@ def test_ingest(mock_ingester, avro_packets):
         alerts[1].stock_id, datapoints, [("EXAMPLE_TNS_MSIP", True)]
     )
     assert blueprint != type(blueprint)()
-    assert mock_ingester.archive.get_alerts_for_object.called_once()
+    assert mock_ingester.get_photopoints.called_once()
 
     assert mock_ingester.context.db.get_collection("t0").count_documents({}) == sum(
         len(alert.dps) for alert in alerts[:2]
@@ -227,19 +227,16 @@ def test_integration(patch_mongo, dev_context, mocker, avro_packets):
             }
         ],
     }
-    mock = mocker.patch("ampel.ztf.ingest.ZiT1ArchivalCompoundIngester.ArchiveDB")
+    # mock get_photopoints to return first alert
+    mock = mocker.patch(
+        "ampel.ztf.ingest.ZiT1ArchivalCompoundIngester.ZiT1ArchivalCompoundIngester.get_photopoints",
+        return_value=consolidated_alert(
+            raw_alert_dicts(itertools.islice(avro_packets(), 0, 1))
+        ),
+    )
     handler = get_handler(dev_context, [AlertProcessorDirective(**directive)])
     ingester = next(iter(handler.t1_ingesters.keys()))
     assert isinstance(ingester, ZiT1ArchivalCompoundIngester)
-
-    # mock archivedb to return first alert
-    ingester.archive.configure_mock(
-        **{
-            "get_photopoints_for_object.return_value": consolidated_alert(
-                raw_alert_dicts(itertools.islice(avro_packets(), 0, 1))
-            )
-        }
-    )
 
     t0 = dev_context.db.get_collection("t0")
     t1 = dev_context.db.get_collection("t1")

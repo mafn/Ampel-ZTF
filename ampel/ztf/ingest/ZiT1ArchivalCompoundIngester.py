@@ -1,4 +1,9 @@
+from functools import cached_property
 from typing import Dict, List, Sequence, Set, Tuple, Type, Union, Optional
+
+import backoff
+import requests
+from requests_toolbelt.sessions import BaseUrlSession
 
 from ampel.abstract.ingest.AbsAlertContentIngester import AbsAlertContentIngester
 from ampel.abstract.ingest.AbsCompoundIngester import AbsCompoundIngester
@@ -10,7 +15,6 @@ from ampel.model.Secret import Secret
 from ampel.model.UnitModel import UnitModel
 from ampel.type import ChannelId, StockId
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
-from ampel.ztf.archive.ArchiveDB import ArchiveDB
 from ampel.ztf.util.ZTFIdMapper import to_ztf_id
 
 
@@ -49,10 +53,14 @@ class ZiT1ArchivalCompoundIngester(AbsCompoundIngester[PhotoCompoundBluePrint]):
 
         self._t0_col = self.context.db.get_collection("t0", "w")
 
-        self.archive = ArchiveDB.instance(
-            self.context.config.get("resource.ampel-ztf/archive", str, raise_exc=True),
-            connect_args=self.archive_auth.get(),
+        self.session = BaseUrlSession(
+            base_url=(
+                url
+                if (url := self.context.config.get("resource.ampel-ztf/archive", str, raise_exc=True)).endswith("/")
+                else url+"/"
+            )
         )
+        self.session.auth = tuple(self.archive_auth.get().values())
 
         self.alert_supplier = ZiAlertSupplier(deserialize=None)
         self.channels: Set[ChannelId] = set()
@@ -108,14 +116,28 @@ class ZiT1ArchivalCompoundIngester(AbsCompoundIngester[PhotoCompoundBluePrint]):
         else:
             return min((from_alert, from_db))
 
+    @backoff.on_exception(
+        backoff.expo,
+        requests.HTTPError,
+        giveup=lambda e: e.response.status_code not in {503, 429},
+        max_time=600,
+    )
+    def get_photopoints(self, ztf_name: str, before_jd: float):
+        response = self.session.get(
+            f"object/{ztf_name}/photopoints",
+            params={"jd_end": before_jd}
+        )
+        response.raise_for_status()
+        return response.json()
+
     def ingest_previous_alerts(
         self, stock_id: StockId, datapoints: Sequence[DataPoint]
     ) -> None:
         # Ingest photopoints from earlier alerts
         if not (
-            history := self.archive.get_photopoints_for_object(
+            history := self.get_photopoints(
                 to_ztf_id(stock_id),
-                jd_end=self.get_earliest_jd(stock_id, datapoints)
+                before_jd=self.get_earliest_jd(stock_id, datapoints)
             )
         ):
             return
