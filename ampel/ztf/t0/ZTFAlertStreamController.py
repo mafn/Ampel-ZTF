@@ -13,6 +13,9 @@ import logging
 from os.path import basename
 from typing import Any, Dict, List, Literal, Optional, Union, Set, Sequence
 
+import backoff
+import requests
+
 from ampel.abstract.AbsProcessController import AbsProcessController
 from ampel.abstract.AbsSecretProvider import AbsSecretProvider
 from ampel.alert.load.TarAlertLoader import TarAlertLoader
@@ -22,11 +25,10 @@ from ampel.model.ProcessModel import ProcessModel
 from ampel.model.Secret import Secret
 from ampel.model.StrictModel import StrictModel
 from ampel.model.UnitModel import UnitModel
+from requests.sessions import Session
 from ampel.util import concurrent
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
 from ampel.ztf.t0.load.UWAlertLoader import UWAlertLoader
-from ampel.ztf.archive.ArchiveDB import ArchiveDB
-from ampel.ztf.t0.ArchiveUpdater import ArchiveUpdater
 
 
 log = logging.getLogger(__name__)
@@ -48,6 +50,8 @@ class KafkaSource(StrictModel):
         return f"kafka.{self.group}"
 
     def get(self) -> ZiAlertSupplier:
+        from ampel.ztf.t0.ArchiveUpdater import ArchiveUpdater
+
         supplier = ZiAlertSupplier(deserialize=None)
         supplier.set_alert_source(
             UWAlertLoader(
@@ -78,29 +82,43 @@ class TarballSource(StrictModel):
 
 
 class ArchiveSource(StrictModel):
-    db: str
-    group: Optional[str]
-    stream: Literal["ztf_uw_private", "ztf_uw_public"]
-    auth: Secret[dict] = {"key": "ztf/archive/reader"} # type: ignore[assignment]
-    chunk: int = 5000
-    jd_min: float = -float('inf')
-    jd_max: float = float('inf')
+    #: Base URL of archive service
+    archive: str = "https://ampel.zeuthen.desy.de/api/ztf/archive"
+    #: A stream identifier, created via POST /api/ztf/archive/streams/
+    stream: str
 
     def label(self):
-        return f"archive.{self.group}.{self.stream}"
+        return f"archive.{self.stream}"
+    
+    def get_alerts(self):
+        with requests.Session() as session:
+            while True:
+                chunk = self._get_chunk(session)
+                try:
+                    yield from chunk["alerts"]
+                except GeneratorExit:
+                    log.error(
+                        f"Chunk from stream {self.stream} partially consumed. "
+                        f"Ensure that iter_max is a multiple of the chunk size."
+                    )
+                    raise
+                if len(chunk["alerts"]) == 0 and chunk["chunks_remaining"] == 0:
+                    break
+
+    @backoff.on_exception(
+        backoff.expo,
+        requests.HTTPError,
+        giveup=lambda e: e.response.status_code not in {503, 429},
+        max_time=600,
+    )
+    def _get_chunk(self, session: requests.Session) -> Dict[str, Any]:
+        response = session.get(f"{self.archive}/stream/{self.stream}/chunk")
+        response.raise_for_status()
+        return response.json()
 
     def get(self) -> ZiAlertSupplier:
         supplier = ZiAlertSupplier(deserialize=None)
-        supplier.set_alert_source(
-            ArchiveDB(self.db, connect_args=self.auth.get())
-            .get_alerts_in_time_range(
-                self.jd_min,
-                self.jd_max,
-                programid=(None if self.stream == "ztf_uw_private" else 1),
-                group_name=f"{self.group}-{self.stream}" if self.group else None,
-                block_size=self.chunk,
-            )
-        )
+        supplier.set_alert_source(self.get_alerts())
         return supplier
 
 

@@ -4,6 +4,7 @@ import os
 import time
 
 import pytest
+import requests
 
 from ampel.config.AmpelConfig import AmpelConfig
 from ampel.config.builder.FirstPassConfig import FirstPassConfig
@@ -12,11 +13,18 @@ from ampel.metrics.AmpelMetricsRegistry import AmpelMetricsRegistry
 from ampel.model.ProcessModel import ProcessModel
 from ampel.model.ZTFLegacyChannelTemplate import ZTFLegacyChannelTemplate
 from ampel.util import concurrent
-from ampel.ztf.t0.ZTFAlertStreamController import ZTFAlertStreamController
+from ampel.ztf.t0.ZTFAlertStreamController import (
+    ArchiveSource,
+    ZTFAlertStreamController,
+    AlertSource,
+)
 
 
 def t0_process(kwargs, first_pass_config):
-    first_pass_config["resource"]["ampel-ztf/kafka"] = {"group": "nonesuch", "broker": "nonesuch:9092"}
+    first_pass_config["resource"]["ampel-ztf/kafka"] = {
+        "group": "nonesuch",
+        "broker": "nonesuch:9092",
+    }
     return ProcessModel(
         **ZTFLegacyChannelTemplate(**kwargs).get_processes(
             AmpelLogger.get_logger(), first_pass_config
@@ -89,7 +97,11 @@ class PotemkinZTFAlertStreamController(ZTFAlertStreamController):
     @staticmethod
     @concurrent.process
     def run_mp_process(
-        config, secrets, p, source, log_profile: str = "default",
+        config,
+        secrets,
+        p,
+        source,
+        log_profile: str = "default",
     ) -> bool:
         print(f"{os.getpid()} is sleepy...")
         time.sleep(1)
@@ -171,3 +183,34 @@ async def test_stop(potemkin_controller):
         ...
     potemkin_controller.stop()
     assert isinstance((await r)[0], asyncio.CancelledError)
+
+
+@pytest.fixture
+def topic_stream_token() -> str:
+    if (token := os.environ.get("ARCHIVE_TOPIC_TOKEN")) is None:
+        pytest.skip("archive test requires stream token")
+    base_url = "https://ampel.zeuthen.desy.de/api/ztf/archive"
+    step = 10000
+    chunk = 5
+    with requests.Session() as session:
+        response = session.get(
+            f"{base_url}/topic/{token}"
+        )
+        response.raise_for_status()
+        size = response.json()["size"]
+
+        response = session.post(
+            f"{base_url}/streams/from_topic",
+            json={"topic": token, "chunk_size": chunk, "step": step},
+        )
+        response.raise_for_status()
+        assert response.json()["chunks"] == (size + step*chunk - 1) // (step*chunk)
+        return response.json()["resume_token"]
+
+
+def test_archive_source(topic_stream_token: str):
+    assert isinstance(topic_stream_token, str)
+    source = AlertSource(source={"stream": topic_stream_token})
+    assert isinstance(source.source, ArchiveSource)
+    alerts = list(source.get())
+    assert len(alerts) == 8
