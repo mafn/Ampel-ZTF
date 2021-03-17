@@ -23,7 +23,8 @@ if TYPE_CHECKING:
 class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
 
     #: Save sources to these groups
-    groups: Optional[List[str]]
+    groups: Optional[List[str]] = None
+    filters: Optional[List[str]] = None
 
     def add(
         self, tviews: Sequence["TransientView"]
@@ -58,7 +59,7 @@ class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
         return (
             view.id,
             JournalTweak(
-                extra=dict(await self.post_candidate(view, groups=self.groups))
+                extra=dict(await self.post_candidate(view, groups=self.groups, filters=self.filters))
             ),
         )
 
