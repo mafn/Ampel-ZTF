@@ -4,6 +4,7 @@ from functools import partial
 from os import environ
 from os.path import dirname, join
 from pathlib import Path
+from time import time
 
 import mongomock
 import pymongo
@@ -32,6 +33,14 @@ def mongod(pytestconfig):
         ).strip().decode()
     except FileNotFoundError:
         pytest.skip("integration tests require docker")
+    for _ in range(10):
+        try:
+            subprocess.check_call(["docker", "exec", container, "sh", "-c", "echo 'db.runCommand({serverStatus:1}).ok' | mongo admin --quiet | grep 1"])
+            break
+        except subprocess.SubprocessError:
+            time.sleep(1)
+    else:
+        raise subprocess.SubprocessError("mongo failed to start")
     try:
         port = json.loads(subprocess.check_output(["docker", "inspect", container]))[0][
             "NetworkSettings"
