@@ -147,7 +147,8 @@ alias:
   t3: {}
 resource:
   mongo: mongodb://localhost:27017
-  ampel-ztf/archive: denada
+  ampel-ztf/archive: https://ampel.zeuthen.desy.de/api/ztf/archive/
+  ampel-ztf/catalogmatch: https://ampel.zeuthen.desy.de/api/catalogmatch/
   ampel-ztf/kafka:
     broker: gregor
     group: samsa

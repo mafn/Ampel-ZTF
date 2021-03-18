@@ -1,3 +1,5 @@
+from ampel.core.AmpelContext import AmpelContext
+from ampel.model.UnitModel import UnitModel
 import pytest
 from pathlib import Path
 import yaml
@@ -31,10 +33,14 @@ def catalogmatch_service_reachable():
 
 
 def test_catalogmatch(
-    patch_mongo, dev_context, catalogmatch_config, catalogmatch_service_reachable
+    patch_mongo,
+    dev_context: AmpelContext,
+    catalogmatch_config,
+    catalogmatch_service_reachable,
 ):
-    unit = T2CatalogMatch(
-        dev_context, logger=logging.getLogger(), **catalogmatch_config
+    unit = dev_context.loader.new_base_unit(
+        UnitModel(unit=T2CatalogMatch, config=catalogmatch_config),
+        logger=logging.getLogger(),
     )
     result = unit.run(DataPoint({"_id": 0, "body": {"ra": 0, "dec": 0}}))
     assert result == {
@@ -59,10 +65,12 @@ def test_catalogmatch(
     }
 
 
-def test_decentfilter_star_in_gaia(patch_mongo, dev_context):
+def test_decentfilter_star_in_gaia(patch_mongo, dev_context: AmpelContext):
     with open(Path(__file__).parent / "test-data" / "decentfilter_config.yaml") as f:
         config = yaml.safe_load(f)
-    unit = DecentFilter(dev_context, logger=logging.getLogger(), **config)
+    unit = dev_context.loader.new_base_unit(
+        UnitModel(unit=DecentFilter, config=config), logger=logging.getLogger()
+    )
     assert unit.is_star_in_gaia(
         {"ra": 0.009437700971970959, "dec": -0.0008937364197194631}
     )
@@ -70,7 +78,11 @@ def test_decentfilter_star_in_gaia(patch_mongo, dev_context):
 
 
 def test_tnsnames(patch_mongo, dev_context) -> None:
-    unit = TNSNames(dev_context, logger=logging.getLogger())
+    unit = dev_context.loader.new_admin_unit(
+        UnitModel(unit=TNSNames),
+        logger=logging.getLogger(),
+        context=dev_context,
+    )
     buf = AmpelBuffer(
         {
             "id": 0,
@@ -102,7 +114,11 @@ def test_tnsnames(patch_mongo, dev_context) -> None:
     assert buf["stock"]["name"] == ("sourceysource", "TNS2020ubb")
     assert not "extra" in buf
 
-    unit = TNSReports(dev_context, logger=logging.getLogger())
+    unit = dev_context.loader.new_admin_unit(
+        UnitModel(unit=TNSReports),
+        logger=logging.getLogger(),
+        context=dev_context,
+    )
     unit.complement([buf])
     assert buf["stock"]["name"] == ("sourceysource", "TNS2020ubb")
     assert buf["extra"] == {

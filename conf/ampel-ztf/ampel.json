@@ -16,6 +16,7 @@
 		],
 		"base": [
 			"ampel.ztf.ingest.ZiT1Combiner",
+			"ampel.ztf.t0.DecentFilter",
 			"ampel.ztf.t2.T2LightCurveSummary",
 			"ampel.ztf.t2.T2CatalogMatch",
 			"ampel.ztf.t3.skyportal.SkyPortalPublisher"
@@ -32,6 +33,8 @@
 		"ztf_periodic_summary": "ampel.model.ZTFPeriodicSummaryT3"
 	},
 	"resource": {
+		"archive": "https://ampel.zeuthen.desy.de/api/ztf/archive/",
+		"catalogmatch": "https://ampel.zeuthen.desy.de/api/catalogmatch/",
 		"kafka": {
 			"broker": "partnership.alerts.ztf.uw.edu:9092",
 			"group": "ampel-v0.7-test"

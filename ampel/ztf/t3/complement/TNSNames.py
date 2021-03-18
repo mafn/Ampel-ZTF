@@ -12,13 +12,15 @@ from typing import Iterable, Optional, Dict, Any
 
 from pydantic import Field
 
-from ampel.ztf.base.CatalogMatchUnit import CatalogMatchUnit, ExtendedConeSearchRequest
 from ampel.core.AmpelBuffer import AmpelBuffer
 from ampel.t3.complement.AbsT3DataAppender import AbsT3DataAppender
-from ampel.ztf.base.CatalogMatchUnit import CatalogMatchUnit
+from ampel.ztf.base.CatalogMatchUnit import (
+    CatalogMatchAdminUnit,
+    ExtendedConeSearchRequest,
+)
 
 
-class TNSNames(CatalogMatchUnit, AbsT3DataAppender):
+class TNSNames(CatalogMatchAdminUnit, AbsT3DataAppender):
     """
     Add TNS names to transients.
     """
@@ -112,7 +114,5 @@ class TNSNames(CatalogMatchUnit, AbsT3DataAppender):
         except StopIteration:
             return None
         return (
-            last_t2_result[-1]
-            if isinstance(last_t2_result, list)
-            else last_t2_result
+            last_t2_result[-1] if isinstance(last_t2_result, list) else last_t2_result
         )

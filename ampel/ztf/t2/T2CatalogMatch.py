@@ -9,7 +9,6 @@
 
 from typing import Any, Dict, Literal, Optional, Sequence
 
-import requests
 from pydantic import Field
 
 from ampel.abstract.AbsPointT2Unit import AbsPointT2Unit
@@ -17,6 +16,7 @@ from ampel.content.DataPoint import DataPoint
 from ampel.model.StrictModel import StrictModel
 from ampel.enum.T2RunState import T2RunState
 from ampel.type import T2UnitResult
+from ampel.ztf.base.CatalogMatchUnit import CatalogMatchUnit
 
 
 class CatalogModel(StrictModel):
@@ -63,12 +63,10 @@ class CatalogModel(StrictModel):
     post_filter: Optional[Dict[str, Any]]
 
 
-class T2CatalogMatch(AbsPointT2Unit):
+class T2CatalogMatch(CatalogMatchUnit, AbsPointT2Unit):
     """
     Cross matches the position of a transient to those of sources in a set of catalogs
     """
-
-    catalogmatch_service: str = "https://ampel.zeuthen.desy.de/api/catalogmatch"
 
     # run only on first datapoint by default
     # NB: this assumes that docs are created by DualPointT2Ingester
@@ -104,8 +102,8 @@ class T2CatalogMatch(AbsPointT2Unit):
         # initialize the catalog quer(ies). Use instance variable to aviod duplicates
         out_dict: Dict[str, Any] = {}
 
-        response = requests.post(
-            self.catalogmatch_service + "/cone_search/nearest",
+        response = self.session.post(
+            "cone_search/nearest",
             json={
                 "ra_deg": transient_ra,
                 "dec_deg": transient_dec,

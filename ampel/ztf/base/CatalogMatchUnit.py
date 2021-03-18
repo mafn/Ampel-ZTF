@@ -8,12 +8,23 @@
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
 from functools import cached_property
-from typing import Sequence, Dict, Any, Literal, TypedDict, Optional, List, Union, overload
+from typing import (
+    Sequence,
+    Dict,
+    Any,
+    Literal,
+    TypedDict,
+    Optional,
+    List,
+    Union,
+    overload,
+)
 
-import requests
+from requests_toolbelt.sessions import BaseUrlSession
 
-from ampel.base.AmpelBaseModel import AmpelBaseModel
-from ampel.model.StrictModel import StrictModel
+from ampel.base.DataUnit import DataUnit
+from ampel.core.AdminUnit import AdminUnit
+
 
 class ConeSearchRequest(TypedDict):
     """
@@ -66,40 +77,59 @@ class CatalogItem(TypedDict):
     dist_arcsec: float
 
 
-class CatalogMatchUnit(AmpelBaseModel):
+class CatalogMatchUnitBase:
     """
     A mixin providing catalog matching with catalogmatch-service
     """
 
-    catalogmatch_service: str = "https://ampel.zeuthen.desy.de/api/catalogmatch"
-
     @cached_property
-    def session(self):
-        return requests.Session()
+    def session(self) -> BaseUrlSession:
+        """
+        A session bound to the base URL of the catalogmatch service
+        """
+        raise NotImplementedError
 
     @overload
     def _cone_search(
-        self, method: Literal["any"], ra: float, dec: float, catalogs: Sequence[ConeSearchRequest]
+        self,
+        method: Literal["any"],
+        ra: float,
+        dec: float,
+        catalogs: Sequence[ConeSearchRequest],
     ) -> List[bool]:
         ...
-    
+
     @overload
     def _cone_search(
-        self, method: Literal["nearest"], ra: float, dec: float, catalogs: Sequence[ConeSearchRequest]
+        self,
+        method: Literal["nearest"],
+        ra: float,
+        dec: float,
+        catalogs: Sequence[ConeSearchRequest],
     ) -> List[Optional[CatalogItem]]:
         ...
-    
+
     @overload
     def _cone_search(
-        self, method: Literal["all"], ra: float, dec: float, catalogs: Sequence[ConeSearchRequest]
+        self,
+        method: Literal["all"],
+        ra: float,
+        dec: float,
+        catalogs: Sequence[ConeSearchRequest],
     ) -> List[Optional[List[CatalogItem]]]:
         ...
 
     def _cone_search(
-        self, method: Literal["any", "nearest", "all"], ra: float, dec: float, catalogs: Sequence[ConeSearchRequest]
-    ) -> Union[List[bool], List[Optional[CatalogItem]], List[Optional[List[CatalogItem]]]]:
+        self,
+        method: Literal["any", "nearest", "all"],
+        ra: float,
+        dec: float,
+        catalogs: Sequence[ConeSearchRequest],
+    ) -> Union[
+        List[bool], List[Optional[CatalogItem]], List[Optional[List[CatalogItem]]]
+    ]:
         response = self.session.post(
-            self.catalogmatch_service + f"/cone_search/{method}",
+            f"cone_search/{method}",
             json={
                 "ra_deg": ra,
                 "dec_deg": dec,
@@ -123,3 +153,29 @@ class CatalogMatchUnit(AmpelBaseModel):
         self, ra: float, dec: float, catalogs: Sequence[ConeSearchRequest]
     ) -> List[Optional[List[CatalogItem]]]:
         return self._cone_search("all", ra, dec, catalogs)
+
+
+class CatalogMatchUnit(CatalogMatchUnitBase, DataUnit):
+    """
+    Catalog matching for DataUnits
+    """
+
+    require = ("ampel-ztf/catalogmatch",)
+
+    @cached_property
+    def session(self) -> BaseUrlSession:
+        return BaseUrlSession(base_url=self.resource["ampel-ztf/catalogmatch"])
+
+
+class CatalogMatchAdminUnit(CatalogMatchUnitBase, AdminUnit):
+    """
+    Catalog matching for AdminUnits
+    """
+
+    @cached_property
+    def session(self) -> BaseUrlSession:
+        return BaseUrlSession(
+            base_url=self.context.config.get(
+                "resource.ampel-ztf/catalogmatch", str, raise_exc=True
+            )
+        )
