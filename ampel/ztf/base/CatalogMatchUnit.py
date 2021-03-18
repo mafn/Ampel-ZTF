@@ -164,6 +164,7 @@ class CatalogMatchUnit(CatalogMatchUnitBase, DataUnit):
 
     @cached_property
     def session(self) -> BaseUrlSession:
+        assert self.resource is not None
         return BaseUrlSession(base_url=self.resource["ampel-ztf/catalogmatch"])
 
 
