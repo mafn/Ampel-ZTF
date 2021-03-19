@@ -17,6 +17,7 @@
 		"base": [
 			"ampel.ztf.ingest.ZiT1Combiner",
 			"ampel.ztf.t0.DecentFilter",
+			"ampel.ztf.t0.CatalogMatchFilter",
 			"ampel.ztf.t2.T2LightCurveSummary",
 			"ampel.ztf.t2.T2CatalogMatch",
 			"ampel.ztf.t3.skyportal.SkyPortalPublisher"
