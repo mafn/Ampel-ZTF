@@ -6,14 +6,14 @@
 # Last Modified Date: 18.09.2020
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
-from typing import Iterable, Literal
+from typing import Iterable, Literal, Any, Optional, Dict
+
+from requests_toolbelt.sessions import BaseUrlSession
 
 from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.core.AmpelBuffer import AmpelBuffer
 from ampel.core.AmpelContext import AmpelContext
-from ampel.model.Secret import Secret
 from ampel.t3.complement.AbsT3DataAppender import AbsT3DataAppender
-from ampel.ztf.archive.ArchiveDB import ArchiveDB
 
 
 class ZTFCutoutImages(AbsT3DataAppender):
@@ -21,7 +21,6 @@ class ZTFCutoutImages(AbsT3DataAppender):
     Add cutout images from ZTF archive database
     """
 
-    auth: Secret[dict] = {"key": "ztf/archive/reader"}  # type: ignore[assignment]
     #: Which detection to retrieve cutouts for
     eligible: Literal["first", "last", "brightest", "all"] = "last"
 
@@ -29,10 +28,17 @@ class ZTFCutoutImages(AbsT3DataAppender):
 
         AmpelBaseModel.__init__(self, **kwargs)
 
-        self.archive = ArchiveDB.instance(
-            context.config.get(f"resource.ampel-ztf/archive", str),
-            connect_args=self.auth.get(),
+        self.session = BaseUrlSession(
+            base_url=context.config.get(f"resource.ampel-ztf/archive", str, raise_exc=True)
         )
+
+    def get_cutout(self, candid: int) -> Optional[Dict[str, Any]]:
+        response = self.session.get(f"cutouts/{candid}")
+        if response.status_code == 400:
+            return None
+        else:
+            response.raise_for_status()
+        return response.json()
 
     def complement(self, records: Iterable[AmpelBuffer]) -> None:
         for record in records:
@@ -53,7 +59,7 @@ class ZTFCutoutImages(AbsT3DataAppender):
                 candids = [min(pps, key=lambda pp: pp["body"]["magpsf"])["_id"]]
             elif self.eligible == "all":
                 candids = [pp["_id"] for pp in pps]
-            cutouts = {candid: self.archive.get_cutout(candid) for candid in candids}
+            cutouts = {candid: self.get_cutout(candid) for candid in candids}
 
             if "extra" not in record or record["extra"] is None:
                 record["extra"] = {self.__class__.__name__: cutouts}
