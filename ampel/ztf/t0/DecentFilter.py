@@ -7,7 +7,7 @@
 # Last Modified Date: 10.03.2021
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
-from numpy import exp, asarray
+import numpy as np
 from typing import Optional, Union, Dict, Any
 from astropy.table import Table
 from astropy.coordinates import SkyCoord
@@ -162,32 +162,39 @@ class DecentFilter(CatalogMatchUnit, AbsAlertFilter[PhotoAlert]):
         srcs = self.cone_search_all(
             transient["ra"],
             transient["dec"],
-            [{"name": "GAIADR2", "use": "catsHTM", "rs_arcsec": self.gaia_rs}],
+            [
+                {
+                    "name": "GAIADR2",
+                    "use": "catsHTM",
+                    "rs_arcsec": self.gaia_rs,
+                    "keys_to_append": [
+                        "Mag_G",
+                        "PMRA",
+                        "ErrPMRA",
+                        "PMDec",
+                        "ErrPMDec",
+                        "Plx",
+                        "ErrPlx",
+                        "ExcessNoiseSig",
+                    ],
+                }
+            ],
         )[0]
-
-        my_keys = [
-            "RA",
-            "Dec",
-            "Mag_G",
-            "PMRA",
-            "ErrPMRA",
-            "PMDec",
-            "ErrPMDec",
-            "Plx",
-            "ErrPlx",
-            "ExcessNoiseSig",
-        ]
 
         if srcs:
 
-            gaia_tab = Table([src["body"] for src in srcs])
-            gaia_tab = gaia_tab[my_keys]
-            gaia_coords = SkyCoord(gaia_tab["RA"], gaia_tab["Dec"], unit="rad")
+            gaia_tab = Table(
+                [
+                    {k: np.nan if v is None else v for k, v in src["body"].items()}
+                    for src in srcs
+                ]
+            )
 
             # compute distance
             gaia_tab["DISTANCE"] = [src["dist_arcsec"] for src in srcs]
             gaia_tab["DISTANCE_NORM"] = (
-                1.8 + 0.6 * exp((20 - gaia_tab["Mag_G"]) / 2.05) > gaia_tab["DISTANCE"]
+                1.8 + 0.6 * np.exp((20 - gaia_tab["Mag_G"]) / 2.05)
+                > gaia_tab["DISTANCE"]
             )
             gaia_tab["FLAG_PROX"] = [
                 x["DISTANCE_NORM"]
