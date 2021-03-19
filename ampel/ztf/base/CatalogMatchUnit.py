@@ -20,6 +20,8 @@ from typing import (
     overload,
 )
 
+import backoff
+import requests
 from requests_toolbelt.sessions import BaseUrlSession
 
 from ampel.base.DataUnit import DataUnit
@@ -119,6 +121,12 @@ class CatalogMatchUnitBase:
     ) -> List[Optional[List[CatalogItem]]]:
         ...
 
+    @backoff.on_exception(
+        backoff.expo,
+        requests.HTTPError,
+        giveup=lambda e: e.response.status_code not in {503, 429},
+        max_time=60,
+    )
     def _cone_search(
         self,
         method: Literal["any", "nearest", "all"],

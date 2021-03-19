@@ -102,25 +102,21 @@ class T2CatalogMatch(CatalogMatchUnit, AbsPointT2Unit):
         # initialize the catalog quer(ies). Use instance variable to aviod duplicates
         out_dict: Dict[str, Any] = {}
 
-        response = self.session.post(
-            "cone_search/nearest",
-            json={
-                "ra_deg": transient_ra,
-                "dec_deg": transient_dec,
-                "catalogs": [
-                    {
-                        "name": catalog,
-                        **{
-                            k: v
-                            for k, v in cat_opts.dict().items()
-                            if k not in {"catq_kwargs"}
-                        },
-                    }
-                    for catalog, cat_opts in self.catalogs.items()
-                ],
-            },
+        matches = self.cone_search_nearest(
+            ra=transient_ra,
+            dec=transient_dec,
+            catalogs=[
+                {
+                    "name": catalog,
+                    "use": cat_opts.use,
+                    "rs_arcsec": cat_opts.rs_arcsec,
+                    "keys_to_append": cat_opts.keys_to_append,
+                    "pre_filter": cat_opts.pre_filter,
+                    "post_filter": cat_opts.post_filter,
+                }
+                for catalog, cat_opts in self.catalogs.items()
+            ],
         )
-        response.raise_for_status()
 
         # return the info as dictionary
         return {
@@ -129,5 +125,5 @@ class T2CatalogMatch(CatalogMatchUnit, AbsPointT2Unit):
                 if match is not None
                 else None
             )
-            for catalog, match in zip(self.catalogs, response.json())
+            for catalog, match in zip(self.catalogs, matches)
         }
