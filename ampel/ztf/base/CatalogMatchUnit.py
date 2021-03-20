@@ -123,6 +123,12 @@ class CatalogMatchUnitBase:
 
     @backoff.on_exception(
         backoff.expo,
+        requests.ConnectionError,
+        max_tries=5,
+        factor=10,
+    )
+    @backoff.on_exception(
+        backoff.expo,
         requests.HTTPError,
         giveup=lambda e: e.response.status_code not in {503, 429},
         max_time=60,
