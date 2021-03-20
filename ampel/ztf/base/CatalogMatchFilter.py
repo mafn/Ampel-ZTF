@@ -7,11 +7,11 @@
 # Last Modified Date: 19.03.2021
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
-from typing import Literal, Dict, Any, Union, Optional, List
+from typing import Literal, Dict, Any, Union, Optional, List, cast
 
 from ampel.abstract.AbsAlertFilter import AbsAlertFilter
 from ampel.alert.PhotoAlert import PhotoAlert
-from ampel.ztf.base.CatalogMatchUnit import CatalogMatchUnit
+from ampel.ztf.base.CatalogMatchUnit import CatalogMatchUnit, ConeSearchRequest
 from ampel.model.operator.AnyOf import AnyOf
 from ampel.model.operator.AllOf import AllOf
 from ampel.model.StrictModel import StrictModel
@@ -25,8 +25,8 @@ class BaseCatalogMatchRequest(StrictModel):
 
 class ExtcatsMatchRequest(BaseCatalogMatchRequest):
     use: Literal["extcats"]
-    pre_filter: Dict[str, Any]
-    post_filter: Dict[str, Any]
+    pre_filter: Optional[Dict[str, Any]]
+    post_filter: Optional[Dict[str, Any]]
 
 
 CatalogMatchRequest = Union[BaseCatalogMatchRequest, ExtcatsMatchRequest]
@@ -62,10 +62,10 @@ class CatalogMatchFilter(CatalogMatchUnit, AbsAlertFilter[PhotoAlert]):
         selection: Union[
             CatalogMatchRequest, AnyOf[CatalogMatchRequest], AllOf[CatalogMatchRequest]
         ],
-    ) -> List[CatalogMatchRequest]:
+    ) -> bool:
         if isinstance(selection, AllOf):
             return all(
-                self.cone_search_any(ra, dec, [r.dict() for r in selection.all_of])
+                self.cone_search_any(ra, dec, [cast(ConeSearchRequest, r.dict()) for r in selection.all_of])
             )
         elif isinstance(selection, AnyOf):
             # recurse into OR conditions
@@ -73,10 +73,10 @@ class CatalogMatchFilter(CatalogMatchUnit, AbsAlertFilter[PhotoAlert]):
                 return all(self._evaluate_match(selection.any_of))
             else:
                 return any(
-                    self.cone_search_any(ra, dec, [r.dict() for r in selection.any_of])
+                    self.cone_search_any(ra, dec, [cast(ConeSearchRequest, r.dict()) for r in selection.any_of])
                 )
         else:
-            return all(self.cone_search_any(ra, dec, [r.dict() for r in [selection]]))
+            return all(self.cone_search_any(ra, dec, [cast(ConeSearchRequest, r.dict()) for r in [selection]]))
 
     def apply(self, alert: PhotoAlert) -> bool:
 

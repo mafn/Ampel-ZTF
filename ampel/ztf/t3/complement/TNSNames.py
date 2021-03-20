@@ -14,10 +14,7 @@ from pydantic import Field
 
 from ampel.core.AmpelBuffer import AmpelBuffer
 from ampel.t3.complement.AbsT3DataAppender import AbsT3DataAppender
-from ampel.ztf.base.CatalogMatchUnit import (
-    CatalogMatchAdminUnit,
-    ExtendedConeSearchRequest,
-)
+from ampel.ztf.base.CatalogMatchUnit import CatalogMatchAdminUnit
 
 
 class TNSNames(CatalogMatchAdminUnit, AbsT3DataAppender):
@@ -49,16 +46,14 @@ class TNSNames(CatalogMatchAdminUnit, AbsT3DataAppender):
                     ra,
                     dec,
                     [
-                        ExtendedConeSearchRequest(
-                            {
-                                "name": "TNS",
-                                "use": "extcats",
-                                "rs_arcsec": self.search_radius,
-                                "keys_to_append": None
-                                if self.include_report
-                                else ["objname"],
-                            }
-                        )
+                        {
+                            "name": "TNS",
+                            "use": "extcats",
+                            "rs_arcsec": self.search_radius,
+                            "keys_to_append": None
+                            if self.include_report
+                            else ["objname"],
+                        }
                     ],
                 )[0]
             ):

@@ -28,7 +28,7 @@ from ampel.base.DataUnit import DataUnit
 from ampel.core.AdminUnit import AdminUnit
 
 
-class ConeSearchRequest(TypedDict):
+class BaseConeSearchRequest(TypedDict):
     """
     :param use: either extcats or catsHTM, depending on how the catalog is set up.
     :param rs_arcsec: search radius for the cone search, in arcseconds
@@ -68,10 +68,10 @@ class ConeSearchRequest(TypedDict):
     rs_arcsec: float
 
 
-class ExtendedConeSearchRequest(ConeSearchRequest, total=False):
+class ConeSearchRequest(BaseConeSearchRequest, total=False):
     keys_to_append: Optional[Sequence[str]]
-    pre_filter: Dict[str, Any]
-    post_filter: Dict[str, Any]
+    pre_filter: Optional[Dict[str, Any]]
+    post_filter: Optional[Dict[str, Any]]
 
 
 class CatalogItem(TypedDict):
