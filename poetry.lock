@@ -19,30 +19,30 @@ speedups = ["aiodns", "brotlipy", "cchardet"]
 
 [[package]]
 name = "ampel-alerts"
-version = "0.7.1a0"
+version = "0.7.1a1"
 description = "Alert support for the Ampel system"
 category = "main"
 optional = false
 python-versions = ">=3.8,<4.0"
 
 [package.dependencies]
-ampel-core = ">=0.7.1-alpha.1,<0.8.0"
-ampel-interface = ">=0.7.1-alpha.7,<0.8.0"
-ampel-photometry = ">=0.7.1-alpha.0,<0.8.0"
+ampel-core = ">=0.7.1-alpha.6,<0.8.0"
+ampel-interface = ">=0.7.1-alpha.8,<0.8.0"
+ampel-photometry = ">=0.7.1-alpha.1,<0.8.0"
 
 [package.extras]
 docs = ["Sphinx (>=3.5.1,<4.0.0)", "sphinx-autodoc-typehints (>=1.11.1,<2.0.0)", "tomlkit (>=0.7.0,<0.8.0)"]
 
 [[package]]
 name = "ampel-core"
-version = "0.7.1a5"
+version = "0.7.1a6"
 description = "Asynchronous and Modular Platform with Execution Layers"
 category = "main"
 optional = false
 python-versions = ">=3.8,<4.0"
 
 [package.dependencies]
-ampel-interface = ">=0.7.1-alpha.7,<0.8.0"
+ampel-interface = ">=0.7.1-alpha.8,<0.8.0"
 prometheus-client = ">=0.9.0,<0.10.0"
 psutil = ">=5.8.0,<6.0.0"
 pydantic = ">=1.4,<1.5"
@@ -60,7 +60,7 @@ plotting = ["svgutils (>=0.3.4,<0.4.0)", "CairoSVG (>=2.5.1,<3.0.0)", "matplotli
 
 [[package]]
 name = "ampel-interface"
-version = "0.7.1a7"
+version = "0.7.1a8"
 description = "Base classes for the Ampel analysis platform"
 category = "main"
 optional = false
@@ -76,7 +76,7 @@ docs = ["Sphinx (>=3.5.1,<4.0.0)", "sphinx-autodoc-typehints (>=1.11.1,<2.0.0)",
 
 [[package]]
 name = "ampel-photometry"
-version = "0.7.1a0"
+version = "0.7.1a1"
 description = "Photometry add-on for the Ampel system"
 category = "main"
 optional = false
@@ -232,7 +232,7 @@ six = "*"
 
 [[package]]
 name = "fastavro"
-version = "1.3.2"
+version = "1.3.4"
 description = "Fast read/write of AVRO files"
 category = "main"
 optional = false
@@ -704,16 +704,16 @@ python-versions = "*"
 
 [[package]]
 name = "urllib3"
-version = "1.26.3"
+version = "1.26.4"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4"
 
 [package.extras]
-brotli = ["brotlipy (>=0.6.0)"]
 secure = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "certifi", "ipaddress"]
 socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
+brotli = ["brotlipy (>=0.6.0)"]
 
 [[package]]
 name = "xmltodict"
@@ -758,7 +758,7 @@ archive = ["ampel-ztf-archive"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "0f21ddf16847bf86a075b7b88e03e907953add1323f7abe29d35dbaab79526c2"
+content-hash = "334a88d26704ef69869761e01a1be5ed8d45047283bdb5f76e0771204df73952"
 
 [metadata.files]
 aiohttp = [
@@ -801,20 +801,20 @@ aiohttp = [
     {file = "aiohttp-3.7.4.post0.tar.gz", hash = "sha256:493d3299ebe5f5a7c66b9819eacdcfbbaaf1a8e84911ddffcdc48888497afecf"},
 ]
 ampel-alerts = [
-    {file = "ampel-alerts-0.7.1a0.tar.gz", hash = "sha256:f9c2478fc127a89ee9dde0d889f7e92fc4c0f99c613adcfa2ebf728743379378"},
-    {file = "ampel_alerts-0.7.1a0-py3-none-any.whl", hash = "sha256:35d5ee89d6b1483aeca69bf4b0d2f808fc7efbb8dc0cc17fed3aad7bb44113b7"},
+    {file = "ampel-alerts-0.7.1a1.tar.gz", hash = "sha256:057fdeff36df1820f1e00622701a2a4585355b10a425e2e333a3f42271d9a322"},
+    {file = "ampel_alerts-0.7.1a1-py3-none-any.whl", hash = "sha256:3b6298e5e708c89ce080eeab5a0e97e0ed9d010ce3c4153bcd9703de7af06402"},
 ]
 ampel-core = [
-    {file = "ampel-core-0.7.1a5.tar.gz", hash = "sha256:deba35a08e110d297a1f1d997751640461e81b69e0b6066322e31c838844e040"},
-    {file = "ampel_core-0.7.1a5-py3-none-any.whl", hash = "sha256:91be0a71fdd3693b0bc7928da17f81cb23ef44cab524a7b69d5ca02901233826"},
+    {file = "ampel-core-0.7.1a6.tar.gz", hash = "sha256:6a2036dd1cdfc082f12e524fce3a666ff242e214f73203ebba95e804bf2d7c6a"},
+    {file = "ampel_core-0.7.1a6-py3-none-any.whl", hash = "sha256:b779ae9bffc6beee0db832849f1944715819ec7ecc03dec4afc93e06bcd477de"},
 ]
 ampel-interface = [
-    {file = "ampel-interface-0.7.1a7.tar.gz", hash = "sha256:a8e80822f7552a312ba7c5e18c6404cbe518f207809e773c27565b8b5ec5adbd"},
-    {file = "ampel_interface-0.7.1a7-py3-none-any.whl", hash = "sha256:58a28e98d07db7d61210ed2b60300276a6ad6902f2e950bd1dd1d80e6e826d5e"},
+    {file = "ampel-interface-0.7.1a8.tar.gz", hash = "sha256:5befef7a71193741eeafd9997bb2afae7a6b9e9d9f63a3110d228a0a7293f96f"},
+    {file = "ampel_interface-0.7.1a8-py3-none-any.whl", hash = "sha256:56ce5ce3914bd38d5e9d50121cf5973221982425bb61e4b72e8b168638ac575a"},
 ]
 ampel-photometry = [
-    {file = "ampel-photometry-0.7.1a0.tar.gz", hash = "sha256:50f8ad34faca299c23b005b6976c961da4f08a23743e401dc5080ba380d7d7ed"},
-    {file = "ampel_photometry-0.7.1a0-py3-none-any.whl", hash = "sha256:13afc3a8fe144c5704d3fe2df8da38b356dc685f35d0dc647bcd9871575a3bcb"},
+    {file = "ampel-photometry-0.7.1a1.tar.gz", hash = "sha256:b75705c6f85535a0031b4b3e32154bddefe3a28ae4a5414336034fe65f47ba28"},
+    {file = "ampel_photometry-0.7.1a1-py3-none-any.whl", hash = "sha256:a4c316f9be3f569b744c0c74b151938ec311aeec04ac79f48708d0e68d0a4265"},
 ]
 ampel-ztf-archive = [
     {file = "ampel-ztf-archive-0.7.0a0.tar.gz", hash = "sha256:066c71c4fa841f514fd41107ccbc99757ed2b4ae909a65a01c9cf01246b56b19"},
@@ -949,22 +949,20 @@ cycler = [
     {file = "cycler-0.10.0.tar.gz", hash = "sha256:cd7b2d1018258d7247a71425e9f26463dfb444d411c39569972f4ce586b0c9d8"},
 ]
 fastavro = [
-    {file = "fastavro-1.3.2-cp36-cp36m-macosx_10_14_x86_64.whl", hash = "sha256:8f7bf53dadaa9b1bd818d3e9bf032e3ac3a6a4960b6c06ae5ae504e35fe0b669"},
-    {file = "fastavro-1.3.2-cp36-cp36m-manylinux2014_aarch64.whl", hash = "sha256:dd07f628d1cb9897bb9e028f9cd90ea8e41feb453f564654419d60ba0df3d9fe"},
-    {file = "fastavro-1.3.2-cp36-cp36m-manylinux2014_x86_64.whl", hash = "sha256:85abc44d5f16a050c49b2d76f31d0e6e5895e7b0b13a6e968857adf2c92b5fd6"},
-    {file = "fastavro-1.3.2-cp36-cp36m-win_amd64.whl", hash = "sha256:dc720c2bea98e1fcf7a984b3acfd49c322b0aa2cc45fd8e219804e1e0ff166b3"},
-    {file = "fastavro-1.3.2-cp37-cp37m-macosx_10_14_x86_64.whl", hash = "sha256:6275f86a3cb8bd4f10382ed28c0263a8679ff888d416a129abec045b21997302"},
-    {file = "fastavro-1.3.2-cp37-cp37m-manylinux2014_x86_64.whl", hash = "sha256:31fd897609b9f96bd88dd563876142da5ca9c17b9992946e1a6c27cf8dc3f99d"},
-    {file = "fastavro-1.3.2-cp37-cp37m-win_amd64.whl", hash = "sha256:ca974d3fab7c2174bc45081191c8e283558a3643cba39d5edaab89f8d42bdf80"},
-    {file = "fastavro-1.3.2-cp38-cp38-macosx_10_14_x86_64.whl", hash = "sha256:37bc3d4fd086fbb09d21c54961f0e6a5953d3c200d97da34cdbb4f50fc2f4d52"},
-    {file = "fastavro-1.3.2-cp38-cp38-manylinux2014_aarch64.whl", hash = "sha256:a908a4ad237089ad298d1c43eba24cc288cb6fb7d9530ad154cf58110c6ace7e"},
-    {file = "fastavro-1.3.2-cp38-cp38-manylinux2014_x86_64.whl", hash = "sha256:b2b16c4c3b3ed380997b07b1c2a706415a4fa905a6c900d72ed1a402d06d3f47"},
-    {file = "fastavro-1.3.2-cp38-cp38-win_amd64.whl", hash = "sha256:683c1dea95a514290190c2ca5407130427620f98183e3f3ed2f19b02150fb1f2"},
-    {file = "fastavro-1.3.2-cp39-cp39-macosx_10_14_x86_64.whl", hash = "sha256:57a5a281eb62001030116ee80f060b3bb5a24827d764ed068e8c0aac56096053"},
-    {file = "fastavro-1.3.2-cp39-cp39-manylinux2014_aarch64.whl", hash = "sha256:16552128560b22d7a64ac5a1d10e85290c00591540e4e9b8b962e9f201170311"},
-    {file = "fastavro-1.3.2-cp39-cp39-manylinux2014_x86_64.whl", hash = "sha256:d1a7e1f11420e99a788cb783c794cc3d9476f735cf49ee86f22084d86ae0fa1d"},
-    {file = "fastavro-1.3.2-cp39-cp39-win_amd64.whl", hash = "sha256:5410c1d71a17c7006b084665d99b35c30fe5df318a1db9e1a7d917a08a0c8859"},
-    {file = "fastavro-1.3.2.tar.gz", hash = "sha256:665bec52628f3b9e0f5efaa2519493a3e9947a67ac00700ef06a703cf4d10ab8"},
+    {file = "fastavro-1.3.4-cp36-cp36m-macosx_10_14_x86_64.whl", hash = "sha256:3d9529bdfabfa38673768df1dd3146050a4c4e51924908f8a434ab61edea4067"},
+    {file = "fastavro-1.3.4-cp36-cp36m-manylinux2014_aarch64.whl", hash = "sha256:065d83f35e179654f1dd5a804d457753745b865cd2698a56bbc7fa33750ce908"},
+    {file = "fastavro-1.3.4-cp36-cp36m-manylinux2014_x86_64.whl", hash = "sha256:92ea0aa736d7a3c4ace86ca0971ceaecdac771fb3fc9b311cd24a1a20a8ab7a3"},
+    {file = "fastavro-1.3.4-cp36-cp36m-win_amd64.whl", hash = "sha256:e9d8277ee9972aeabaa72acfae262b1b310cee5a4d29a3347177661592733b9d"},
+    {file = "fastavro-1.3.4-cp37-cp37m-macosx_10_14_x86_64.whl", hash = "sha256:fedcc1f1449825365d327714a65501171af6e40bd371356049218ca47deb7464"},
+    {file = "fastavro-1.3.4-cp37-cp37m-manylinux2014_x86_64.whl", hash = "sha256:02406252b9c18b0a152d1536b4cbed8766192427da6e5e4eb9eb3d5e1fc96725"},
+    {file = "fastavro-1.3.4-cp37-cp37m-win_amd64.whl", hash = "sha256:48704347fb1b81fe2234f89583d3611500eb0b336712dd3ba053389c0a8d0584"},
+    {file = "fastavro-1.3.4-cp38-cp38-macosx_10_14_x86_64.whl", hash = "sha256:11ca52083cc79b1a3e7e9fbb2b84b810fe63bfe65c783ccb261081c2fcc28e34"},
+    {file = "fastavro-1.3.4-cp38-cp38-manylinux2014_x86_64.whl", hash = "sha256:43408a5b7db951fd4dd293d7253c308e8cec78f5f126dfe756b20e4fe5a5a47a"},
+    {file = "fastavro-1.3.4-cp38-cp38-win_amd64.whl", hash = "sha256:bd53092758f162080462d1dc170a25974204c0b31aba200798ed95f1429ca8aa"},
+    {file = "fastavro-1.3.4-cp39-cp39-macosx_10_14_x86_64.whl", hash = "sha256:86ed5ed392bfefa822608c1c08fc17eea702e0287c268e922b45f850df6d7435"},
+    {file = "fastavro-1.3.4-cp39-cp39-manylinux2014_x86_64.whl", hash = "sha256:e22f9a41949d5d330db4c959fb3bc0bbe226eefc3ed05d08d52b133b735ca5d0"},
+    {file = "fastavro-1.3.4-cp39-cp39-win_amd64.whl", hash = "sha256:4fe9583e772cef1656bab4d7ee27a306a317f3f4fdf4cc45f2add0d919d20f8b"},
+    {file = "fastavro-1.3.4.tar.gz", hash = "sha256:4c0c2ed0c218d3e8737bd04d6cac2a3c1afd11090d3ac3a45fbaafd73cfe2cd7"},
 ]
 idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
@@ -1570,8 +1568,8 @@ typing-extensions = [
     {file = "typing_extensions-3.7.4.3.tar.gz", hash = "sha256:99d4073b617d30288f569d3f13d2bd7548c3a7e4c8de87db09a9d29bb3a4a60c"},
 ]
 urllib3 = [
-    {file = "urllib3-1.26.3-py2.py3-none-any.whl", hash = "sha256:1b465e494e3e0d8939b50680403e3aedaa2bc434b7d5af64dfd3c958d7f5ae80"},
-    {file = "urllib3-1.26.3.tar.gz", hash = "sha256:de3eedaad74a2683334e282005cd8d7f22f4d55fa690a2a1020a416cb0a47e73"},
+    {file = "urllib3-1.26.4-py2.py3-none-any.whl", hash = "sha256:2f4da4594db7e1e110a944bb1b551fdf4e6c136ad42e4234131391e21eb5b0df"},
+    {file = "urllib3-1.26.4.tar.gz", hash = "sha256:e7b021f7241115872f92f43c6508082facffbd1c048e3c6e2bb9c2a157e28937"},
 ]
 xmltodict = [
     {file = "xmltodict-0.12.0-py2.py3-none-any.whl", hash = "sha256:8bbcb45cc982f48b2ca8fe7e7827c5d792f217ecf1792626f808bf41c3b86051"},
