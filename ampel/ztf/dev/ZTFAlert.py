@@ -30,7 +30,7 @@ class ZTFAlert:
 		als = ZiAlertSupplier(deserialize="avro")
 		if file_path:
 			from ampel.alert.load.FileAlertLoader import FileAlertLoader
-			als.set_alert_source(FileAlertLoader(file_path))
+			als.set_alert_source(FileAlertLoader(files=file_path))
 
 		return next(als)
 

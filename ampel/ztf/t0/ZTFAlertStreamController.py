@@ -77,7 +77,7 @@ class TarballSource(StrictModel):
 
     def get(self) -> ZiAlertSupplier:
         supplier = ZiAlertSupplier(deserialize=self.serialization)
-        supplier.set_alert_source(TarAlertLoader(self.filename))
+        supplier.set_alert_source(TarAlertLoader(file_path=self.filename))
         return supplier
 
 
