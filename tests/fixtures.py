@@ -74,7 +74,7 @@ def avro_packets():
     ------------------ -------------------------- ------------------------
     """
     return partial(
-        TarAlertLoader, Path(__file__).parent / "test-data" / "ZTF18abxhyqv.tar.gz"
+        TarAlertLoader, file_path=str(Path(__file__).parent / "test-data" / "ZTF18abxhyqv.tar.gz")
     )
 
 
@@ -84,7 +84,7 @@ def superseded_packets():
     Three alerts, received within 100 ms, with the same points but different candids
     """
     return partial(
-        TarAlertLoader, Path(__file__).parent / "test-data" / "ZTF18acruwxq.tar.gz"
+        TarAlertLoader, file_path=str(Path(__file__).parent / "test-data" / "ZTF18acruwxq.tar.gz")
     )
 
 
