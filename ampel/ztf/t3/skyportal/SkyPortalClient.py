@@ -660,7 +660,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             t["type"] for t in response["data"]["thumbnails"]
         } if response["status"] == "success" else set()
         for candid, cutouts in (view.extra or {}).get("ZTFCutoutImages", {}).items():
-            for kind, blob in cutouts.items():
+            for kind, blob in (cutouts or {}).items():
                 if CUTOUT_TYPES[kind] in existing_cutouts:
                     continue
                 assert isinstance(blob, bytes)
