@@ -34,7 +34,7 @@ class ZTFCutoutImages(AbsT3DataAppender):
 
     def get_cutout(self, candid: int) -> Optional[Dict[str, Any]]:
         response = self.session.get(f"cutouts/{candid}")
-        if response.status_code == 400:
+        if response.status_code == 404:
             return None
         else:
             response.raise_for_status()
