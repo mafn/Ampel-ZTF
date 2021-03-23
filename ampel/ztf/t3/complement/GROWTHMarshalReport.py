@@ -7,11 +7,12 @@
 # Date              : 03.11.2020
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
-from typing import Any, Dict, Optional, Tuple, Iterable
+from typing import Any, Dict, Optional, Sequence, Iterable
 
 import backoff
 import requests
 
+from ampel.type import StockId
 from ampel.core.AmpelBuffer import AmpelBuffer
 from ampel.t3.complement.AbsT3DataAppender import AbsT3DataAppender
 from ampel.ztf.base.CatalogMatchUnit import CatalogMatchAdminUnit
@@ -30,7 +31,7 @@ class GROWTHMarshalReport(CatalogMatchAdminUnit, AbsT3DataAppender):
             if (stock := record.get("stock", None)) is None:
                 raise ValueError(f"{self.__class__.__name__} requires stock records")
 
-            report = self.get_catalog_item(stock.get("name", tuple()))
+            report = self.get_catalog_item(stock.get("name") or tuple())
             if record.get("extra") is None or record["extra"] is None:
                 record["extra"] = {self.__class__.__name__: report}
             else:
@@ -49,11 +50,13 @@ class GROWTHMarshalReport(CatalogMatchAdminUnit, AbsT3DataAppender):
         response.raise_for_status()
         return response.json()
 
-    def get_catalog_item(self, names: Tuple[str, ...]) -> Optional[Dict[str, Any]]:
+    def get_catalog_item(self, names: Sequence[StockId]) -> Optional[Dict[str, Any]]:
         """Get catalog entry associated with the stock name"""
         for name in names:
-            if name.startswith("ZTF") and (
-                entry := self._lookup(name)
+            if (
+                isinstance(name, str)
+                and name.startswith("ZTF")
+                and (entry := self._lookup(name))
             ):
                 return entry
         return None
