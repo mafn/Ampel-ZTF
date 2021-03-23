@@ -164,11 +164,11 @@ class ZiT1ArchivalCompoundIngester(AbsCompoundIngester[PhotoCompoundBluePrint]):
             self._t0_col.find(
                 {
                     "stock": stock_id,
-                    "body.jd": {"$lte": datapoints[0]["body"]["jd"]},
+                    "body.jd": {"$lte": datapoints[-1]["body"]["jd"]},
                     "tag": "ZTF",
                 },
                 self.projection,
-            ).sort([("body.jd", -1)])
+            ).sort([("body.jd", 1)])
         )
 
         # Create compounds
