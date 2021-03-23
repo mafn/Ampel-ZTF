@@ -68,7 +68,7 @@ class TNSNames(CatalogMatchAdminUnit, AbsT3DataAppender):
                     for item in matches
                     if not (n := "TNS" + item["body"]["objname"]) in existing_names
                 )
-                stock["name"] = existing_names + new_names
+                dict.__setitem__(stock, "name", existing_names + new_names) # type: ignore[index]
 
             if self.include_report:
                 reports = [item["body"] for item in matches]
