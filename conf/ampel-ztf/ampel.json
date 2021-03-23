@@ -9,6 +9,7 @@
 			"ampel.ztf.alert.ZTFGeneralAlertRegister",
 			"ampel.ztf.t3.complement.ZTFCutoutImages",
 			"ampel.ztf.t3.complement.FritzReport",
+			"ampel.ztf.t3.complement.GROWTHMarshalReport",
 			"ampel.ztf.t3.complement.TNSNames",
 			"ampel.ztf.t3.complement.TNSReports",
 			"ampel.ztf.t3.select.T3AdHocStockSelector",
