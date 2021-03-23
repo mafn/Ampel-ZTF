@@ -6,6 +6,7 @@
 # Last Modified Date: 18.09.2020
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
+from base64 import b64decode
 from typing import Iterable, Literal, Any, Optional, Dict
 
 from requests_toolbelt.sessions import BaseUrlSession
@@ -32,13 +33,13 @@ class ZTFCutoutImages(AbsT3DataAppender):
             base_url=context.config.get(f"resource.ampel-ztf/archive", str, raise_exc=True)
         )
 
-    def get_cutout(self, candid: int) -> Optional[Dict[str, Any]]:
+    def get_cutout(self, candid: int) -> Optional[Dict[str, bytes]]:
         response = self.session.get(f"cutouts/{candid}")
         if response.status_code == 404:
             return None
         else:
             response.raise_for_status()
-        return response.json()
+        return {k: b64decode(v) for k,v in response.json().items()}
 
     def complement(self, records: Iterable[AmpelBuffer]) -> None:
         for record in records:
@@ -65,3 +66,4 @@ class ZTFCutoutImages(AbsT3DataAppender):
                 record["extra"] = {self.__class__.__name__: cutouts}
             else:
                 record["extra"][self.__class__.__name__] = cutouts
+
