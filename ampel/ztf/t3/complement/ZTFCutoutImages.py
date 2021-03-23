@@ -9,6 +9,8 @@
 from base64 import b64decode
 from typing import Iterable, Literal, Any, Optional, Dict
 
+import backoff
+import requests
 from requests_toolbelt.sessions import BaseUrlSession
 
 from ampel.base.AmpelBaseModel import AmpelBaseModel
@@ -33,6 +35,18 @@ class ZTFCutoutImages(AbsT3DataAppender):
             base_url=context.config.get(f"resource.ampel-ztf/archive", str, raise_exc=True)
         )
 
+    @backoff.on_exception(
+        backoff.expo,
+        requests.ConnectionError,
+        max_tries=5,
+        factor=10,
+    )
+    @backoff.on_exception(
+        backoff.expo,
+        requests.HTTPError,
+        giveup=lambda e: e.response.status_code not in {503, 429},
+        max_time=60,
+    )
     def get_cutout(self, candid: int) -> Optional[Dict[str, bytes]]:
         response = self.session.get(f"cutouts/{candid}")
         if response.status_code == 404:
