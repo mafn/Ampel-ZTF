@@ -758,7 +758,7 @@ archive = ["ampel-ztf-archive"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "334a88d26704ef69869761e01a1be5ed8d45047283bdb5f76e0771204df73952"
+content-hash = "248368e52feb283554b086e7e48a4481214bc204ff67d826e3ee8e08d871d7c9"
 
 [metadata.files]
 aiohttp = [
