@@ -14,6 +14,7 @@ from ampel.model.ProcessModel import ProcessModel
 from ampel.model.ZTFLegacyChannelTemplate import ZTFLegacyChannelTemplate
 from ampel.util import concurrent
 from ampel.ztf.t0.ZTFAlertStreamController import ZTFAlertStreamController
+from ampel.ztf.t0.load.ZTFArchiveAlertLoader import ZTFArchiveAlertLoader
 
 
 def t0_process(kwargs, first_pass_config):
@@ -204,7 +205,6 @@ def topic_stream_token() -> str:
 
 def test_archive_source(topic_stream_token: str):
     assert isinstance(topic_stream_token, str)
-    source = AlertSource(source={"stream": topic_stream_token})
-    assert isinstance(source.source, ArchiveSource)
-    alerts = list(source.get())
+    source = ZTFArchiveAlertLoader(stream=topic_stream_token)
+    alerts = list(iter(source))
     assert len(alerts) == 8
