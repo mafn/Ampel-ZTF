@@ -36,6 +36,6 @@ resource:
   catalogmatch: https://ampel.zeuthen.desy.de/api/catalogmatch/
   kafka:
     bootstrap: partnership.alerts.ztf.uw.edu:9092
-    group: ampel-v0.7.1
-    timeout: 60
+    group_name: ampel-v0.7.1
+    timeout: 3600
 
