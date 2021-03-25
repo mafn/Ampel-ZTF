@@ -27,7 +27,7 @@ class ZiT1ArchivalCompoundIngester(AbsCompoundIngester[PhotoCompoundBluePrint]):
 
     datapoint_ingester: Union[UnitModel, str]
     compound_ingester: Union[UnitModel, str]
-    archive_auth: Secret[dict] = {"key": "ztf/archive/reader"}  # type: ignore[assignment]
+    archive_auth: Secret[dict] = {"key": "ztf/archive/auth"}  # type: ignore[assignment]
 
     # Standard projection used when checking DB for existing PPS/ULS
     projection: Dict[str, int] = {
