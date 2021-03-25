@@ -25,6 +25,7 @@
 		],
 		"aux": [
 			"ampel.ztf.alert.ZiAlertSupplier",
+			"ampel.ztf.t0.load.UWAlertLoader",
 			"ampel.ztf.util.ZTFIdMapper"
 		]
 	},

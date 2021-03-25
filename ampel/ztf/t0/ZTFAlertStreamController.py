@@ -50,12 +50,12 @@ class KafkaSource(StrictModel):
         return f"kafka.{self.group}"
 
     def get(self) -> ZiAlertSupplier:
-        from ampel.ztf.t0.ArchiveUpdater import ArchiveUpdater
+        from ampel.ztf.t0.ArchiveUpdater import ArchiveUpdater # type: ignore[import]
 
-        supplier = ZiAlertSupplier(deserialize=None)
+        supplier = ZiAlertSupplier()
         supplier.set_alert_source(
             UWAlertLoader(
-                partnership=(self.stream == "ztf_uw_private"),
+                stream=self.stream,
                 bootstrap=self.broker,
                 group_name=self.group,
                 archive_updater=(
