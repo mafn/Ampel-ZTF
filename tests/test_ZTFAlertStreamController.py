@@ -13,11 +13,7 @@ from ampel.metrics.AmpelMetricsRegistry import AmpelMetricsRegistry
 from ampel.model.ProcessModel import ProcessModel
 from ampel.model.ZTFLegacyChannelTemplate import ZTFLegacyChannelTemplate
 from ampel.util import concurrent
-from ampel.ztf.t0.ZTFAlertStreamController import (
-    ArchiveSource,
-    ZTFAlertStreamController,
-    AlertSource,
-)
+from ampel.ztf.t0.ZTFAlertStreamController import ZTFAlertStreamController
 
 
 def t0_process(kwargs, first_pass_config):
@@ -36,7 +32,6 @@ def make_controller(config, processes, klass=ZTFAlertStreamController):
     return klass(
         config=config,
         priority="standard",
-        source={"stream": "ztf_uw_public", **config.get("resource.ampel-ztf/kafka")},
         processes=processes,
     )
 
@@ -100,7 +95,6 @@ class PotemkinZTFAlertStreamController(ZTFAlertStreamController):
         config,
         secrets,
         p,
-        source,
         log_profile: str = "default",
     ) -> bool:
         print(f"{os.getpid()} is sleepy...")
