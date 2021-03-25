@@ -53,6 +53,7 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 
 	# Mandatory implementation
 	def get_channel(self, logger: AmpelLogger) -> Dict[str, Any]:
+		assert self.template is not None
 		return {
 			**super().get_channel(logger),
 			'access': self.__class__._access[self.template]
