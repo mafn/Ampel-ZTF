@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 
 class ZTFAlertStreamController(AbsProcessController):
 
-    priority: str
+    priority: str = "default"
     multiplier: int = 1
 
     def __init__(self, **kwargs) -> None:
@@ -113,7 +113,6 @@ class ZTFAlertStreamController(AbsProcessController):
                 self.config.get(),
                 self.secrets,
                 self._process.dict(),
-                self.source.dict(exclude_defaults=False),
             )
             counter.inc()
             t.add_done_callback(lambda t: counter.dec())
@@ -169,7 +168,6 @@ class ZTFAlertStreamController(AbsProcessController):
         config: Dict[str, Any],
         secrets: Optional[AbsSecretProvider],
         p: Dict[str, Any],
-        source: Dict[str, Any],
     ) -> bool:
 
         try:
