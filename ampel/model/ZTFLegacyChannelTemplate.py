@@ -35,7 +35,7 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 	"""
 
 	# static variables (ClassVar type) are ignored by pydantic
-	_access: ClassVar = {
+	_access: ClassVar[Dict[str,List[str]]] = {
 		"ztf_uw_private": ["ZTF", "ZTF_PUB", "ZTF_COLLAB"],
 		"ztf_uw_public": ["ZTF", "ZTF_PUB"],
 		"ztf_uw_caltech": ["ZTF", "ZTF_PUB"]
@@ -86,14 +86,7 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 			self.craft_t0_process(
 				first_pass_config,
 				controller = {
-					"unit": "ZTFAlertStreamController",
-					"config": "%ampel-ztf/alert_source",
-					"override": {
-						"source": {
-							"stream": self.template,
-							"group": f"{kafka_config['group']}-{self.template}",
-						}
-					}
+					"unit": "ZTFAlertStreamController"
 				},
 				stock_ingester = "ZiStockIngester",
 				t0_ingester = t0_ingester,
@@ -112,5 +105,15 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 				t2_compute_from_t1 = t2_compute_from_t1,
 			)
 		)
+		ret[0]["processor"]["config"].update({
+			"supplier": {"unit": "ZiAlertSupplier"},
+			"loader": {
+				"unit": "UWAlertLoader",
+				"config": {
+					**kafka_config,
+					**{"stream": self.template},
+				}
+			}
+		})
 
 		return ret
