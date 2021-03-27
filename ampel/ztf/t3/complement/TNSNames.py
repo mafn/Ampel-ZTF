@@ -83,31 +83,15 @@ class TNSNames(CatalogMatchAdminUnit, AbsT3DataAppender):
         """
         Get the result of the latest invocation of the given unit
         """
-        if (t2 := record.get("t2")) is None:
+        if (t2_documents := record.get("t2")) is None:
             raise ValueError(f"{type(self).__name__} requires T2 records be loaded")
-        try:
-            last_t2_result = next(
-                iter(
-                    sorted(
-                        [
-                            sorted_records[0]
-                            for doc in t2
-                            if (
-                                doc["unit"] == unit_id
-                                and (
-                                    sorted_records := sorted(
-                                        doc["body"], key=lambda r: r["ts"], reverse=True
-                                    )
-                                )
-                            )
-                        ],
-                        key=lambda r: r["ts"],
-                        reverse=True,
-                    )
-                )
-            )["result"]
-        except StopIteration:
-            return None
-        return (
-            last_t2_result[-1] if isinstance(last_t2_result, list) else last_t2_result
-        )
+        for t2_doc in reversed(t2_documents):
+            if t2_doc["unit"] == unit_id and (body := t2_doc.get("body")):
+                for t2_record in reversed(body):
+                    if "result" in t2_record and t2_record.get("status", 0) >= 0:
+                        result = t2_record["result"]
+                        if isinstance(result, dict):
+                            return result
+                        elif isinstance(result, list) and len(result):
+                            return result[-1]
+        return None
