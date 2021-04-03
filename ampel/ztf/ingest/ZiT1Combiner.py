@@ -11,7 +11,7 @@ from typing import Tuple, Set, Union
 from ampel.type import DataPointId, ChannelId
 from ampel.content.DataPoint import DataPoint
 from ampel.content.Compound import CompoundElement
-from ampel.ingest.T1PhotoCombiner import T1PhotoCombiner
+from ampel.compile.T1PhotoCombiner import T1PhotoCombiner
 
 
 class ZiT1Combiner(T1PhotoCombiner):

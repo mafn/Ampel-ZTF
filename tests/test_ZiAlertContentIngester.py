@@ -8,7 +8,7 @@ import socket
 import pytest
 
 from ampel.config.AmpelConfig import AmpelConfig
-from ampel.db.DBUpdatesBuffer import DBUpdatesBuffer
+from ampel.mongo.update.DBUpdatesBuffer import DBUpdatesBuffer
 from ampel.dev.DevAmpelContext import DevAmpelContext
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.log.LogsBufferDict import LogsBufferDict

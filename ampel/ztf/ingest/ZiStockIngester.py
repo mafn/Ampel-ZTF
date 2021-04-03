@@ -10,7 +10,7 @@
 from typing import Dict, List, Any, Union
 from ampel.type import StockId
 from ampel.ztf.util.ZTFIdMapper import to_ztf_id
-from ampel.ingest.StockIngester import StockIngester
+from ampel.mongo.update.StockIngester import StockIngester
 
 
 class ZiStockIngester(StockIngester):

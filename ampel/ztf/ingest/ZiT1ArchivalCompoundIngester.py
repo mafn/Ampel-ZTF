@@ -10,7 +10,7 @@ from ampel.abstract.ingest.AbsCompoundIngester import AbsCompoundIngester
 from ampel.alert.PhotoAlert import PhotoAlert
 from ampel.content.DataPoint import DataPoint
 from ampel.core.UnitLoader import PT
-from ampel.ingest.PhotoCompoundBluePrint import PhotoCompoundBluePrint
+from ampel.compile.PhotoCompoundBluePrint import PhotoCompoundBluePrint
 from ampel.model.Secret import Secret
 from ampel.model.UnitModel import UnitModel
 from ampel.type import ChannelId, StockId

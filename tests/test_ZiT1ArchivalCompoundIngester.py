@@ -4,9 +4,9 @@ from collections import defaultdict
 import pytest
 
 from ampel.alert.IngestionHandler import IngestionHandler
-from ampel.db.DBUpdatesBuffer import DBUpdatesBuffer
+from ampel.mongo.update.DBUpdatesBuffer import DBUpdatesBuffer
 from ampel.demo.unit.base.DemoLightCurveT2Unit import DemoLightCurveT2Unit
-from ampel.ingest.PhotoCompoundIngester import PhotoCompoundIngester
+from ampel.compile.PhotoCompoundIngester import PhotoCompoundIngester
 from ampel.log.AmpelLogger import AmpelLogger, DEBUG
 from ampel.log.LogsBufferDict import LogsBufferDict
 from ampel.model.AlertProcessorDirective import AlertProcessorDirective
