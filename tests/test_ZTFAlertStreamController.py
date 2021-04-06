@@ -60,6 +60,8 @@ def test_merge_processes(config, first_pass_config):
         )
         for name in ("foo", "bar")
     ]
+    for pm in processes:
+        pm.controller.config = {"priority": pm.name.split("|")[-1]}
     len(
         ZTFAlertStreamController.merge_processes(processes).processor.config[
             "directives"
@@ -85,6 +87,8 @@ def test_merge_processes(config, first_pass_config):
         )
         for name, stream in zip(("foo", "bar"), ("ztf_uw_private", "ztf_uw_public"))
     ]
+    for pm in processes:
+        pm.controller.config = {"priority": pm.name.split("|")[-1]}
     with pytest.raises(AssertionError):
         make_controller(config, processes)
 
