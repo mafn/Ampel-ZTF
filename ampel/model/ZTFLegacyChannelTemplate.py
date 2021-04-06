@@ -75,7 +75,6 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 			}))
 
 
-		kafka_config = first_pass_config['resource']['ampel-ztf/kafka']
 		t0_ingester = "ZiAlertContentIngester"
 		t1_ingester = ("PhotoCompoundIngester", {"combiner": {"unit": "ZiT1Combiner"}})
 		# Add a T2LightCurveSummary if it does not already exist
@@ -107,14 +106,7 @@ class ZTFLegacyChannelTemplate(AbsLegacyChannelTemplate):
 			)
 		)
 		ret[0]["processor"]["config"].update({
-			"supplier": {"unit": "ZiAlertSupplier"},
-			"loader": {
-				"unit": "UWAlertLoader",
-				"config": {
-					**kafka_config,
-					**{"stream": self.template},
-				}
-			}
+			"supplier": {"unit": "ZiAlertSupplier"}
 		})
 
 		return ret
