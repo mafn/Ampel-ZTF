@@ -16,11 +16,24 @@ from astropy.io import fits
 from matplotlib.colors import Normalize
 from matplotlib.figure import Figure
 from pydantic import AnyHttpUrl
+
 if sys.version_info.minor > 8:
-	from typing import TypedDict
+    from typing import TypedDict
 else:
-	from typing_extensions import TypedDict
-from typing import Any, Dict, Generator, List, Optional, overload, Sequence, Set, TYPE_CHECKING, Union
+    from typing_extensions import TypedDict
+from typing import (
+    Any,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Tuple,
+    overload,
+    Sequence,
+    Set,
+    TYPE_CHECKING,
+    Union,
+)
 
 from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.log.AmpelLogger import AmpelLogger
@@ -29,6 +42,7 @@ from ampel.model.Secret import Secret
 from ampel.protocol.LoggerProtocol import LoggerProtocol
 from ampel.enum.T2RunState import T2RunState
 from ampel.util.collections import ampel_iter
+from ampel.util.mappings import flatten_dict
 
 if TYPE_CHECKING:
     from pydantic import AnyUrl
@@ -99,6 +113,18 @@ def decode_t2_body(blob: str) -> Dict[str, Any]:
     return {"ts": int(datetime.fromisoformat(doc.pop("timestamp")).timestamp()), **doc}
 
 
+def get_t2_result(t2: "T2Document") -> Optional[Tuple[datetime, Dict[str, Any]]]:
+    assert t2["body"] is not None
+    for record in reversed(t2["body"]):
+        if record.get("status", 0) == 0:
+            break
+    else:
+        return None
+    return datetime.fromtimestamp(record["ts"]), (
+        r[-1] if isinstance(r := record["result"], list) else r
+    )
+
+
 def render_thumbnail(cutout_data: bytes) -> str:
     """
     Render gzipped FITS as base64-encoded PNG
@@ -137,15 +163,19 @@ class UrlPathError(pydantic.errors.UrlError):
     code = "url.path"
     msg_template = "URL path must be empty, not {path!r}"
 
+
 class BaseHttpUrl(AnyHttpUrl):
     """An http(s) URL with path unset"""
 
     @classmethod
-    def validate(cls, value: Any, field: 'ModelField', config: 'BaseConfig') -> 'AnyUrl':
+    def validate(
+        cls, value: Any, field: "ModelField", config: "BaseConfig"
+    ) -> "AnyUrl":
         url = super().validate(value, field, config)
         if url.path is not None:
             raise UrlPathError(path=url.path)
         return url
+
     # @classmethod
     # def validate_parts(cls, parts: Dict[str, str]) -> Dict[str, str]:
     #     parts["path"] = None
@@ -331,7 +361,7 @@ class FilterGroupProvisioner(SkyPortalClient):
     ) -> None:
         """
         Create a dummy SkyPortal filter for each Ampel filter
-        
+
         :param group: name of group that should own the filter
         :param stream:
           name of the filter's alert stream (meaningless, since there is no
@@ -408,7 +438,8 @@ async def provision_seed_data(client: SkyPortalClient):
     for user in (await client.get("user"))["data"]:
         if not user["username"] in users:
             await client.post(
-                f"groups/{source['group']}/users", json={"username": user["username"]},
+                f"groups/{source['group']}/users",
+                json={"username": user["username"]},
             )
 
     return source
@@ -478,12 +509,117 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 ...
         raise KeyError(f"None of {tags} match a known instrument")
 
+    async def post_t2_annotations(
+        self,
+        name: str,
+        t2_docs: Sequence["T2Document"],
+        object_record: Optional[Dict[str, Any]],
+        ret: PostReport,
+    ):
+        previous_annotations = object_record["annotations"] if object_record else []
+        for t2 in t2_docs:
+            last_modified, result = get_t2_result(t2)
+            # find associated annotation
+            for annotation in previous_annotations:
+                if ":".split(annotation["origin"])[-1] == t2["unit"]:
+                    break
+            else:
+                # post new annotation
+                self.logger.debug(f"posting {t2['unit']}")
+                try:
+                    await self.post(
+                        "annotation",
+                        json={
+                            "obj_id": name,
+                            "origin": f"ampel:{t2['unit']}",
+                            "data": flatten_dict(result, ":"),
+                        },
+                    )
+                    ret["comments"] += 1
+                except SkyPortalAPIError as exc:
+                    ret["comment_errors"].append(exc.args[0])
+                continue
+            # update previous annotation
+            if last_modified > datetime.fromisoformat(annotation["updated"]):
+                self.logger.debug(f"updating {t2['unit']}")
+                try:
+                    await self.put(
+                        f"annotation/{annotation['id']}",
+                        json={
+                            "obj_id": name,
+                            "author_id": annotation["author_id"],
+                            "origin": f"ampel:{t2['unit']}",
+                            "data": flatten_dict(result, ":"),
+                        },
+                    )
+                    ret["comments"] += 1
+                except SkyPortalAPIError as exc:
+                    ret["comment_errors"].append(exc.args[0])
+            else:
+                self.logger.debug(f"{t2['unit']} exists and is current")
+
+    async def post_t2_comments(
+        self,
+        name: str,
+        t2_docs: Sequence["T2Document"],
+        object_record: Optional[Dict[str, Any]],
+        ret: PostReport,
+    ):
+        previous_comments = object_record["comments"] if object_record else []
+
+        for t2 in t2_docs:
+            # find associated comment
+            for comment in previous_comments:
+                if comment["text"] == t2["unit"]:
+                    break
+            else:
+                # post new comment
+                self.logger.debug(f"posting {t2['unit']}")
+                try:
+                    await self.post(
+                        "comment",
+                        json={
+                            "obj_id": name,
+                            "text": t2["unit"],
+                            "attachment": {
+                                "body": encode_t2_body(t2),
+                                "name": f"{name}-{t2['unit']}.json",
+                            },
+                        },
+                    )
+                    ret["comments"] += 1
+                except SkyPortalAPIError as exc:
+                    ret["comment_errors"].append(exc.args[0])
+                continue
+            # update previous comment
+            previous_body = decode_t2_body(comment["attachment_bytes"])
+            if (t2["body"] is not None) and (
+                t2["body"][-1]["ts"] > previous_body["ts"]
+            ):
+                self.logger.debug(f"updating {t2['unit']}")
+                try:
+                    await self.put(
+                        f"comment/{comment['id']}",
+                        json={
+                            "attachment_bytes": encode_t2_body(t2),
+                            "author_id": comment["author_id"],
+                            "obj_id": name,
+                            "text": comment["text"],
+                        },
+                    )
+                    ret["comments"] += 1
+                except SkyPortalAPIError as exc:
+                    ret["comment_errors"].append(exc.args[0])
+            else:
+                self.logger.debug(f"{t2['unit']} exists and is current")
+
     async def post_candidate(
         self,
         view: "TransientView",
         filters: Optional[List[str]] = None,
         groups: Optional[List[str]] = None,
         instrument: Optional[str] = None,
+        annotate: bool = False,
     ) -> PostReport:
         """
         Perform the following actions:
@@ -495,7 +631,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
           * Post each T2 result as comment with a JSON-encoded attachment. If
             a comment corresponding to the T2 unit already exists, overwrite it
             with the most recent result.
-        
+
         :param view:
             Data to post
         :param filters:
@@ -656,9 +792,11 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         # SkyPortal only supports one of thumbnail per object and type
         # ('new', 'ref', 'sub', 'sdss', 'dr8', 'new_gz', 'ref_gz', 'sub_gz')
         # Post one of each type only if they do not yet exist.
-        existing_cutouts: Set[str] = {
-            t["type"] for t in response["data"]["thumbnails"]
-        } if response["status"] == "success" else set()
+        existing_cutouts: Set[str] = (
+            {t["type"] for t in response["data"]["thumbnails"]}
+            if response["status"] == "success"
+            else set()
+        )
         for candid, cutouts in (view.extra or {}).get("ZTFCutoutImages", {}).items():
             for kind, blob in (cutouts or {}).items():
                 if CUTOUT_TYPES[kind] in existing_cutouts:
@@ -685,55 +823,21 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             assert isinstance(t2["unit"], str)
             if t2["unit"] not in latest_t2 or latest_t2[t2["unit"]]["_id"] < t2["_id"]:
                 latest_t2[t2["unit"]] = t2
-        previous_comments = (
-            response["data"]["comments"] if response["status"] == "success" else []
-        )
 
-        for t2 in latest_t2.values():
-            # find associated comment
-            for comment in previous_comments:
-                if comment["text"] == t2["unit"]:
-                    break
-            else:
-                # post new comment
-                self.logger.debug(f"posting {t2['unit']}")
-                try:
-                    await self.post(
-                        "comment",
-                        json={
-                            "obj_id": name,
-                            "text": t2["unit"],
-                            "attachment": {
-                                "body": encode_t2_body(t2),
-                                "name": f"{name}-{t2['unit']}.json",
-                            },
-                        },
-                    )
-                    ret["comments"] += 1
-                except SkyPortalAPIError as exc:
-                    ret["comment_errors"].append(exc.args[0])
-                continue
-            # update previous comment
-            previous_body = decode_t2_body(comment["attachment_bytes"])
-            if (t2["body"] is not None) and (
-                t2["body"][-1]["ts"] > previous_body["ts"]
-            ):
-                self.logger.debug(f"updating {t2['unit']}")
-                try:
-                    await self.put(
-                        f"comment/{comment['id']}",
-                        json={
-                            "attachment_bytes": encode_t2_body(t2),
-                            "author_id": comment["author_id"],
-                            "obj_id": name,
-                            "text": comment["text"],
-                        },
-                    )
-                    ret["comments"] += 1
-                except SkyPortalAPIError as exc:
-                    ret["comment_errors"].append(exc.args[0])
-            else:
-                self.logger.debug(f"{t2['unit']} exists and is current")
+        if annotate:
+            await self.post_t2_annotations(
+                name,
+                latest_t2.values(),
+                response["data"] if response["status"] == "success" else None,
+                ret,
+            )
+        else:
+            await self.post_t2_comments(
+                name,
+                latest_t2.values(),
+                response["data"] if response["status"] == "success" else None,
+                ret,
+            )
 
         ret["dt"] += time.time()
 

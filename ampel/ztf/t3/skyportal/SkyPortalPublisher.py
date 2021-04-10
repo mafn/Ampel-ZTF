@@ -25,6 +25,8 @@ class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
     #: Save sources to these groups
     groups: Optional[List[str]] = None
     filters: Optional[List[str]] = None
+    #: Post T2 results as annotations instead of comments
+    annotate: bool = False
 
     def add(
         self, tviews: Sequence["TransientView"]
@@ -48,7 +50,7 @@ class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
             return dict(
                 await asyncio.gather(
                     *[
-                        self.post_view(view)
+                        self.post_view(view, annotate=self.annotate)
                         for view in tviews
                         if view.stock is not None
                     ],
