@@ -705,9 +705,11 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         }
         new_filters = set(filter_ids.values())
 
-        if (response := await self.get(f"candidates/{name}", raise_exc=False))[
-            "status"
-        ] == "success":
+        if (
+            response := await self.get(
+                f"candidates/{name}", params={"includeComments": True}, raise_exc=False
+            )
+        )["status"] == "success":
             # Only update filters, not the candidate itself
             new_filters.difference_update(response["data"]["filter_ids"])
             candidate = {}
