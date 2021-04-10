@@ -710,7 +710,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
 
         if (
             response := await self.get(
-                f"candidates/{name}", params={"includeComments": True}, raise_exc=False
+                f"candidates/{name}", params={"includeComments": 1}, raise_exc=False
             )
         )["status"] == "success":
             # Only update filters, not the candidate itself
