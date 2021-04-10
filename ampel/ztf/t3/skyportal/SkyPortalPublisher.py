@@ -50,7 +50,7 @@ class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
             return dict(
                 await asyncio.gather(
                     *[
-                        self.post_view(view, annotate=self.annotate)
+                        self.post_view(view)
                         for view in tviews
                         if view.stock is not None
                     ],
@@ -61,7 +61,14 @@ class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
         return (
             view.id,
             JournalTweak(
-                extra=dict(await self.post_candidate(view, groups=self.groups, filters=self.filters))
+                extra=dict(
+                    await self.post_candidate(
+                        view,
+                        groups=self.groups,
+                        filters=self.filters,
+                        annotate=self.annotate,
+                    )
+                )
             ),
         )
 

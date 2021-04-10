@@ -25,6 +25,7 @@ from typing import (
     Any,
     Dict,
     Generator,
+    Iterable,
     List,
     Optional,
     Tuple,
@@ -113,13 +114,13 @@ def decode_t2_body(blob: str) -> Dict[str, Any]:
     return {"ts": int(datetime.fromisoformat(doc.pop("timestamp")).timestamp()), **doc}
 
 
-def get_t2_result(t2: "T2Document") -> Optional[Tuple[datetime, Dict[str, Any]]]:
+def get_t2_result(t2: "T2Document") -> Union[Tuple[None, None], Tuple[datetime, Dict[str, Any]]]:
     assert t2["body"] is not None
     for record in reversed(t2["body"]):
         if record.get("status", 0) == 0:
             break
     else:
-        return None
+        return None, None
     return datetime.fromtimestamp(record["ts"]), (
         r[-1] if isinstance(r := record["result"], list) else r
     )
@@ -512,13 +513,15 @@ class BaseSkyPortalPublisher(SkyPortalClient):
     async def post_t2_annotations(
         self,
         name: str,
-        t2_docs: Sequence["T2Document"],
+        t2_docs: Iterable["T2Document"],
         object_record: Optional[Dict[str, Any]],
         ret: PostReport,
     ):
         previous_annotations = object_record["annotations"] if object_record else []
         for t2 in t2_docs:
             last_modified, result = get_t2_result(t2)
+            if result is None or last_modified is None:
+                continue
             # find associated annotation
             for annotation in previous_annotations:
                 if ":".split(annotation["origin"])[-1] == t2["unit"]:
@@ -561,7 +564,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
     async def post_t2_comments(
         self,
         name: str,
-        t2_docs: Sequence["T2Document"],
+        t2_docs: Iterable["T2Document"],
         object_record: Optional[Dict[str, Any]],
         ret: PostReport,
     ):
