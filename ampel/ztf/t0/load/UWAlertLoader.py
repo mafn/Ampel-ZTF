@@ -10,10 +10,9 @@
 import io
 import itertools
 import logging
-import time
 import uuid
 from collections import defaultdict
-from typing import Any, DefaultDict, Dict, Iterator, List, Literal, Optional, TYPE_CHECKING
+from typing import DefaultDict, Iterator, List, Literal, Optional
 
 import fastavro
 from pydantic import Field
@@ -35,8 +34,6 @@ class UWAlertLoader(AmpelBaseModel):
     stream: Literal["ztf_uw_private", "ztf_uw_public"] = "ztf_uw_public"
     #: Consumer group name
     group_name: str = str(uuid.uuid1())
-    #: Alert archive client
-    archive_updater: Any = None
     #: time to wait for messages before giving up, in seconds
     timeout: int = 1
 
@@ -68,13 +65,6 @@ class UWAlertLoader(AmpelBaseModel):
             if alert["candidate"]["jd"] > stats[1]:
                 stats[1] = alert["candidate"]["jd"]
             stats[2] += 1
-            if self.archive_updater:
-                self.archive_updater.insert_alert(
-                    alert,
-                    reader.writer_schema,
-                    message.partition(),
-                    int(1e6 * time.time()),
-                )
             yield io.BytesIO(message.value())
         log.info("Got messages from topics: {}".format(dict(topic_stats)))
 
