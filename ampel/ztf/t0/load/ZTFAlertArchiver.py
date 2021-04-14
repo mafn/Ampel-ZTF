@@ -43,14 +43,14 @@ class ZTFAlertArchiver(AbsOpsUnit):
 
         self.archive_updater = ArchiveUpdater(
             self.archive_uri,
-            connect_kwargs=self.auth.get(),
+            connect_kwargs=self.archive_auth.get(),
         )
 
         self.consumer = AllConsumingConsumer(
             self.bootstrap,
             timeout=self.timeout,
             topics=self.topics,
-            **{"group.id", self.group_name},
+            **{"group.id": self.group_name},
         )
 
     def run(self, beacon: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
@@ -64,3 +64,5 @@ class ZTFAlertArchiver(AbsOpsUnit):
                 message.partition(),
                 int(1e6 * time.time()),
             )
+        
+        return None
