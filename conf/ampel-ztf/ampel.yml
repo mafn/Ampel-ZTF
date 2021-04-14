@@ -27,7 +27,6 @@ unit:
     - ampel.ztf.t0.load.UWAlertLoader
     - ampel.ztf.t0.load.ZTFArchiveAlertLoader
     - ampel.ztf.util.ZTFIdMapper
-  ops:
 template:
   ztf_uw_private: ampel.model.ZTFLegacyChannelTemplate
   ztf_uw_public: ampel.model.ZTFLegacyChannelTemplate
