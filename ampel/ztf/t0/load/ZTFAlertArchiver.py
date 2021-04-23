@@ -43,7 +43,7 @@ class ZTFAlertArchiver(AbsOpsUnit):
 
         self.archive_updater = ArchiveUpdater(
             self.archive_uri,
-            connect_kwargs=self.archive_auth.get(),
+            connect_args=self.archive_auth.get(),
         )
 
         self.consumer = AllConsumingConsumer(
