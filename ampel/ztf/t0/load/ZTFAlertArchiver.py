@@ -55,14 +55,17 @@ class ZTFAlertArchiver(AbsOpsUnit):
 
     def run(self, beacon: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
 
-        for message in self.consumer:
-            reader = fastavro.reader(io.BytesIO(message.value()))
-            alert = next(reader)  # raise StopIteration
-            self.archive_updater.insert_alert(
-                alert,
-                reader.writer_schema,
-                message.partition(),
-                int(1e6 * time.time()),
-            )
+        try:
+            for message in self.consumer:
+                reader = fastavro.reader(io.BytesIO(message.value()))
+                alert = next(reader)  # raise StopIteration
+                self.archive_updater.insert_alert(
+                    alert,
+                    reader.writer_schema,
+                    message.partition(),
+                    int(1e6 * time.time()),
+                )
+        except KeyboardInterrupt:
+            ...
         
         return None
