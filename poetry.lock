@@ -19,23 +19,23 @@ speedups = ["aiodns", "brotlipy", "cchardet"]
 
 [[package]]
 name = "ampel-alerts"
-version = "0.7.1a5"
+version = "0.7.1"
 description = "Alert support for the Ampel system"
 category = "main"
 optional = false
 python-versions = ">=3.8,<4.0"
 
 [package.dependencies]
-ampel-core = ">=0.7.1-alpha.6,<0.8.0"
-ampel-interface = ">=0.7.1-alpha.8,<0.8.0"
-ampel-photometry = ">=0.7.1-alpha.1,<0.8.0"
+ampel-core = ">=0.7.1,<0.8.0"
+ampel-interface = ">=0.7.1,<0.8.0"
+ampel-photometry = ">=0.7.1,<0.8.0"
 
 [package.extras]
 docs = ["Sphinx (>=3.5.1,<4.0.0)", "sphinx-autodoc-typehints (>=1.11.1,<2.0.0)", "tomlkit (>=0.7.0,<0.8.0)"]
 
 [[package]]
 name = "ampel-core"
-version = "0.7.1a13"
+version = "0.7.1"
 description = "Asynchronous and Modular Platform with Execution Layers"
 category = "main"
 optional = false
@@ -77,15 +77,15 @@ docs = ["Sphinx (>=3.5.1,<4.0.0)", "sphinx-autodoc-typehints (>=1.11.1,<2.0.0)",
 
 [[package]]
 name = "ampel-photometry"
-version = "0.7.1a1"
+version = "0.7.1"
 description = "Photometry add-on for the Ampel system"
 category = "main"
 optional = false
 python-versions = ">=3.8,<4.0"
 
 [package.dependencies]
-ampel-core = ">=0.7.1-alpha.0,<0.8.0"
-ampel-interface = ">=0.7.1-alpha.7,<0.8.0"
+ampel-core = ">=0.7.1-alpha.6,<0.8.0"
+ampel-interface = ">=0.7.1-alpha.8,<0.8.0"
 
 [package.extras]
 docs = ["Sphinx (>=3.5.1,<4.0.0)", "sphinx-autodoc-typehints (>=1.11.1,<2.0.0)", "tomlkit (>=0.7.0,<0.8.0)"]
@@ -105,7 +105,7 @@ sqlalchemy-stubs = ">=0.4,<0.5"
 
 [[package]]
 name = "argcomplete"
-version = "1.12.2"
+version = "1.12.3"
 description = "Bash tab completion for argparse"
 category = "main"
 optional = false
@@ -233,7 +233,7 @@ six = "*"
 
 [[package]]
 name = "fastavro"
-version = "1.3.5"
+version = "1.4.0"
 description = "Fast read/write of AVRO files"
 category = "main"
 optional = false
@@ -770,7 +770,7 @@ archive = ["ampel-ztf-archive"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "5c823e498be50c9b24565e53e517d4be480a0360f7a12de1656c069007767f27"
+content-hash = "32591601f393fc05f579fa8abf1eceb70fb09aea8cfb7f732d05fb2d6a0b802b"
 
 [metadata.files]
 aiohttp = [
@@ -813,28 +813,28 @@ aiohttp = [
     {file = "aiohttp-3.7.4.post0.tar.gz", hash = "sha256:493d3299ebe5f5a7c66b9819eacdcfbbaaf1a8e84911ddffcdc48888497afecf"},
 ]
 ampel-alerts = [
-    {file = "ampel-alerts-0.7.1a5.tar.gz", hash = "sha256:ac10085a241e0d3b6e9aac8f24f1ea8ce6885d70b3d969d8b2d2ad89f83af5dc"},
-    {file = "ampel_alerts-0.7.1a5-py3-none-any.whl", hash = "sha256:76bde3c711a758d8c5ed1dab55210991e7f4c2a2eb4b2432d42b1f634d61dd26"},
+    {file = "ampel-alerts-0.7.1.tar.gz", hash = "sha256:4f0d596b745e2dc1e41d9c1fe9148a37c9f4c9501c426dd8baf981173bfb208a"},
+    {file = "ampel_alerts-0.7.1-py3-none-any.whl", hash = "sha256:8c98ff3719ee535e52db74d2e18480031b4640f288523886c56702ed33b5dc76"},
 ]
 ampel-core = [
-    {file = "ampel-core-0.7.1a13.tar.gz", hash = "sha256:b191c1b7bef984af26f7e14cff6292343273061e21c1909bf64cb7eeb6ba5928"},
-    {file = "ampel_core-0.7.1a13-py3-none-any.whl", hash = "sha256:bde80815b205ff2afa3b57243160b5311e877269af766ae99fa80b303ea4c218"},
+    {file = "ampel-core-0.7.1.tar.gz", hash = "sha256:e16c81ea616d204f449e1d109e4394e32a1a4feefa1d76f626985c754253632c"},
+    {file = "ampel_core-0.7.1-py3-none-any.whl", hash = "sha256:70135fcf2630a744792ff818be0231f7725b7f2f2d8c9e171d13b38fba2e8533"},
 ]
 ampel-interface = [
     {file = "ampel-interface-0.7.1.tar.gz", hash = "sha256:888cbea9992a4e71b7826ef6eb64d26cfbd92504b4c1fbfe8ce37cdec2f08237"},
     {file = "ampel_interface-0.7.1-py3-none-any.whl", hash = "sha256:e270f52377de65ba514e338138b4643975e57bae40bd3c0f4bece7a88f048833"},
 ]
 ampel-photometry = [
-    {file = "ampel-photometry-0.7.1a1.tar.gz", hash = "sha256:b75705c6f85535a0031b4b3e32154bddefe3a28ae4a5414336034fe65f47ba28"},
-    {file = "ampel_photometry-0.7.1a1-py3-none-any.whl", hash = "sha256:a4c316f9be3f569b744c0c74b151938ec311aeec04ac79f48708d0e68d0a4265"},
+    {file = "ampel-photometry-0.7.1.tar.gz", hash = "sha256:d8a0433a87cf91f4e07d05d41d559befea4ce8c1fe4d1cf024dfda16d10b1eb5"},
+    {file = "ampel_photometry-0.7.1-py3-none-any.whl", hash = "sha256:693e402d8fd1f509ad6f9abcd391ccfcf3a6dd35023832edab27d1dd1a915bf7"},
 ]
 ampel-ztf-archive = [
     {file = "ampel-ztf-archive-0.7.0a0.tar.gz", hash = "sha256:066c71c4fa841f514fd41107ccbc99757ed2b4ae909a65a01c9cf01246b56b19"},
     {file = "ampel_ztf_archive-0.7.0a0-py3-none-any.whl", hash = "sha256:8b53aac1db5ea97d2f1bd89edc614d1e2459c7415b91ae83702690ca37552c9d"},
 ]
 argcomplete = [
-    {file = "argcomplete-1.12.2-py2.py3-none-any.whl", hash = "sha256:17f01a9b9b9ece3e6b07058eae737ad6e10de8b4e149105f84614783913aba71"},
-    {file = "argcomplete-1.12.2.tar.gz", hash = "sha256:de0e1282330940d52ea92a80fea2e4b9e0da1932aaa570f84d268939d1897b04"},
+    {file = "argcomplete-1.12.3-py2.py3-none-any.whl", hash = "sha256:291f0beca7fd49ce285d2f10e4c1c77e9460cf823eef2de54df0c0fec88b0d81"},
+    {file = "argcomplete-1.12.3.tar.gz", hash = "sha256:2c7dbffd8c045ea534921e63b0be6fe65e88599990d8dc408ac8c542b72a5445"},
 ]
 astropy = [
     {file = "astropy-4.2.1-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:db694c10eb3cc10068859ba1eab30b38b7e821dbfff142960c5a99c4af059747"},
@@ -963,20 +963,20 @@ cycler = [
     {file = "cycler-0.10.0.tar.gz", hash = "sha256:cd7b2d1018258d7247a71425e9f26463dfb444d411c39569972f4ce586b0c9d8"},
 ]
 fastavro = [
-    {file = "fastavro-1.3.5-cp36-cp36m-macosx_10_14_x86_64.whl", hash = "sha256:a3d5d8ff3ea47d7ab39b253736c5546417ad4765cf336f63a533363720268c4e"},
-    {file = "fastavro-1.3.5-cp36-cp36m-manylinux2014_aarch64.whl", hash = "sha256:e39d9d41a441597f795c3ecd5404c4b4a57f83c44040bc3b58d6c268faaa3546"},
-    {file = "fastavro-1.3.5-cp36-cp36m-manylinux2014_x86_64.whl", hash = "sha256:68fc157d1624ed5f09a2b8a41b19f7f7a8ddb6716e26b9af66b4d9613f1d462f"},
-    {file = "fastavro-1.3.5-cp36-cp36m-win_amd64.whl", hash = "sha256:fbd85b63f88ac7023fcb1828250fdc9395fddec8d226dd527ad29a8512787785"},
-    {file = "fastavro-1.3.5-cp37-cp37m-macosx_10_14_x86_64.whl", hash = "sha256:722d514ddbfa926ce2cceddb3b0c4bab87167f2d45ae254334c12f6a1634d1a0"},
-    {file = "fastavro-1.3.5-cp37-cp37m-manylinux2014_x86_64.whl", hash = "sha256:80343cbf1c90d93a078265cc3ec6333914d4ef1a088714e2f3ab71c2771407b1"},
-    {file = "fastavro-1.3.5-cp37-cp37m-win_amd64.whl", hash = "sha256:fb3a5aa3e2666700c268be2da67b14d6ca7019eeffc3fa25134414a19733dd6a"},
-    {file = "fastavro-1.3.5-cp38-cp38-macosx_10_14_x86_64.whl", hash = "sha256:43c268586699f37ed282b8cb1dcfd7f0cf0f2d19cfe8b507de4fa93683cc0530"},
-    {file = "fastavro-1.3.5-cp38-cp38-manylinux2014_x86_64.whl", hash = "sha256:8bb762d702d96abfc630860a671371a7aa94b09ffd3c155d1b2ce016119d062e"},
-    {file = "fastavro-1.3.5-cp38-cp38-win_amd64.whl", hash = "sha256:1187b1f353679e5740351c4a050f41191cdad1ff9277faf6e83d9de2dd20a8df"},
-    {file = "fastavro-1.3.5-cp39-cp39-macosx_10_14_x86_64.whl", hash = "sha256:c59ecef619d7739c6c86a0b7fbdc3bf274b3529c3ae2b4497e9496b51a32090f"},
-    {file = "fastavro-1.3.5-cp39-cp39-manylinux2014_x86_64.whl", hash = "sha256:1812e0f61b3a18ccd9cf6370c2e691b39a3cadbdc45d98560828206848b2b0f1"},
-    {file = "fastavro-1.3.5-cp39-cp39-win_amd64.whl", hash = "sha256:ffee71f4f82b53c620dbfb39f234c4ba5b3f6144f80b236e797c1b561898f94a"},
-    {file = "fastavro-1.3.5.tar.gz", hash = "sha256:02e3377dfb6f0ae152209cc2f92ca20fbdd75764a9ffef3662bf4682e9fe559e"},
+    {file = "fastavro-1.4.0-cp36-cp36m-macosx_10_14_x86_64.whl", hash = "sha256:4e240c99d484298b8ce6825ed239e806da6ff3cb2596077102b76a039e57c9fc"},
+    {file = "fastavro-1.4.0-cp36-cp36m-manylinux2014_aarch64.whl", hash = "sha256:51d74395581afce5b3508950c7a0f791eb91838cc4cae9f11b9ebdf04e2894c6"},
+    {file = "fastavro-1.4.0-cp36-cp36m-manylinux2014_x86_64.whl", hash = "sha256:0f7de00e84d61f1aa233ca22b1555c6a98693c3801829b89c52f1532850ea618"},
+    {file = "fastavro-1.4.0-cp36-cp36m-win_amd64.whl", hash = "sha256:5f825bf6c90acdd47804ec343fb5337846cb87ff84211ed86defe92c43e8bb5e"},
+    {file = "fastavro-1.4.0-cp37-cp37m-macosx_10_14_x86_64.whl", hash = "sha256:4dff942b220c7710c02dad189b23c935bf1b85d4a6e1dfef49ee6bd87379ef60"},
+    {file = "fastavro-1.4.0-cp37-cp37m-manylinux2014_x86_64.whl", hash = "sha256:0770a8dafcac9b54f26cc54e2fbc683f3cb93b631d36f38c727aff65ffdb6c44"},
+    {file = "fastavro-1.4.0-cp37-cp37m-win_amd64.whl", hash = "sha256:e7a8927764c0ba40cbf0ff0b6177875c4e9c2ce8eed1f33aaae432878c2923b2"},
+    {file = "fastavro-1.4.0-cp38-cp38-macosx_10_14_x86_64.whl", hash = "sha256:a22107c204712679ce685ea3886d9f5ed1e395c8b64c081545b841b22dccf10b"},
+    {file = "fastavro-1.4.0-cp38-cp38-manylinux2014_x86_64.whl", hash = "sha256:b69dc3ac12facef67d22c04afba318798ef1abaa512a1dc7407e3403d00a8979"},
+    {file = "fastavro-1.4.0-cp38-cp38-win_amd64.whl", hash = "sha256:ad9d17c88dbddfc2c1b494c39124ceecc6417904a54ddd1a357270e69d05d1f8"},
+    {file = "fastavro-1.4.0-cp39-cp39-macosx_10_14_x86_64.whl", hash = "sha256:6dbb58e051e62f0f71a40b6221ac80b47cdad7a8820a6403d36b357823bceb49"},
+    {file = "fastavro-1.4.0-cp39-cp39-manylinux2014_x86_64.whl", hash = "sha256:3c9b1a11d17282267e3765cdb63f5155cdd0c37e985186fbcd72157fa6b98840"},
+    {file = "fastavro-1.4.0-cp39-cp39-win_amd64.whl", hash = "sha256:8373c125b92b6460dc7b6863282409111a6f37f69efde82debb18cb368521ba6"},
+    {file = "fastavro-1.4.0.tar.gz", hash = "sha256:306b87a55713ab5a9a37a315cbf9ecd74a1c640287c23a7926e960626c522d04"},
 ]
 idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
