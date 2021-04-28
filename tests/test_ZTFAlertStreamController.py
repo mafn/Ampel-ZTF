@@ -186,7 +186,7 @@ async def test_stop(potemkin_controller):
 
 @pytest.fixture
 def topic_stream_token() -> str:
-    if (token := os.environ.get("ARCHIVE_TOPIC_TOKEN")) is None:
+    if not (token := os.environ.get("ARCHIVE_TOPIC_TOKEN")):
         pytest.skip("archive test requires stream token")
     base_url = "https://ampel.zeuthen.desy.de/api/ztf/archive"
     step = 10000
