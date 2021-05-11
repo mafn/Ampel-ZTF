@@ -119,7 +119,7 @@ class ZiT1ArchivalCompoundIngester(AbsCompoundIngester[PhotoCompoundBluePrint]):
     @backoff.on_exception(
         backoff.expo,
         requests.HTTPError,
-        giveup=lambda e: e.response.status_code not in {503, 429},
+        giveup=lambda e: e.response.status_code not in {503, 429, 408},
         max_time=600,
     )
     def get_photopoints(self, ztf_name: str, before_jd: float):

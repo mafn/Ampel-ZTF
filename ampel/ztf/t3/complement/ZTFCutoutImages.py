@@ -44,7 +44,7 @@ class ZTFCutoutImages(AbsT3DataAppender):
     @backoff.on_exception(
         backoff.expo,
         requests.HTTPError,
-        giveup=lambda e: e.response.status_code not in {503, 429},
+        giveup=lambda e: e.response.status_code not in {503, 429, 408},
         max_time=60,
     )
     def get_cutout(self, candid: int) -> Optional[Dict[str, bytes]]:

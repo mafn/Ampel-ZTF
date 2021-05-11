@@ -35,7 +35,7 @@ class ZTFArchiveAlertLoader(AmpelBaseModel):
     @backoff.on_exception(
         backoff.expo,
         requests.HTTPError,
-        giveup=lambda e: e.response.status_code not in {503, 429},
+        giveup=lambda e: e.response.status_code not in {503, 429, 408},
         max_time=600,
     )
     def _get_chunk(self, session: requests.Session) -> Dict[str, Any]:
