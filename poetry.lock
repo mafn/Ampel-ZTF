@@ -19,19 +19,19 @@ speedups = ["aiodns", "brotlipy", "cchardet"]
 
 [[package]]
 name = "ampel-alerts"
-version = "0.7.1"
+version = "0.7.2"
 description = "Alert support for the Ampel system"
 category = "main"
 optional = false
 python-versions = ">=3.8,<4.0"
 
 [package.dependencies]
-ampel-core = ">=0.7.1,<0.8.0"
+ampel-core = ">=0.7.2,<0.8.0"
 ampel-interface = ">=0.7.1,<0.8.0"
 ampel-photometry = ">=0.7.1,<0.8.0"
 
 [package.extras]
-docs = ["Sphinx (>=3.5.1,<4.0.0)", "sphinx-autodoc-typehints (>=1.11.1,<2.0.0)", "tomlkit (>=0.7.0,<0.8.0)"]
+docs = ["Sphinx (>=3.5.1,<5.0.0)", "sphinx-autodoc-typehints (>=1.11.1,<2.0.0)", "tomlkit (>=0.7.0,<0.8.0)"]
 
 [[package]]
 name = "ampel-core"
@@ -806,8 +806,8 @@ aiohttp = [
     {file = "aiohttp-3.7.4.post0.tar.gz", hash = "sha256:493d3299ebe5f5a7c66b9819eacdcfbbaaf1a8e84911ddffcdc48888497afecf"},
 ]
 ampel-alerts = [
-    {file = "ampel-alerts-0.7.1.tar.gz", hash = "sha256:4f0d596b745e2dc1e41d9c1fe9148a37c9f4c9501c426dd8baf981173bfb208a"},
-    {file = "ampel_alerts-0.7.1-py3-none-any.whl", hash = "sha256:8c98ff3719ee535e52db74d2e18480031b4640f288523886c56702ed33b5dc76"},
+    {file = "ampel-alerts-0.7.2.tar.gz", hash = "sha256:62b78f9cae76a1fbbdad09523145f470012990b3dbd91bfb41c4a78bf425416a"},
+    {file = "ampel_alerts-0.7.2-py3-none-any.whl", hash = "sha256:27e1c448451d1d7b536f31f5645a012c3f90e68b731acb5c3bebac9d647d3fc6"},
 ]
 ampel-core = [
     {file = "ampel-core-0.7.3.tar.gz", hash = "sha256:d7ee280b346bb2c0f59e34c9e0c6ca3b3bcd1e90f15c11bf7aedc774abf21e01"},
