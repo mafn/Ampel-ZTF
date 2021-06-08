@@ -33,6 +33,6 @@ template:
   ztf_uw_caltech: ampel.model.ZTFLegacyChannelTemplate
   ztf_periodic_summary: ampel.model.ZTFPeriodicSummaryT3
 resource:
-  archive: https://ampel.zeuthen.desy.de/api/ztf/archive/
+  archive: https://ampel.zeuthen.desy.de/api/ztf/archive/v2/
   catalogmatch: https://ampel.zeuthen.desy.de/api/catalogmatch/
 

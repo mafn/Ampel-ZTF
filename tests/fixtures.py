@@ -58,6 +58,14 @@ def dev_context(mongod):
         config=config, purge_db=True, custom_conf={"resource.mongo": mongod}
     )
 
+@pytest.fixture
+def mock_context(patch_mongo):
+    config = AmpelConfig.load(
+        Path(__file__).parent / "test-data" / "testing-config.yaml",
+    )
+    return DevAmpelContext.new(
+        config=config, purge_db=True
+    )
 
 @pytest.fixture
 def avro_packets():

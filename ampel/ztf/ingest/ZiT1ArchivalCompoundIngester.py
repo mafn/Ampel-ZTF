@@ -18,6 +18,15 @@ from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
 from ampel.ztf.util.ZTFIdMapper import to_ztf_id
 
 
+class BearerAuth(requests.auth.AuthBase):
+    def __init__(self, token: str) -> None:
+        self.token = token
+
+    def __call__(self, req: requests.Request) -> requests.Request:
+        req.headers["authorization"] = f"bearer {self.token}"
+        return req
+
+
 class ZiT1ArchivalCompoundIngester(AbsCompoundIngester[PhotoCompoundBluePrint]):
     """
     Ingest data points from archived ZTF-IPAC alerts, and create compounds
@@ -27,7 +36,7 @@ class ZiT1ArchivalCompoundIngester(AbsCompoundIngester[PhotoCompoundBluePrint]):
 
     datapoint_ingester: Union[UnitModel, str]
     compound_ingester: Union[UnitModel, str]
-    archive_auth: Secret[dict] = {"key": "ztf/archive/auth"}  # type: ignore[assignment]
+    archive_token: Secret[str] = {"key": "ztf/archive/token"}  # type: ignore[assignment]
 
     # Standard projection used when checking DB for existing PPS/ULS
     projection: Dict[str, int] = {
@@ -56,11 +65,15 @@ class ZiT1ArchivalCompoundIngester(AbsCompoundIngester[PhotoCompoundBluePrint]):
         self.session = BaseUrlSession(
             base_url=(
                 url
-                if (url := self.context.config.get("resource.ampel-ztf/archive", str, raise_exc=True)).endswith("/")
-                else url+"/"
+                if (
+                    url := self.context.config.get(
+                        "resource.ampel-ztf/archive", str, raise_exc=True
+                    )
+                ).endswith("/")
+                else url + "/"
             )
         )
-        self.session.auth = tuple(self.archive_auth.get().values())
+        self.session.auth = BearerAuth(self.archive_token.get())
 
         self.alert_supplier = ZiAlertSupplier(deserialize=None)
         self.channels: Set[ChannelId] = set()
@@ -124,8 +137,7 @@ class ZiT1ArchivalCompoundIngester(AbsCompoundIngester[PhotoCompoundBluePrint]):
     )
     def get_photopoints(self, ztf_name: str, before_jd: float):
         response = self.session.get(
-            f"object/{ztf_name}/photopoints",
-            params={"jd_end": before_jd}
+            f"object/{ztf_name}/photopoints", params={"jd_end": before_jd}
         )
         response.raise_for_status()
         return response.json()
@@ -137,7 +149,7 @@ class ZiT1ArchivalCompoundIngester(AbsCompoundIngester[PhotoCompoundBluePrint]):
         if not (
             history := self.get_photopoints(
                 to_ztf_id(stock_id),
-                before_jd=self.get_earliest_jd(stock_id, datapoints)
+                before_jd=self.get_earliest_jd(stock_id, datapoints),
             )
         ):
             return

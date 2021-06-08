@@ -1,8 +1,10 @@
+import os
 import itertools
 from collections import defaultdict
 
 import pytest
 
+from ampel.dev.DictSecretProvider import DictSecretProvider
 from ampel.alert.IngestionHandler import IngestionHandler
 from ampel.db.DBUpdatesBuffer import DBUpdatesBuffer
 from ampel.demo.unit.base.DemoLightCurveT2Unit import DemoLightCurveT2Unit
@@ -17,7 +19,7 @@ from ampel.ztf.ingest.ZiT1ArchivalCompoundIngester import ZiT1ArchivalCompoundIn
 from ampel.ztf.ingest.ZiT1Combiner import ZiT1Combiner
 
 
-def _make_ingester(context):
+def _make_ingester(context) -> ZiT1ArchivalCompoundIngester:
     run_id = 0
     logger = AmpelLogger.get_logger()
     updates_buffer = DBUpdatesBuffer(context.db, run_id=run_id, logger=logger)
@@ -162,9 +164,7 @@ def test_ingest(mock_ingester, avro_packets):
     blueprint = mock_ingester.ingest(
         alerts[1].stock_id, datapoints, [("EXAMPLE_TNS_MSIP", True)]
     )
-    assert (
-        not mock_ingester.get_photopoints.called
-    ), "short-cut if no channels match"
+    assert not mock_ingester.get_photopoints.called, "short-cut if no channels match"
     assert blueprint == type(blueprint)(), "default (empty) blueprint returned"
 
     mock_ingester.add_channel("EXAMPLE_TNS_MSIP")
@@ -263,3 +263,22 @@ def test_integration(patch_mongo, dev_context, mocker, avro_packets):
     assert t2.find_one(
         {"link": t1.find_one({"len": len(alerts[1].dps) + len(alerts[0].dps)})["_id"]}
     )
+
+
+@pytest.fixture
+def archive_token(mock_context, monkeypatch):
+    if not (token := os.environ.get("ARCHIVE_TOKEN")):
+        pytest.skip("archive test requires token")
+    monkeypatch.setattr(
+        mock_context.loader, "secrets", DictSecretProvider({"ztf/archive/token": token})
+    )
+    yield token
+
+
+def test_get_photopoints_from_api(mock_context, archive_token):
+    """
+    ZiT1ArchivalCompoundIngester can communicate with the archive service
+    """
+    ingester = _make_ingester(mock_context)
+    alert = ingester.get_photopoints("ZTF18abcfcoo", before_jd=2458300)
+    assert len(alert["prv_candidates"]) == 10
