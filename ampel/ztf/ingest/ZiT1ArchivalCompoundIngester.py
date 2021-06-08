@@ -22,7 +22,7 @@ class BearerAuth(requests.auth.AuthBase):
     def __init__(self, token: str) -> None:
         self.token = token
 
-    def __call__(self, req: requests.Request) -> requests.Request:
+    def __call__(self, req: requests.PreparedRequest) -> requests.PreparedRequest:
         req.headers["authorization"] = f"bearer {self.token}"
         return req
 
