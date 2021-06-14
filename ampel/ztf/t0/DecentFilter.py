@@ -36,6 +36,8 @@ class DecentFilter(CatalogMatchUnit, AbsAlertFilter[PhotoAlert]):
     min_ndet: int  # number of previous detections
     min_tspan: float  # minimum duration of alert detection history [days]
     max_tspan: float  # maximum duration of alert detection history [days]
+    min_archive_tspan: float = 0. # minimum duration of alert detection history [days]
+    max_archive_tspan: float = 10**5. # maximum duration of alert detection history [days]
 
     # Image quality
     min_drb: float = 0.0  # deep learning real bogus score
@@ -297,6 +299,16 @@ class DecentFilter(CatalogMatchUnit, AbsAlertFilter[PhotoAlert]):
             # self.logger.debug("rejected: magdiff (AP-PSF) %.2f above threshod (%.2f)"% (latest['magdiff'], self.max_magdiff))
             self.logger.info(None, extra={"magdiff": latest["magdiff"]})
             return None
+
+        # cut on archive length
+        if 'jdendhist' in latest.keys() and 'jdstarthist' in latest.keys():
+            archive_tspan = latest['jdendhist'] - latest['jdstarthist'] 
+            if not (self.min_archive_tspan < archive_tspan < self.max_archive_tspan):
+                self.logger.info(None, extra={'archive_tspan': archive_tspan})
+                return None
+
+
+
 
         # ASTRONOMY
         ###########
