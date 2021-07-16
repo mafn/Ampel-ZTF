@@ -276,7 +276,7 @@ class SkyPortalClient(AmpelBaseModel):
                 async with self._session.request(
                     verb, url, **{**self._request_kwargs, **kwargs}
                 ) as response:
-                    if response.status >= 500:
+                    if response.status == 429 or response.status >= 500:
                         response.raise_for_status()
                     stat_http_responses.labels(*labels).inc()
                     if _decode_json:
