@@ -234,7 +234,7 @@ class DecentFilter(CatalogMatchUnit, AbsAlertFilter[PhotoAlert]):
         return False
 
     # Override
-    def apply(self, alert: PhotoAlert) -> Optional[Union[bool, int]]:
+    def process(self, alert: PhotoAlert) -> Optional[Union[bool, int]]:
         """
         Mandatory implementation.
         To exclude the alert, return *None*
