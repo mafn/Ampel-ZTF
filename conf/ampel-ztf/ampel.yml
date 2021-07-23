@@ -1,36 +1,44 @@
 unit:
-  controller:
-    - ampel.ztf.t0.ZTFAlertStreamController
-  admin:
-    - ampel.ztf.ingest.ZiStockIngester
-    - ampel.ztf.ingest.ZiAlertContentIngester
-    - ampel.ztf.ingest.ZiT1ArchivalCompoundIngester
-    - ampel.ztf.alert.ZTFGeneralActiveAlertRegister
-    - ampel.ztf.alert.ZTFGeneralAlertRegister
-    - ampel.ztf.t3.complement.ZTFCutoutImages
-    - ampel.ztf.t3.complement.FritzReport
-    - ampel.ztf.t3.complement.GROWTHMarshalReport
-    - ampel.ztf.t3.complement.TNSNames
-    - ampel.ztf.t3.complement.TNSReports
-    - ampel.ztf.t3.select.T3AdHocStockSelector
-    - ampel.ztf.t3.T3LegacyExtJournalAppender
-  base:
-    - ampel.ztf.ingest.ZiT1Combiner
-    - ampel.ztf.t0.DecentFilter
-    - ampel.ztf.base.CatalogMatchFilter
-    - ampel.ztf.t2.T2LightCurveSummary
-    - ampel.ztf.t2.T2CatalogMatch
-    - ampel.ztf.t3.skyportal.SkyPortalPublisher
-  aux:
-    - ampel.ztf.alert.ZiAlertSupplier
-    - ampel.ztf.t0.load.UWAlertLoader
-    - ampel.ztf.t0.load.ZTFArchiveAlertLoader
-    - ampel.ztf.util.ZTFIdMapper
+
+# Controller units
+- ampel.ztf.t0.ZTFAlertStreamController
+
+# Context units
+#- ampel.ztf.ingest.ZiT1ArchivalCompoundIngester
+- ampel.ztf.alert.ZTFGeneralActiveAlertRegister
+- ampel.ztf.alert.ZTFGeneralAlertRegister
+- ampel.ztf.t3.complement.ZTFCutoutImages
+- ampel.ztf.t3.complement.FritzReport
+- ampel.ztf.t3.complement.GROWTHMarshalReport
+- ampel.ztf.t3.complement.TNSNames
+- ampel.ztf.t3.complement.TNSReports
+- ampel.ztf.t3.select.T3AdHocStockSelector
+- ampel.ztf.t3.T3LegacyExtJournalAppender
+- ampel.ztf.ingest.ZiMongoMuxer
+
+# Logical units
+- ampel.ztf.t1.ZiT1Combiner
+- ampel.ztf.t0.DecentFilter
+- ampel.ztf.ingest.ZiT0DataPointShaper
+- ampel.ztf.base.CatalogMatchFilter
+- ampel.ztf.t2.T2LightCurveSummary
+- ampel.ztf.t2.T2CatalogMatch
+- ampel.ztf.t3.skyportal.SkyPortalPublisher
+
+# Aux units
+- ampel.ztf.alert.ZiAlertSupplier
+- ampel.ztf.t0.load.UWAlertLoader
+- ampel.ztf.t0.load.ZTFArchiveAlertLoader
+- ampel.ztf.util.ZTFIdMapper
+- ampel.ztf.ingest.ZiCompilerOptions
+
 template:
-  ztf_uw_private: ampel.model.ZTFLegacyChannelTemplate
-  ztf_uw_public: ampel.model.ZTFLegacyChannelTemplate
-  ztf_uw_caltech: ampel.model.ZTFLegacyChannelTemplate
-  ztf_periodic_summary: ampel.model.ZTFPeriodicSummaryT3
+  ztf_uw_private: ampel.template.ZTFLegacyChannelTemplate
+  ztf_uw_public: ampel.template.ZTFLegacyChannelTemplate
+  ztf_uw_caltech: ampel.template.ZTFLegacyChannelTemplate
+  ztf_periodic_summary: ampel.template.ZTFPeriodicSummaryT3
+  ztf_local_alerts: ampel.template.ZTFProcessLocalAlerts
+
 resource:
   archive: https://ampel.zeuthen.desy.de/api/ztf/archive/
   catalogmatch: https://ampel.zeuthen.desy.de/api/catalogmatch/
