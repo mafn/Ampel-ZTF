@@ -15,7 +15,7 @@ from ampel.content.DataPoint import DataPoint
 from ampel.content.StockDocument import StockDocument
 from ampel.content.T2Document import T2Document
 
-from ampel.core.AmpelBuffer import AmpelBuffer
+from ampel.struct.AmpelBuffer import AmpelBuffer
 
 
 @pytest.fixture
@@ -38,14 +38,14 @@ def test_catalogmatch(
     catalogmatch_config,
     catalogmatch_service_reachable,
 ):
-    unit = dev_context.loader.new_base_unit(
+    unit, _ = dev_context.loader.new_logical_unit(
         UnitModel(unit=T2CatalogMatch, config=catalogmatch_config),
         logger=logging.getLogger(),
     )
-    result = unit.run(DataPoint({"_id": 0, "body": {"ra": 0, "dec": 0}}))
-    assert result == {
-        **{k: None for k in catalogmatch_config["catalogs"].keys()},
-        **{
+    result = unit.run(DataPoint({"id": 0, "body": {"ra": 0, "dec": 0}}))
+    assert result ==
+        {k: None for k in catalogmatch_config["catalogs"].keys()} |
+        {
             "SDSS_spec": {
                 "bptclass": 5.0,
                 "dist2transient": 0.0,
@@ -61,14 +61,14 @@ def test_catalogmatch(
                 "flag2": 0,
                 "flag3": 0,
             },
-        },
+        }
     }
 
 
 def test_decentfilter_star_in_gaia(patch_mongo, dev_context: AmpelContext):
     with open(Path(__file__).parent / "test-data" / "decentfilter_config.yaml") as f:
         config = yaml.safe_load(f)
-    unit = dev_context.loader.new_base_unit(
+    unit, _ = dev_context.loader.new_logical_unit(
         UnitModel(unit=DecentFilter, config=config), logger=logging.getLogger()
     )
     assert unit.is_star_in_gaia(
@@ -78,7 +78,7 @@ def test_decentfilter_star_in_gaia(patch_mongo, dev_context: AmpelContext):
 
 
 def test_tnsnames(patch_mongo, dev_context) -> None:
-    unit = dev_context.loader.new_admin_unit(
+    unit = dev_context.loader.new_context_unit(
         UnitModel(unit=TNSNames),
         logger=logging.getLogger(),
         context=dev_context,
@@ -92,7 +92,7 @@ def test_tnsnames(patch_mongo, dev_context) -> None:
                     "tag": None,
                     "channel": None,
                     "journal": [],
-                    "modified": {},
+                    "updated": {},
                     "created": {},
                     "name": ["sourceysource"],
                 }
@@ -103,7 +103,7 @@ def test_tnsnames(patch_mongo, dev_context) -> None:
                         "_id": 0,
                         "unit": "T2LightCurveSummary",
                         "body": [
-                            {"ts": 0, "result": {"ra": 0.518164, "dec": 0.361964}}
+                            {"ts": 0, 'data': {"ra": 0.518164, "dec": 0.361964}}
                         ],
                     }
                 )
@@ -114,7 +114,7 @@ def test_tnsnames(patch_mongo, dev_context) -> None:
     assert buf["stock"]["name"] == ("sourceysource", "TNS2020ubb")
     assert not "extra" in buf
 
-    unit = dev_context.loader.new_admin_unit(
+    unit = dev_context.loader.new_context_unit(
         UnitModel(unit=TNSReports),
         logger=logging.getLogger(),
         context=dev_context,

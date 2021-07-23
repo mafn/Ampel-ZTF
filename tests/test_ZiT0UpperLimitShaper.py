@@ -45,4 +45,4 @@ from ampel.ztf.ingest.ZiT0UpperLimitShaper import ZiT0UpperLimitShaper
 )
 def test_identity(uld, expected_id, comment):
     assert ZiT0UpperLimitShaper().identity(uld) == expected_id, comment
-    assert ZiT0UpperLimitShaper().ampelize([uld])[0]["_id"] == expected_id, comment
+    assert ZiT0UpperLimitShaper().process([uld])[0]["_id"] == expected_id, comment

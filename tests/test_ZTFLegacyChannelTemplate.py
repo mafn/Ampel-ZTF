@@ -3,7 +3,7 @@ import yaml
 from pathlib import Path
 
 from ampel.model.ZTFLegacyChannelTemplate import ZTFLegacyChannelTemplate
-from ampel.model.AlertProcessorDirective import AlertProcessorDirective
+from ampel.model.AlertConsumerDirective import AlertConsumerDirective
 from ampel.log.AmpelLogger import AmpelLogger
 
 @pytest.fixture
@@ -23,7 +23,7 @@ def test_alert_only(logger, first_pass_config):
     )
     process = template.get_processes(logger=logger, first_pass_config=first_pass_config)[0]
     assert process["tier"] == 0
-    directive = AlertProcessorDirective(**process["processor"]["config"]["directives"][0])
+    directive = AlertConsumerDirective(**process["processor"]["config"]["directives"][0])
     assert directive.t0_add
     assert directive.stock_update
     assert len(directive.t0_add.t1_combine) == 1
@@ -45,7 +45,7 @@ def test_alert_t2(logger, first_pass_config):
     )
     process = template.get_processes(logger=logger, first_pass_config=first_pass_config)[0]
     assert process["tier"] == 0
-    directive = AlertProcessorDirective(**process["processor"]["config"]["directives"][0])
+    directive = AlertConsumerDirective(**process["processor"]["config"]["directives"][0])
     assert directive.t0_add
     assert directive.stock_update
     assert len(directive.t0_add.t1_combine) == 1
@@ -67,7 +67,7 @@ def test_archive_t2(logger, first_pass_config):
     )
     process = template.get_processes(logger=logger, first_pass_config=first_pass_config)[0]
     assert process["tier"] == 0
-    directive = AlertProcessorDirective(**process["processor"]["config"]["directives"][0])
+    directive = AlertConsumerDirective(**process["processor"]["config"]["directives"][0])
     assert directive.t0_add
     assert directive.stock_update
     assert len(units := directive.t0_add.t1_combine[0].t2_compute.units) == 1

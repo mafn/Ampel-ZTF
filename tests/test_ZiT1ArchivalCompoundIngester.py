@@ -3,18 +3,18 @@ from collections import defaultdict
 
 import pytest
 
-from ampel.alert.IngestionHandler import IngestionHandler
+from ampel.ingest.ChainedIngestionHandler import ChainedIngestionHandler
 from ampel.mongo.update.DBUpdatesBuffer import DBUpdatesBuffer
 from ampel.demo.unit.base.DemoLightCurveT2Unit import DemoLightCurveT2Unit
-from ampel.compile.PhotoCompoundIngester import PhotoCompoundIngester
+from ampel.ingest.PhotoT1Ingester import PhotoT1Ingester
 from ampel.log.AmpelLogger import AmpelLogger, DEBUG
 from ampel.log.LogsBufferDict import LogsBufferDict
-from ampel.model.AlertProcessorDirective import AlertProcessorDirective
+from ampel.model.AlertConsumerDirective import AlertConsumerDirective
 from ampel.model.UnitModel import UnitModel
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
 from ampel.ztf.ingest.ZiAlertContentIngester import ZiAlertContentIngester
 from ampel.ztf.ingest.ZiT1ArchivalCompoundIngester import ZiT1ArchivalCompoundIngester
-from ampel.ztf.ingest.ZiT1Combiner import ZiT1Combiner
+from ampel.ztf.t1.ZiT1Combiner import ZiT1Combiner
 
 
 def _make_ingester(context):
@@ -29,11 +29,11 @@ def _make_ingester(context):
         }
     )
 
-    ingester = context.loader.new_admin_unit(
-        unit_model=UnitModel(unit=ZiT1ArchivalCompoundIngester),
+    ingester = context.loader.new_context_unit(
+        model=UnitModel(unit=ZiT1ArchivalCompoundIngester),
         datapoint_ingester=UnitModel(unit=ZiAlertContentIngester),
         compound_ingester=UnitModel(
-            unit=PhotoCompoundIngester, config={"combiner": {"unit": ZiT1Combiner}}
+            unit=PhotoT1Ingester, config={"combiner": {"unit": ZiT1Combiner}}
         ),
         updates_buffer=updates_buffer,
         logd=logd,
@@ -184,7 +184,7 @@ def get_handler(context, directives):
     logger = AmpelLogger.get_logger(console={"level": DEBUG})
     updates_buffer = DBUpdatesBuffer(context.db, run_id=run_id, logger=logger)
     logd = LogsBufferDict({"logs": [], "extra": {}})
-    return IngestionHandler(
+    return ChainedIngestionHandler(
         context=context,
         logger=logger,
         run_id=0,
@@ -201,7 +201,7 @@ def test_integration(patch_mongo, dev_context, mocker, avro_packets):
             "ingester": "ZiAlertContentIngester",
             "t1_combine": [
                 {
-                    "ingester": "PhotoCompoundIngester",
+                    "ingester": "PhotoT1Ingester",
                     "config": {"combiner": {"unit": "ZiT1Combiner"}},
                     "t2_compute": {
                         "ingester": "PhotoT2Ingester",
@@ -216,7 +216,7 @@ def test_integration(patch_mongo, dev_context, mocker, avro_packets):
                 "config": {
                     "datapoint_ingester": {"unit": "ZiAlertContentIngester"},
                     "compound_ingester": {
-                        "unit": "PhotoCompoundIngester",
+                        "unit": "PhotoT1Ingester",
                         "config": {"combiner": {"unit": "ZiT1Combiner"}},
                     },
                 },
@@ -234,7 +234,7 @@ def test_integration(patch_mongo, dev_context, mocker, avro_packets):
             raw_alert_dicts(itertools.islice(avro_packets(), 0, 1))
         ),
     )
-    handler = get_handler(dev_context, [AlertProcessorDirective(**directive)])
+    handler = get_handler(dev_context, [AlertConsumerDirective(**directive)])
     ingester = next(iter(handler.t1_ingesters.keys()))
     assert isinstance(ingester, ZiT1ArchivalCompoundIngester)
 
