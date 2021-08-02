@@ -8,7 +8,7 @@
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
 from pydantic import Field
-from typing import Any, Dict, Literal, Optional, Sequence, ClassVar, Union
+from typing import Any, Dict, Literal, Optional, Sequence, Union
 from ampel.types import UBson
 from ampel.abstract.AbsPointT2Unit import AbsPointT2Unit
 from ampel.content.DataPoint import DataPoint
@@ -16,8 +16,6 @@ from ampel.model.StrictModel import StrictModel
 from ampel.struct.UnitResult import UnitResult
 from ampel.ztf.base.CatalogMatchUnit import CatalogMatchUnit
 from ampel.enum.DocumentCode import DocumentCode
-from ampel.struct.MetaAttributes import MetaAttributes
-from ampel.model.T2IngestOptions import T2IngestOptions
 
 
 class CatalogModel(StrictModel):
@@ -70,10 +68,11 @@ class T2CatalogMatch(CatalogMatchUnit, AbsPointT2Unit):
     """
 
     # run only on first datapoint by default
-    eligible: ClassVar[Optional[T2IngestOptions]] = {"filter": "PPSFilter", "sort": "jd", "select": "first"}
+    eligible = {"filter": "PPSFilter", "sort": "jd", "select": "first"}
 
     # Each value specifies a catalog in extcats or catsHTM format and the query parameters
     catalogs: Dict[str, CatalogModel]
+
 
     def process(self, datapoint: DataPoint) -> Union[UBson, UnitResult]:
         """
@@ -97,7 +96,7 @@ class T2CatalogMatch(CatalogMatchUnit, AbsPointT2Unit):
             transient_ra = datapoint["body"]["ra"]
             transient_dec = datapoint["body"]["dec"]
         except KeyError:
-            return None, MetaAttributes(code=DocumentCode.T2_MISSING_INFO)
+            return UnitResult(code=DocumentCode.T2_MISSING_INFO)
 
         matches = self.cone_search_nearest(
             ra=transient_ra,
@@ -117,10 +116,8 @@ class T2CatalogMatch(CatalogMatchUnit, AbsPointT2Unit):
 
         # return the info as dictionary
         return {
-            catalog: (
-                {"dist2transient": match["dist_arcsec"], **match["body"]}
-                if match is not None
-                else None
-            )
+            catalog: {
+                "dist2transient": match["dist_arcsec"], **match["body"]
+            } if match is not None else None
             for catalog, match in zip(self.catalogs, matches)
         }
