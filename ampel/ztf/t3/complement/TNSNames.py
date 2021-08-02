@@ -12,12 +12,12 @@ from typing import Iterable, Optional, Dict, Any
 
 from pydantic import Field
 
-from ampel.core.AmpelBuffer import AmpelBuffer
-from ampel.t3.complement.AbsT3DataAppender import AbsT3DataAppender
-from ampel.ztf.base.CatalogMatchUnit import CatalogMatchAdminUnit
+from ampel.struct.AmpelBuffer import AmpelBuffer
+from ampel.abstract.AbsBufferComplement import AbsBufferComplement
+from ampel.ztf.base.CatalogMatchUnit import CatalogMatchContextUnit
 
 
-class TNSNames(CatalogMatchAdminUnit, AbsT3DataAppender):
+class TNSNames(CatalogMatchContextUnit, AbsBufferComplement):
     """
     Add TNS names to transients.
     """
@@ -88,8 +88,8 @@ class TNSNames(CatalogMatchAdminUnit, AbsT3DataAppender):
         for t2_doc in reversed(t2_documents):
             if t2_doc["unit"] == unit_id and (body := t2_doc.get("body")):
                 for t2_record in reversed(body):
-                    if "result" in t2_record and t2_record.get("status", 0) >= 0:
-                        result = t2_record["result"]
+                    if 'data' in t2_record and t2_record.get("code", 0) >= 0:
+                        result = t2_record['data']
                         if isinstance(result, dict):
                             return result
                         elif isinstance(result, list) and len(result):

@@ -25,9 +25,9 @@ from typing import Any, Dict, Generator, List, Optional, overload, Sequence, Set
 from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.metrics.AmpelMetricsRegistry import AmpelMetricsRegistry
-from ampel.model.Secret import Secret
+from ampel.abstract.Secret import Secret
 from ampel.protocol.LoggerProtocol import LoggerProtocol
-from ampel.enum.T2RunState import T2RunState
+from ampel.enum.DocumentCode import DocumentCode
 from ampel.util.collections import ampel_iter
 
 if TYPE_CHECKING:
@@ -250,7 +250,7 @@ class SkyPortalClient(AmpelBaseModel):
                     stat_http_responses.labels(*labels).inc()
                     if _decode_json:
                         payload = await response.json()
-                        if raise_exc and payload["status"] != "success":
+                        if raise_exc and payload["code"] != "success":
                             raise SkyPortalAPIError(payload["message"])
                         return payload
                     else:
@@ -680,7 +680,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         # represent latest T2 results as a comments
         latest_t2: Dict[str, "T2Document"] = {}
         for t2 in view.t2 or []:
-            if t2["status"] != T2RunState.COMPLETED or not t2["body"]:
+            if t2["code"] != DocumentCode.COMPLETED or not t2["body"]:
                 continue
             assert isinstance(t2["unit"], str)
             if t2["unit"] not in latest_t2 or latest_t2[t2["unit"]]["_id"] < t2["_id"]:

@@ -12,8 +12,8 @@ from typing import Dict, List, Optional, Sequence, Tuple, TYPE_CHECKING
 import nest_asyncio
 
 from ampel.abstract.AbsPhotoT3Unit import AbsPhotoT3Unit
-from ampel.struct.JournalTweak import JournalTweak
-from ampel.type import StockId
+from ampel.struct.JournalAttributes import JournalAttributes
+from ampel.types import StockId
 from ampel.ztf.t3.skyportal.SkyPortalClient import BaseSkyPortalPublisher
 
 if TYPE_CHECKING:
@@ -26,9 +26,9 @@ class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
     groups: Optional[List[str]] = None
     filters: Optional[List[str]] = None
 
-    def add(
+    def process(
         self, tviews: Sequence["TransientView"]
-    ) -> Optional[Dict[StockId, JournalTweak]]:
+    ) -> Optional[Dict[StockId, JournalAttributes]]:
         """Pass each view to :meth:`post_candidate`."""
         # Patch event loop to be reentrant if it is already running, e.g.
         # within a notebook
@@ -42,7 +42,7 @@ class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
 
     async def post_candidates(
         self, tviews: Sequence["TransientView"]
-    ) -> Dict[StockId, JournalTweak]:
+    ) -> Dict[StockId, JournalAttributes]:
         """Pass each view to :meth:`post_candidate`."""
         async with self.session(limit_per_host=self.max_parallel_connections):
             return dict(
@@ -55,10 +55,10 @@ class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
                 )
             )
 
-    async def post_view(self, view: "TransientView") -> Tuple[StockId, JournalTweak]:
+    async def post_view(self, view: "TransientView") -> Tuple[StockId, JournalAttributes]:
         return (
             view.id,
-            JournalTweak(
+            JournalAttributes(
                 extra=dict(await self.post_candidate(view, groups=self.groups, filters=self.filters))
             ),
         )

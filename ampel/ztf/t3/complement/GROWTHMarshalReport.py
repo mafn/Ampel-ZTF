@@ -12,13 +12,13 @@ from typing import Any, Dict, Optional, Sequence, Iterable
 import backoff
 import requests
 
-from ampel.type import StockId
-from ampel.core.AmpelBuffer import AmpelBuffer
-from ampel.t3.complement.AbsT3DataAppender import AbsT3DataAppender
-from ampel.ztf.base.CatalogMatchUnit import CatalogMatchAdminUnit
+from ampel.types import StockId
+from ampel.struct.AmpelBuffer import AmpelBuffer
+from ampel.abstract.AbsBufferComplement import AbsBufferComplement
+from ampel.ztf.base.CatalogMatchUnit import CatalogMatchContextUnit
 
 
-class GROWTHMarshalReport(CatalogMatchAdminUnit, AbsT3DataAppender):
+class GROWTHMarshalReport(CatalogMatchContextUnit, AbsBufferComplement):
     """
     Add GROWTH Marshal records from a local extcats mirror of the ProgramList.
     Though the GROWTH Marshal is no longer being updated, this is useful for

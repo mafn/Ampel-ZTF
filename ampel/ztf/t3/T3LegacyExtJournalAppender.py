@@ -8,9 +8,9 @@
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from typing import Optional, List
-from ampel.type import StockId
+from ampel.types import StockId
 from ampel.content.JournalRecord import JournalRecord
-from ampel.t3.complement.T3ExtJournalAppender import T3ExtJournalAppender
+from ampel.t3.supply.complement.T3ExtJournalAppender import T3ExtJournalAppender
 from ampel.ztf.legacy_utils import to_ampel_id as legacy_to_ampel_id
 from ampel.ztf.util.ZTFIdMapper import to_ztf_id
 

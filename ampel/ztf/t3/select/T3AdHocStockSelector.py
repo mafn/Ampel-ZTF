@@ -12,7 +12,7 @@ from typing import Optional, List
 from pymongo.cursor import Cursor
 
 from ampel.log.AmpelLogger import AmpelLogger
-from ampel.t3.select.AbsT3Selector import AbsT3Selector
+from ampel.abstract.AbsT3Selector import AbsT3Selector
 from ampel.ztf.util.ZTFIdMapper import to_ampel_id
 
 

@@ -14,12 +14,12 @@ import requests
 from requests_toolbelt.sessions import BaseUrlSession
 
 from ampel.base.AmpelBaseModel import AmpelBaseModel
-from ampel.core.AmpelBuffer import AmpelBuffer
+from ampel.struct.AmpelBuffer import AmpelBuffer
 from ampel.core.AmpelContext import AmpelContext
-from ampel.t3.complement.AbsT3DataAppender import AbsT3DataAppender
+from ampel.abstract.AbsBufferComplement import AbsBufferComplement
 
 
-class ZTFCutoutImages(AbsT3DataAppender):
+class ZTFCutoutImages(AbsBufferComplement):
     """
     Add cutout images from ZTF archive database
     """
