@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : Ampel-ZTF/ampel/ztf/dev/DevAlertProcessor.py
+# File              : Ampel-ZTF/ampel/ztf/dev/DevAlertConsumer.py
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 07.06.2018
@@ -12,7 +12,7 @@ import logging, time, sys, fastavro, tarfile # type: ignore[import]
 from ampel.alert.PhotoAlert import PhotoAlert
 
 
-class DevAlertProcessor:
+class DevAlertConsumer:
 	"""
 	For each alert: load, filter, ingest.
 	"""
@@ -24,7 +24,7 @@ class DevAlertProcessor:
 
 		alert_filter:
 			Instance of a t0 alert filter. It must implement method:
-			apply(<instance of ampel.alert.PhotoAlert>)
+			process(<instance of ampel.alert.PhotoAlert>)
 
 		save:
 			either
@@ -81,7 +81,7 @@ class DevAlertProcessor:
 
 		# Iterate over alerts
 		for content in iterable:
-			if iter_count<iter_offset:
+			if iter_count < iter_offset:
 				iter_count += 1
 				continue
 
@@ -93,17 +93,17 @@ class DevAlertProcessor:
 			self._filter(alert)
 
 			iter_count += 1
-			if iter_count == (iter_max+iter_offset):
+			if iter_count == (iter_max + iter_offset):
 				self._logger.info("Reached max number of iterations")
 				break
 
 		self._logger.info(
 			"%i alert(s) processed (time required: %is)" %
-			(iter_count-iter_offset, int(time.time() - run_start))
+			(iter_count - iter_offset, int(time.time() - run_start))
 		)
 
 		# Return number of processed alerts
-		return iter_count-iter_offset
+		return iter_count - iter_offset
 
 
 	def _unpack(self, tar_info):
@@ -141,8 +141,8 @@ class DevAlertProcessor:
 
 	def _filter(self, alert):
 
-		filter_result = self._alert_filter.apply(alert)
-		if filter_result is None or filter_result<0:
+		filter_result = self._alert_filter.process(alert)
+		if filter_result is None or filter_result < 0:
 			self._logger.debug(
 				"- Rejecting %i (objectId: %s)" %
 				(alert.pps[0]['candid'], alert.stock_id)
@@ -162,7 +162,7 @@ class DevAlertProcessor:
 		elif self.save == 'candid':
 			target_array.append(alert.pps[0]['candid'])
 		elif self.save == 'objectId_candid':
-			target_array.append( (alert.id, alert.pps[0]['candid']) )
+			target_array.append((alert.id, alert.pps[0]['candid']))
 
 
 	def _deserialize(self, f):
