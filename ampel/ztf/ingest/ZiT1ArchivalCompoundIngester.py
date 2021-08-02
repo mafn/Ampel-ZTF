@@ -5,20 +5,20 @@ import backoff
 import requests
 from requests_toolbelt.sessions import BaseUrlSession
 
-from ampel.abstract.ingest.AbsAlertContentIngester import AbsAlertContentIngester
-from ampel.abstract.ingest.AbsCompoundIngester import AbsCompoundIngester
+from ampel.abstract.ingest.AbsAlertIngester import AbsAlertIngester
+from ampel.abstract.ingest.AbsT1Ingester import AbsT1Ingester
 from ampel.alert.PhotoAlert import PhotoAlert
 from ampel.content.DataPoint import DataPoint
-from ampel.core.UnitLoader import PT
-from ampel.compile.PhotoCompoundBluePrint import PhotoCompoundBluePrint
-from ampel.model.Secret import Secret
+from ampel.core.UnitLoader import CT
+from ampel.ingest.PhotoT1Compiler import PhotoT1Compiler
+from ampel.abstract.Secret import Secret
 from ampel.model.UnitModel import UnitModel
-from ampel.type import ChannelId, StockId
+from ampel.types import ChannelId, StockId
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
 from ampel.ztf.util.ZTFIdMapper import to_ztf_id
 
 
-class ZiT1ArchivalCompoundIngester(AbsCompoundIngester[PhotoCompoundBluePrint]):
+class ZiT1ArchivalCompoundIngester(AbsT1Ingester[PhotoT1Compiler]):
     """
     Ingest data points from archived ZTF-IPAC alerts, and create compounds
     representing the light curve from the start of ZTF operations to the alert
@@ -45,10 +45,10 @@ class ZiT1ArchivalCompoundIngester(AbsCompoundIngester[PhotoCompoundBluePrint]):
         super().__init__(**kwargs)
 
         self.compound_engine = self._get_ingester(
-            self.compound_ingester, AbsCompoundIngester[PhotoCompoundBluePrint]
+            self.compound_ingester, AbsT1Ingester[PhotoT1Compiler]
         )
         self.datapoint_engine = self._get_ingester(
-            self.datapoint_ingester, AbsAlertContentIngester[PhotoAlert, DataPoint]
+            self.datapoint_ingester, AbsAlertIngester[PhotoAlert, DataPoint]
         )
 
         self._t0_col = self.context.db.get_collection("t0", "w")
@@ -65,9 +65,9 @@ class ZiT1ArchivalCompoundIngester(AbsCompoundIngester[PhotoCompoundBluePrint]):
         self.alert_supplier = ZiAlertSupplier(deserialize=None)
         self.channels: Set[ChannelId] = set()
 
-    def _get_ingester(self, model: Union[str, UnitModel], sub_type: Type[PT]) -> PT:
-        return self.context.loader.new_admin_unit(
-            unit_model=model if isinstance(model, UnitModel) else UnitModel(unit=model),
+    def _get_ingester(self, model: Union[str, UnitModel], sub_type: Type[CT]) -> CT:
+        return self.context.loader.new_context_unit(
+            model=model if isinstance(model, UnitModel) else UnitModel(unit=model),
             context=self.context,
             logd=self.logd,
             updates_buffer=self.updates_buffer,
@@ -151,7 +151,7 @@ class ZiT1ArchivalCompoundIngester(AbsCompoundIngester[PhotoCompoundBluePrint]):
         stock_id: StockId,
         datapoints: Sequence[DataPoint],
         chan_selection: List[Tuple[ChannelId, Union[bool, int]]],
-    ) -> Optional[PhotoCompoundBluePrint]:
+    ) -> Optional[PhotoT1Compiler]:
 
         # Keep only channels that requested extended states
         if not (chans := [(k, v) for k, v in chan_selection if k in self.channels]):

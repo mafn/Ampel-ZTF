@@ -27,7 +27,7 @@ class ZiT0UpperLimitShaper(AbsT0Unit):
 	JD2017: float = 2457754.5
 
 	# Mandatory implementation
-	def ampelize(self, arg: Iterable[Dict[str, Any]]) -> List[DataPoint]:
+	def process(self, arg: Iterable[Dict[str, Any]]) -> List[DataPoint]:
 		"""
 		'stock' (prev. called tranId) is not set here on purpose
 		since it would then conflicts with the $addToSet operation
@@ -35,7 +35,7 @@ class ZiT0UpperLimitShaper(AbsT0Unit):
 
 		return [
 			{
-				'_id': self.identity(photo_dict),
+				'id': self.identity(photo_dict),
 				'tag': tags[photo_dict['programid']][photo_dict['fid']],
 				'body': {
 					'jd': photo_dict['jd'],
@@ -64,14 +64,15 @@ class ZiT0UpperLimitShaper(AbsT0Unit):
 		 Example::
 		
 			>>> ZiT0UpperLimitShaper().identity(
-			{
-			  'diffmaglim': 19.024799346923828,
-			  'fid': 2,
-			  'jd': 2458089.7405324,
-			  'pdiffimfilename': '/ztf/archive/sci/2017/1202/240532/ztf_20171202240532_000566_zr_c08_o_q1_scimrefdiffimg.fits.fz',
-			  'pid': 335240532815,
-			  'programid': 0
-			})
+				{
+				  'diffmaglim': 19.024799346923828,
+				  'fid': 2,
+				  'jd': 2458089.7405324,
+				  'pdiffimfilename': '/ztf/archive/sci/2017/1202/240532/ztf_20171202240532_000566_zr_c08_o_q1_scimrefdiffimg.fits.fz',
+				  'pid': 335240532815,
+				  'programid': 0
+				}
+			)
 			-3352405322819025
 		"""
 		return (
