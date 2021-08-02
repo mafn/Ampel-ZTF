@@ -19,7 +19,7 @@ unit:
 # Logical units
 - ampel.ztf.t1.ZiT1Combiner
 - ampel.ztf.t0.DecentFilter
-- ampel.ztf.ingest.ZiT0DataPointShaper
+- ampel.ztf.ingest.ZiDataPointShaper
 - ampel.ztf.base.CatalogMatchFilter
 - ampel.ztf.t2.T2LightCurveSummary
 - ampel.ztf.t2.T2CatalogMatch
