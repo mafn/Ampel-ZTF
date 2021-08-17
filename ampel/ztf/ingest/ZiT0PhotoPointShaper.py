@@ -4,10 +4,11 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 14.12.2017
-# Last Modified Date: 18.03.2020
+# Last Modified Date: 30.05.2021
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from typing import Dict, List, Any, Iterable, Optional
+from ampel.types import StockId
 from ampel.abstract.AbsT0Unit import AbsT0Unit
 from ampel.content.DataPoint import DataPoint
 from ampel.log.AmpelLogger import AmpelLogger
@@ -24,7 +25,7 @@ class ZiT0PhotoPointShaper(AbsT0Unit):
 	logger: Optional[AmpelLogger] # type: ignore[assignment]
 
 	# Mandatory implementation
-	def ampelize(self, arg: Iterable[Dict[str, Any]]) -> List[DataPoint]:
+	def process(self, arg: Iterable[Dict[str, Any]], stock: Optional[StockId] = None) -> List[DataPoint]:
 		"""
 		:param arg: sequence of unshaped pps
 		IMPORTANT:

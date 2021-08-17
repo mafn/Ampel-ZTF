@@ -8,7 +8,7 @@ import socket
 import pytest
 
 from ampel.config.AmpelConfig import AmpelConfig
-from ampel.db.DBUpdatesBuffer import DBUpdatesBuffer
+from ampel.mongo.update.DBUpdatesBuffer import DBUpdatesBuffer
 from ampel.dev.DevAmpelContext import DevAmpelContext
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.log.LogsBufferDict import LogsBufferDict
@@ -214,14 +214,14 @@ async def test_superseded_candidates_concurrent(
         assert [without(dp, {"tag"}) for dp in dps if dp["_id"] > 0] == sorted(
             [
                 without(ingester.project(dp), {"tag"})
-                for dp in ingester.pp_shaper.ampelize(copy.deepcopy(alert.pps))
+                for dp in ingester.pp_shaper.process(copy.deepcopy(alert.pps))
             ],
             key=lambda pp: pp["body"]["jd"],
         ), "photopoints match alert content (except tags)"
         assert [without(dp, {"tag"}) for dp in dps if dp["_id"] < 0] == sorted(
             [
                 without(ingester.project(dp), {"tag"})
-                for dp in ingester.ul_shaper.ampelize(copy.deepcopy(alert.uls))
+                for dp in ingester.ul_shaper.process(copy.deepcopy(alert.uls))
             ],
             key=lambda pp: pp["body"]["jd"],
         ), "upper limits match alert content (except tags)"

@@ -13,9 +13,9 @@ from typing import Any, Dict, Iterable, Optional, Tuple
 import nest_asyncio
 from pydantic.tools import parse_obj_as
 
-from ampel.core.AmpelBuffer import AmpelBuffer
-from ampel.model.Secret import Secret
-from ampel.t3.complement.AbsT3DataAppender import AbsT3DataAppender
+from ampel.struct.AmpelBuffer import AmpelBuffer
+from ampel.abstract.Secret import Secret
+from ampel.abstract.AbsBufferComplement import AbsBufferComplement
 from ampel.ztf.t3.skyportal.SkyPortalClient import (
     BaseHttpUrl,
     SkyPortalAPIError,
@@ -23,7 +23,7 @@ from ampel.ztf.t3.skyportal.SkyPortalClient import (
 )
 
 
-class FritzReport(SkyPortalClient, AbsT3DataAppender):
+class FritzReport(SkyPortalClient, AbsBufferComplement):
     """
     Add source record from SkyPortal
     """

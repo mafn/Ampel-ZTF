@@ -7,16 +7,15 @@
 # Last Modified Date: 29.01.2021
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
-from typing import Any, Dict, Literal, Optional, Sequence
-
 from pydantic import Field
-
+from typing import Any, Dict, Literal, Optional, Sequence, Union
+from ampel.types import UBson
 from ampel.abstract.AbsPointT2Unit import AbsPointT2Unit
 from ampel.content.DataPoint import DataPoint
 from ampel.model.StrictModel import StrictModel
-from ampel.enum.T2RunState import T2RunState
-from ampel.type import T2UnitResult
+from ampel.struct.UnitResult import UnitResult
 from ampel.ztf.base.CatalogMatchUnit import CatalogMatchUnit
+from ampel.enum.DocumentCode import DocumentCode
 
 
 class CatalogModel(StrictModel):
@@ -69,13 +68,13 @@ class T2CatalogMatch(CatalogMatchUnit, AbsPointT2Unit):
     """
 
     # run only on first datapoint by default
-    # NB: this assumes that docs are created by DualPointT2Ingester
-    ingest: Dict = {"eligible": {"pps": "first"}}
+    eligible = {"filter": "PPSFilter", "sort": "jd", "select": "first"}
 
     # Each value specifies a catalog in extcats or catsHTM format and the query parameters
     catalogs: Dict[str, CatalogModel]
 
-    def run(self, datapoint: DataPoint) -> T2UnitResult:
+
+    def process(self, datapoint: DataPoint) -> Union[UBson, UnitResult]:
         """
         :returns: example of a match in SDSS but not in NED:
 
@@ -97,10 +96,7 @@ class T2CatalogMatch(CatalogMatchUnit, AbsPointT2Unit):
             transient_ra = datapoint["body"]["ra"]
             transient_dec = datapoint["body"]["dec"]
         except KeyError:
-            return T2RunState.MISSING_INFO
-
-        # initialize the catalog quer(ies). Use instance variable to aviod duplicates
-        out_dict: Dict[str, Any] = {}
+            return UnitResult(code=DocumentCode.T2_MISSING_INFO)
 
         matches = self.cone_search_nearest(
             ra=transient_ra,
@@ -120,10 +116,8 @@ class T2CatalogMatch(CatalogMatchUnit, AbsPointT2Unit):
 
         # return the info as dictionary
         return {
-            catalog: (
-                {"dist2transient": match["dist_arcsec"], **match["body"]}
-                if match is not None
-                else None
-            )
+            catalog: {
+                "dist2transient": match["dist_arcsec"], **match["body"]
+            } if match is not None else None
             for catalog, match in zip(self.catalogs, matches)
         }

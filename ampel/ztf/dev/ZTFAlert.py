@@ -12,7 +12,7 @@ from typing import Any, Dict, Optional, List
 from ampel.view.LightCurve import LightCurve
 from ampel.view.TransientView import TransientView
 from ampel.content.DataPoint import DataPoint
-from ampel.content.T2Record import T2Record
+from ampel.content.T2Document import T2Document
 from ampel.alert.PhotoAlert import PhotoAlert
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
 from ampel.ztf.ingest.ZiT0PhotoPointShaper import ZiT0PhotoPointShaper
@@ -46,7 +46,7 @@ class ZTFAlert:
 		"""
 		Creates and returns an instance of ampel.view.LightCurve using a ZTF IPAC alert.
 		This is either created from an already existing ampel.alert.PhotoAlert or
-		read through a ampel.ztf.alert.ZiAlertSupplier (default). 
+		read through a ampel.ztf.alert.ZiAlertSupplier (default).
 		In the latter case a path to a stored avro file can be given.
 		"""
 
@@ -55,7 +55,7 @@ class ZTFAlert:
 
 
 		# Build upper limit ids (done by ingester for now)
-		uls = ZiT0UpperLimitShaper().ampelize(
+		uls = ZiT0UpperLimitShaper().process(
 			[
 				{
 					**el,
@@ -64,7 +64,7 @@ class ZTFAlert:
 				for el in (pal.uls if pal.uls else [])
 			]
 		)
-		pps = ZiT0PhotoPointShaper().ampelize([dict(el) for el in pal.pps])
+		pps = ZiT0PhotoPointShaper().process([dict(el) for el in pal.pps])
 		for collection in uls, pps:
 			for pp in collection:
 				pp['stock'] = pal.stock_id
@@ -85,7 +85,7 @@ class ZTFAlert:
 		file_path: Optional[str] = None,
 		alert: Optional[PhotoAlert] = None,
 		content: Optional[Dict] = None,
-		t2_records: Optional[List[T2Record]] = None
+		t2_docs: Optional[List[T2Document]] = None
 	) -> TransientView:
 		"""
 		Note: incomplete/meaningless//quick'n'dirty method, to improve if need be.
@@ -105,7 +105,7 @@ class ZTFAlert:
 		return TransientView(
 			id = alert.stock_id,
 			t0 = datapoints,
-			t2 = t2_records,
+			t2 = t2_docs,
 			extra = {
 				'names': [alert.name]
 			}

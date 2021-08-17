@@ -7,10 +7,10 @@
 # Last Modified Date: 16.12.2020
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
-from typing import Any, Dict, List
-
+from typing import Any, Dict, List, Union
+from ampel.types import UBson
 from ampel.abstract.AbsLightCurveT2Unit import AbsLightCurveT2Unit
-from ampel.type import T2UnitResult
+from ampel.struct.UnitResult import UnitResult
 from ampel.view.LightCurve import LightCurve
 
 
@@ -36,11 +36,11 @@ class T2LightCurveSummary(AbsLightCurveT2Unit):
     #: Minimum magnitude of nondetections
     limiting_magnitude: float = 19.5
 
-    def run(self, lightcurve: LightCurve) -> T2UnitResult:
+    def process(self, lightcurve: LightCurve) -> Union[UBson, UnitResult]:
         result: Dict[str, Any] = {
             "num_detections": len(lightcurve.get_photopoints() or []),
         }
-        if (pps := lightcurve.get_photopoints()) :
+        if (pps := lightcurve.get_photopoints()):
             first, latest = pps[0]["body"], pps[-1]["body"]
             result["first_detection"] = first["jd"]
             result["ra_dis"], result["dec_dis"] = first["ra"], first["dec"]

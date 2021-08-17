@@ -8,7 +8,7 @@
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from typing import List, Union, Iterable, overload, cast
-from ampel.type import StrictIterable, StockId
+from ampel.types import StrictIterable, StockId
 from ampel.abstract.AbsIdMapper import AbsIdMapper
 
 # Optimization variables

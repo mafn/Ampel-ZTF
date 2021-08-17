@@ -78,7 +78,7 @@ class CatalogMatchFilter(CatalogMatchUnit, AbsAlertFilter[PhotoAlert]):
         else:
             return all(self.cone_search_any(ra, dec, [cast(ConeSearchRequest, r.dict()) for r in [selection]]))
 
-    def apply(self, alert: PhotoAlert) -> bool:
+    def process(self, alert: PhotoAlert) -> bool:
 
         # cut on the number of previous detections
         if len(alert.pps) < self.min_ndet:

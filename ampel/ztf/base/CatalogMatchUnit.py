@@ -24,8 +24,8 @@ import backoff
 import requests
 from requests_toolbelt.sessions import BaseUrlSession
 
-from ampel.base.DataUnit import DataUnit
-from ampel.core.AdminUnit import AdminUnit
+from ampel.base.LogicalUnit import LogicalUnit
+from ampel.core.ContextUnit import ContextUnit
 
 
 class BaseConeSearchRequest(TypedDict):
@@ -169,9 +169,9 @@ class CatalogMatchUnitBase:
         return self._cone_search("all", ra, dec, catalogs)
 
 
-class CatalogMatchUnit(CatalogMatchUnitBase, DataUnit):
+class CatalogMatchUnit(CatalogMatchUnitBase, LogicalUnit):
     """
-    Catalog matching for DataUnits
+    Catalog matching for LogicalUnits
     """
 
     require = ("ampel-ztf/catalogmatch",)
@@ -182,9 +182,9 @@ class CatalogMatchUnit(CatalogMatchUnitBase, DataUnit):
         return BaseUrlSession(base_url=self.resource["ampel-ztf/catalogmatch"])
 
 
-class CatalogMatchAdminUnit(CatalogMatchUnitBase, AdminUnit):
+class CatalogMatchContextUnit(CatalogMatchUnitBase, ContextUnit):
     """
-    Catalog matching for AdminUnits
+    Catalog matching for ContextUnits
     """
 
     @cached_property

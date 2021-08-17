@@ -9,7 +9,7 @@
 
 from typing import Dict, Sequence, Optional, Union
 
-from ampel.model.template.PeriodicSummaryT3 import PeriodicSummaryT3, LoaderDirective
+from ampel.template.PeriodicSummaryT3 import PeriodicSummaryT3, LoaderDirective
 
 
 class ZTFPeriodicSummaryT3(PeriodicSummaryT3):

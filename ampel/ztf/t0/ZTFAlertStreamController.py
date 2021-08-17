@@ -55,25 +55,25 @@ class ZTFAlertStreamController(AbsProcessController):
         process = copy.deepcopy(processes[0])
 
         assert process.active
-        assert process.processor.unit == "AlertProcessor", "Lead process is an AlertProcessor"
+        assert process.processor.unit == "AlertConsumer", "Lead process is an AlertConsumer"
         assert isinstance(process.processor.config, dict)
 
         def strip(config):
-            """Remove AlertProcessor config keys will be changed or merged"""
+            """Remove AlertConsumer config keys will be changed or merged"""
             return {
                 k: v for k, v in config.items()
                 if k not in {"process_name", "publish_stats", "directives"}
             } if config else {}
 
         for pm in processes[1:]:
-            # ensure that trailing AlertProcessor configs are compatible
+            # ensure that trailing AlertConsumer configs are compatible
             assert pm.active
             assert process.controller.config == pm.controller.config
             assert process.controller.override == pm.controller.override
             assert isinstance(pm.processor.config, dict)
-            assert process.processor.unit == pm.processor.unit, "All processes are AlertProcessors"
-            assert strip(process.processor.config) == strip(pm.processor.config), "AlertProcessor configs are compatible"
-            assert strip(process.processor.override) == strip(pm.processor.override), "AlertProcessor overrides are compatible"
+            assert process.processor.unit == pm.processor.unit, "All processes are AlertConsumers"
+            assert strip(process.processor.config) == strip(pm.processor.config), "AlertConsumer configs are compatible"
+            assert strip(process.processor.override) == strip(pm.processor.override), "AlertConsumer overrides are compatible"
             process.processor.config["directives"] += pm.processor.config["directives"]
         
         process.name = Counter([proc.name.split('|')[-1] for proc in processes]).most_common(1)[0][0]
@@ -145,7 +145,7 @@ class ZTFAlertStreamController(AbsProcessController):
                         else:
                             if (exc := task.exception()):
                                 AbsProcessController.process_exceptions.labels(self._process.tier, self._process.name).inc()
-                                log.warn("AlertProcessor failed", exc_info=exc)
+                                log.warn("AlertConsumer failed", exc_info=exc)
                                 await asyncio.sleep(10)
                             # start a fresh replica for each processor that
                             # returned True. NB: +1 for scale wait task
@@ -176,7 +176,7 @@ class ZTFAlertStreamController(AbsProcessController):
         except Exception:
             ...
 
-        from ampel.alert.AlertProcessor import AlertProcessor
+        from ampel.alert.AlertConsumer import AlertConsumer
 
         # Create new context with frozen config
         context = AmpelContext.new(
@@ -184,10 +184,10 @@ class ZTFAlertStreamController(AbsProcessController):
             secrets=secrets
         )
 
-        processor = context.loader.new_admin_unit(
-            unit_model=UnitModel(**p["processor"]),
+        processor = context.loader.new_context_unit(
+            model=UnitModel(**p["processor"]),
             context=context,
-            sub_type=AlertProcessor,
+            sub_type=AlertConsumer,
             process_name = p["name"],
         )
 

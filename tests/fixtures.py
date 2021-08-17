@@ -17,7 +17,7 @@ from ampel.dev.DevAmpelContext import DevAmpelContext
 
 @pytest.fixture
 def patch_mongo(monkeypatch):
-    monkeypatch.setattr("ampel.db.AmpelDB.MongoClient", mongomock.MongoClient)
+    monkeypatch.setattr("ampel.core.AmpelDB.MongoClient", mongomock.MongoClient)
 
 @pytest.fixture(scope="session")
 def mongod(pytestconfig):

@@ -88,21 +88,21 @@ unit:
       base:
       - StockIngester
       - AbsStockIngester
-      - AbsIngester
+      - AbsDocIngester
       distrib: ampel-ztf
       file: conf/ampel-ztf/ampel.json
     ZiAlertContentIngester:
       fqn: ampel.ztf.ingest.ZiAlertContentIngester
       base:
-      - AbsAlertContentIngester
-      - AbsIngester
+      - AbsAlertT0Ingester
+      - AbsDocIngester
       distrib: ampel-ztf
       file: conf/ampel-ztf/ampel.json
     PhotoCompoundIngester:
       fqn: ampel.ingest.PhotoCompoundIngester
       base:
       - AbsCompoundIngester
-      - AbsIngester
+      - AbsDocIngester
       distrib: ampel-photometry
       file: conf/ampel-photometry/ampel.json
     PhotoT2Ingester:
@@ -110,7 +110,7 @@ unit:
       base:
       - AbsStateT2Ingester
       - AbsT2Ingester
-      - AbsIngester
+      - AbsDocIngester
       distrib: ampel-photometry
       file: conf/ampel-photometry/ampel.json
   base:
