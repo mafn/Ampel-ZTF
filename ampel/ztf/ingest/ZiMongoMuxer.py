@@ -15,6 +15,11 @@ from ampel.util.mappings import unflatten_dict
 from ampel.mongo.utils import maybe_use_each
 from ampel.abstract.AbsT0Muxer import AbsT0Muxer
 
+class ConcurrentUpdateError(Exception):
+	"""
+	Raised when the t0 collection was updated during ingestion
+	"""
+	...
 
 class ZiMongoMuxer(AbsT0Muxer):
 	"""
@@ -56,6 +61,28 @@ class ZiMongoMuxer(AbsT0Muxer):
 
 
 	def process(self,
+		dps: List[DataPoint],
+		stock_id: Optional[StockId] = None
+	) -> Tuple[Optional[List[DataPoint]], Optional[List[DataPoint]]]:
+		"""
+		:param dps: datapoints from alert
+		:param stock_id: stock id from alert
+		Attempt to determine which pps/uls should be inserted into the t0 collection,
+		and which one should be marked as superseded.
+		"""
+		# IPAC occasionally issues multiple subtraction candidates for the same
+		# exposure and source, and these may be received in parallel by two
+		# AlertConsumers.
+		for _ in range(10):
+			try:
+				return self._process(dps, stock_id)
+			except ConcurrentUpdateError:
+				continue
+		else:
+			raise ConcurrentUpdateError(f"More than 10 iterations ingesting alert {dps[0]['id']}")
+
+
+	def _process(self,
 		dps: List[DataPoint],
 		stock_id: Optional[StockId] = None
 	) -> Tuple[Optional[List[DataPoint]], Optional[List[DataPoint]]]:
@@ -109,6 +136,7 @@ class ZiMongoMuxer(AbsT0Muxer):
 						unique_dps[key] = dp
 			else:
 				unique_dps[key] = dp
+		print(ids_dps_superseded)
 				
 
 		# Part 2: Insert new data points
@@ -165,9 +193,43 @@ class ZiMongoMuxer(AbsT0Muxer):
 		if self.check_reprocessing:
 			for dp in dps_db or []:
 				if dp['id'] in ids_dps_superseded and 'SUPERSEDED' not in dp['tag']:
+
+					self.logger.info(
+						f'Marking datapoint {dp["id"]} '
+						f'as superseded by {ids_dps_superseded[dp["id"]]}'
+					)
+
 					dp['tag'] = list(dp['tag'])
 					dp['tag'].append('SUPERSEDED') # type: ignore[attr-defined]
 
+					add_update(
+						UpdateOne(
+							{'id': dp['id']},
+							{
+								'$addToSet': {
+									'newId': ids_dps_superseded[dp['id']],
+									'tag': 'SUPERSEDED'
+								}
+							}
+						)
+					)
+
+		# Part 4: commit ops and check for conflicts
+		############################################
+		if self.check_reprocessing:
+			# Commit ops, retrying on upsert races
+			if ops:
+				self.updates_buffer.call_bulk_write('t0', ops)
+			# If another query returns docs not present in the first query, the
+			# set of superseded photopoints may be incomplete.
+			if concurrent_updates := (
+				{
+					doc['id']
+					for doc in self._photo_col.find({'stock': stock_id}, {'id': 1})
+				} \
+				- (ids_dps_db | ids_dps_alert)
+			):
+				raise ConcurrentUpdateError(f"t0 collection contains {len(concurrent_updates)} extra photopoints: {concurrent_updates}")
 
 		# The union of the datapoints drawn from the db and
 		# from the alert will be part of the t1 document
