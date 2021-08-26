@@ -13,7 +13,7 @@ import numpy as np
 import light_curve
 
 from ampel.abstract.AbsLightCurveT2Unit import AbsLightCurveT2Unit
-from ampel.type import T2UnitResult
+from ampel.types import UBson
 from ampel.view.LightCurve import LightCurve
 
 
@@ -39,7 +39,7 @@ class T2LightCurveFeatures(AbsLightCurveT2Unit):
             *(getattr(light_curve, k)(**(v or {})) for k, v in self.features.items())
         )
 
-    def run(self, lightcurve: LightCurve) -> T2UnitResult:
+    def run(self, lightcurve: LightCurve) -> UBson:
         result = {}
         for fid, band in self.bands.items():
             if (

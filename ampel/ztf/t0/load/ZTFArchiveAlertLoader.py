@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 class ZTFArchiveAlertLoader(AmpelBaseModel):
     #: Base URL of archive service
-    archive: str = "https://ampel.zeuthen.desy.de/api/ztf/archive"
+    archive: str = "https://ampel.zeuthen.desy.de/api/ztf/archive/v2"
     #: A stream identifier, created via POST /api/ztf/archive/streams/
     stream: str
 

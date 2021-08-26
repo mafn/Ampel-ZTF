@@ -1,5 +1,8 @@
+from typing import Any
+from ampel.base.LogicalUnit import LogicalUnit
 from ampel.core.AmpelContext import AmpelContext
 from ampel.model.UnitModel import UnitModel
+from ampel.protocol.LoggerProtocol import LoggerProtocol
 import pytest
 from pathlib import Path
 import yaml
@@ -16,6 +19,8 @@ from ampel.content.StockDocument import StockDocument
 from ampel.content.T2Document import T2Document
 
 from ampel.struct.AmpelBuffer import AmpelBuffer
+from ampel.log.AmpelLogger import AmpelLogger
+from ampel.enum.DocumentCode import DocumentCode
 
 
 @pytest.fixture
@@ -32,20 +37,30 @@ def catalogmatch_service_reachable():
         pytest.skip("https://ampel.zeuthen.desy.de/ is unreachable")
 
 
+@pytest.fixture
+def ampel_logger():
+    return AmpelLogger.get_logger()
+
+
 def test_catalogmatch(
     patch_mongo,
     dev_context: AmpelContext,
-    catalogmatch_config,
+    catalogmatch_config: dict[str, Any],
+    ampel_logger: AmpelLogger,
     catalogmatch_service_reachable,
 ):
-    unit, _ = dev_context.loader.new_logical_unit(
-        UnitModel(unit=T2CatalogMatch, config=catalogmatch_config),
-        logger=logging.getLogger(),
+    unit: T2CatalogMatch = dev_context.loader.new_logical_unit(
+        model=UnitModel(unit="T2CatalogMatch", config=catalogmatch_config),
+        logger=ampel_logger,
+        sub_type=T2CatalogMatch,
     )
-    result = unit.run(DataPoint({"id": 0, "body": {"ra": 0, "dec": 0}}))
-    assert result ==
-        {k: None for k in catalogmatch_config["catalogs"].keys()} |
-        {
+    result = unit.process(DataPoint({"id": 0, "body": {"ra": 0, "dec": 0}}))
+    base_config: dict[str, Any] = {
+        k: None for k in catalogmatch_config["catalogs"].keys()
+    }
+    assert result == (
+        base_config
+        | {
             "SDSS_spec": {
                 "bptclass": 5.0,
                 "dist2transient": 0.0,
@@ -62,14 +77,20 @@ def test_catalogmatch(
                 "flag3": 0,
             },
         }
-    }
+    )
 
 
-def test_decentfilter_star_in_gaia(patch_mongo, dev_context: AmpelContext):
+def test_decentfilter_star_in_gaia(
+    patch_mongo,
+    dev_context: AmpelContext,
+    ampel_logger: AmpelLogger,
+):
     with open(Path(__file__).parent / "test-data" / "decentfilter_config.yaml") as f:
         config = yaml.safe_load(f)
-    unit, _ = dev_context.loader.new_logical_unit(
-        UnitModel(unit=DecentFilter, config=config), logger=logging.getLogger()
+    unit: DecentFilter = dev_context.loader.new_logical_unit(
+        UnitModel(unit="DecentFilter", config=config),
+        logger=ampel_logger,
+        sub_type=DecentFilter,
     )
     assert unit.is_star_in_gaia(
         {"ra": 0.009437700971970959, "dec": -0.0008937364197194631}
@@ -77,50 +98,53 @@ def test_decentfilter_star_in_gaia(patch_mongo, dev_context: AmpelContext):
     assert not unit.is_star_in_gaia({"ra": 0, "dec": 0})
 
 
-def test_tnsnames(patch_mongo, dev_context) -> None:
-    unit = dev_context.loader.new_context_unit(
-        UnitModel(unit=TNSNames),
-        logger=logging.getLogger(),
+def test_tnsnames(
+    patch_mongo, dev_context: AmpelContext, ampel_logger: AmpelLogger
+) -> None:
+    unit: TNSNames = dev_context.loader.new_context_unit(
+        UnitModel(unit="TNSNames"),
+        logger=ampel_logger,
         context=dev_context,
+        sub_type=TNSNames,
     )
     buf = AmpelBuffer(
         {
             "id": 0,
             "stock": StockDocument(
                 {
-                    "_id": 0,
-                    "tag": None,
-                    "channel": None,
+                    "stock": 0,
+                    "tag": [],
+                    "channel": [],
                     "journal": [],
-                    "updated": {},
-                    "created": {},
+                    "ts": {},
+                    "updated": 0,
                     "name": ["sourceysource"],
                 }
             ),
             "t2": [
                 T2Document(
                     {
-                        "_id": 0,
                         "unit": "T2LightCurveSummary",
-                        "body": [
-                            {"ts": 0, 'data': {"ra": 0.518164, "dec": 0.361964}}
-                        ],
+                        "meta": [{"code": DocumentCode.OK}],
+                        "body": [{"ra": 0.518164, "dec": 0.361964}],
                     }
                 )
             ],
         }
     )
     unit.complement([buf])
-    assert buf["stock"]["name"] == ("sourceysource", "TNS2020ubb")
+    assert (stockdoc := buf["stock"]) is not None
+    assert stockdoc["name"] == ("sourceysource", "TNS2020ubb")
     assert not "extra" in buf
 
     unit = dev_context.loader.new_context_unit(
-        UnitModel(unit=TNSReports),
-        logger=logging.getLogger(),
+        UnitModel(unit="TNSReports"),
+        logger=ampel_logger,
         context=dev_context,
+        sub_type=TNSNames,
     )
     unit.complement([buf])
-    assert buf["stock"]["name"] == ("sourceysource", "TNS2020ubb")
+    assert stockdoc["name"] == ("sourceysource", "TNS2020ubb")
     assert buf["extra"] == {
         "TNSReports": [
             {

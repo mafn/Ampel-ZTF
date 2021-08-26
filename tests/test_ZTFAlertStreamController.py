@@ -11,7 +11,7 @@ from ampel.config.builder.FirstPassConfig import FirstPassConfig
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.metrics.AmpelMetricsRegistry import AmpelMetricsRegistry
 from ampel.model.ProcessModel import ProcessModel
-from ampel.model.ZTFLegacyChannelTemplate import ZTFLegacyChannelTemplate
+from ampel.template.ZTFLegacyChannelTemplate import ZTFLegacyChannelTemplate
 from ampel.util import concurrent
 from ampel.ztf.t0.ZTFAlertStreamController import ZTFAlertStreamController
 from ampel.ztf.t0.load.ZTFArchiveAlertLoader import ZTFArchiveAlertLoader
@@ -22,10 +22,15 @@ def t0_process(kwargs, first_pass_config):
         "group": "nonesuch",
         "broker": "nonesuch:9092",
     }
+    # explicitly add version, which would otherwise be synthesized by ProcessMorpher
+    template = ZTFLegacyChannelTemplate(**kwargs)
     return ProcessModel(
-        **ZTFLegacyChannelTemplate(**kwargs).get_processes(
-            AmpelLogger.get_logger(), first_pass_config
-        )[0]
+        **(
+            template.get_processes(
+                AmpelLogger.get_logger(), first_pass_config
+            )[0]
+            | {"version": template.version}
+        )
     )
 
 
@@ -52,6 +57,7 @@ def test_merge_processes(config, first_pass_config):
         t0_process(
             {
                 "channel": name,
+                "version": 0,
                 "auto_complete": False,
                 "template": "ztf_uw_public",
                 "t0_filter": {"unit": "NoFilter"},
@@ -79,6 +85,7 @@ def test_merge_processes(config, first_pass_config):
         t0_process(
             {
                 "channel": name,
+                "version": 0,
                 "auto_complete": False,
                 "template": stream,
                 "t0_filter": {"unit": "NoFilter"},
@@ -114,6 +121,7 @@ def potemkin_controller(config, first_pass_config):
         t0_process(
             {
                 "channel": name,
+                "version": 0,
                 "active": True,
                 "auto_complete": False,
                 "template": "ztf_uw_public",
@@ -188,13 +196,11 @@ async def test_stop(potemkin_controller):
 def topic_stream_token() -> str:
     if not (token := os.environ.get("ARCHIVE_TOPIC_TOKEN")):
         pytest.skip("archive test requires stream token")
-    base_url = "https://ampel.zeuthen.desy.de/api/ztf/archive"
+    base_url = "https://ampel.zeuthen.desy.de/api/ztf/archive/v2"
     step = 10000
     chunk = 5
     with requests.Session() as session:
-        response = session.get(
-            f"{base_url}/topic/{token}"
-        )
+        response = session.get(f"{base_url}/topic/{token}")
         response.raise_for_status()
         size = response.json()["size"]
 
@@ -203,7 +209,7 @@ def topic_stream_token() -> str:
             json={"topic": token, "chunk_size": chunk, "step": step},
         )
         response.raise_for_status()
-        assert response.json()["chunks"] == (size + step*chunk - 1) // (step*chunk)
+        assert response.json()["chunks"] == (size + step * chunk - 1) // (step * chunk)
         return response.json()["resume_token"]
 
 
