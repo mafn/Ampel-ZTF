@@ -11,8 +11,9 @@ from typing import Dict, List, Any, Literal
 from ampel.types import ChannelId
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.model.UnitModel import UnitModel
+from ampel.model.ingest.T2Compute import T2Compute
 from ampel.abstract.AbsProcessorTemplate import AbsProcessorTemplate
-from ampel.template.AbsEasyChannelTemplate import AbsEasyChannelTemplate, T2UnitModel
+from ampel.template.AbsEasyChannelTemplate import AbsEasyChannelTemplate
 
 
 class ZTFProcessLocalAlerts(AbsProcessorTemplate):
@@ -28,7 +29,7 @@ class ZTFProcessLocalAlerts(AbsProcessorTemplate):
 
  	#: T2 units to trigger when transient is updated. Dependencies of tied
 	#: units will be added automatically.
-	t2_compute: List[T2UnitModel] = []
+	t2_compute: List[T2Compute] = []
 
 	extra: Dict = {}
 
