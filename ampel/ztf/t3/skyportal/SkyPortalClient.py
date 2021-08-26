@@ -98,10 +98,11 @@ def sanitize_json(obj):
 def encode_t2_body(t2: "T2Document") -> str:
     assert t2["body"] is not None
     doc = t2["body"][-1]
+    assert isinstance(doc, dict)
     return base64.b64encode(
         json.dumps(
             {
-                "timestamp": datetime.fromtimestamp(doc["ts"]).isoformat(),
+                "timestamp": datetime.fromtimestamp(doc["meta"][-1]["ts"]).isoformat(),
                 **{k: sanitize_json(v) for k, v in doc.items() if k != "ts"},
             },
             default=lambda o: None,
@@ -116,14 +117,13 @@ def decode_t2_body(blob: str) -> Dict[str, Any]:
 
 def get_t2_result(t2: "T2Document") -> Union[Tuple[None, None], Tuple[datetime, Dict[str, Any]]]:
     assert t2["body"] is not None
-    for record in reversed(t2["body"]):
-        if record.get("status", 0) == 0:
+    for meta, record in zip(reversed(t2["meta"]), reversed(t2["body"])):
+        if meta.get("code", DocumentCode.OK) == DocumentCode.OK:
             break
     else:
         return None, None
-    return datetime.fromtimestamp(record["ts"]), (
-        r[-1] if isinstance(r := record["result"], list) else r
-    )
+    assert isinstance(record, dict)
+    return datetime.fromtimestamp(meta["ts"]), record
 
 
 def render_thumbnail(cutout_data: bytes) -> str:
@@ -477,7 +477,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             if "SUPERSEDED" in dp["tag"]:
                 continue
             base = {
-                "_id": dp["_id"],
+                "id": dp["id"],
                 "filter": ZTF_FILTERS[body["fid"]],
                 "mjd": body["jd"] - 2400000.5,
                 "limiting_mag": body["diffmaglim"],
@@ -597,7 +597,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             # update previous comment
             previous_body = decode_t2_body(comment["attachment_bytes"])
             if (t2["body"] is not None) and (
-                t2["body"][-1]["ts"] > previous_body["ts"]
+                t2["meta"][-1]["ts"] > previous_body["ts"]
             ):
                 self.logger.debug(f"updating {t2['unit']}")
                 try:
@@ -685,7 +685,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         assert view.t0 is not None
         dps = sorted(view.t0, key=lambda pp: pp["body"]["jd"])
         # detections, in time order
-        pps = [pp for pp in dps if pp["_id"] > 0]
+        pps = [pp for pp in dps if pp["id"] > 0]
 
         # post transient
         candidate = {
@@ -785,7 +785,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
             "instrument_id": instrument_id,
             **self.make_photometry(dps),
         }
-        datapoint_ids = photometry.pop("_id")
+        datapoint_ids = photometry.pop("id")
         try:
             photometry_response = await self.put("photometry", json=photometry)
             photometry_ids = photometry_response["data"]["ids"]
@@ -823,10 +823,10 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         # represent latest T2 results as a comments
         latest_t2: Dict[str, "T2Document"] = {}
         for t2 in view.t2 or []:
-            if t2["code"] != DocumentCode.COMPLETED or not t2["body"]:
+            if t2["code"] != DocumentCode.OK or not t2["body"]:
                 continue
             assert isinstance(t2["unit"], str)
-            if t2["unit"] not in latest_t2 or latest_t2[t2["unit"]]["_id"] < t2["_id"]:
+            if t2["unit"] not in latest_t2 or latest_t2[t2["unit"]]["meta"][-1]["ts"] < t2["meta"][-1]["ts"]:
                 latest_t2[t2["unit"]] = t2
 
         if annotate:

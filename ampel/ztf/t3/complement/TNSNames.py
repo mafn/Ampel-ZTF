@@ -9,6 +9,7 @@
 
 
 from typing import Iterable, Optional, Dict, Any
+from ampel.enum.DocumentCode import DocumentCode
 
 from pydantic import Field
 
@@ -87,11 +88,8 @@ class TNSNames(CatalogMatchContextUnit, AbsBufferComplement):
             raise ValueError(f"{type(self).__name__} requires T2 records be loaded")
         for t2_doc in reversed(t2_documents):
             if t2_doc["unit"] == unit_id and (body := t2_doc.get("body")):
-                for t2_record in reversed(body):
-                    if 'data' in t2_record and t2_record.get("code", 0) >= 0:
-                        result = t2_record['data']
-                        if isinstance(result, dict):
-                            return result
-                        elif isinstance(result, list) and len(result):
-                            return result[-1]
+                for meta, result in zip(reversed(t2_doc["meta"]), reversed(body)):
+                    if meta["code"] == DocumentCode.OK:
+                        assert isinstance(result, dict)
+                        return result
         return None

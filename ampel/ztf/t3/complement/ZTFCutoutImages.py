@@ -60,20 +60,20 @@ class ZTFCutoutImages(AbsBufferComplement):
             if (photopoints := record.get("t0")) is None:
                 raise ValueError(f"{type(self).__name__} requires t0 records")
             pps = sorted(
-                [pp for pp in photopoints if pp["_id"] > 0],
+                [pp for pp in photopoints if pp["id"] > 0],
                 key=lambda pp: pp["body"]["jd"],
             )
             if not pps:
                 return
 
             if self.eligible == "last":
-                candids = [pps[-1]["_id"]]
+                candids = [pps[-1]["id"]]
             elif self.eligible == "first":
-                candids = [pps[0]["_id"]]
+                candids = [pps[0]["id"]]
             elif self.eligible == "brightest":
-                candids = [min(pps, key=lambda pp: pp["body"]["magpsf"])["_id"]]
+                candids = [min(pps, key=lambda pp: pp["body"]["magpsf"])["id"]]
             elif self.eligible == "all":
-                candids = [pp["_id"] for pp in pps]
+                candids = [pp["id"] for pp in pps]
             cutouts = {candid: self.get_cutout(candid) for candid in candids}
 
             if "extra" not in record or record["extra"] is None:
