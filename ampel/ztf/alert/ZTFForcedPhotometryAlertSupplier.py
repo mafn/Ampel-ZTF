@@ -85,7 +85,7 @@ class ZTFForcedPhotometryAlertSupplier(BaseAlertSupplier[PhotoAlert]):
 		fd = next(self.alert_loader) # type: ignore
 
 		# Convert first line comment "# key1: val1, key2: val2" into dict
-		cdict = {(x := el.split(":"))[0].strip(): x[1].strip() for el in fd.readline()[1:].split(",")}
+		cdict = {(x := el.split(b":"))[0].strip().decode(): x[1].strip().decode() for el in fd.readline()[1:].split(b",")}
 		dict_reader = self.deserialize(fd) # type: ignore
 
 		all_ids = b""
