@@ -31,11 +31,11 @@ class BearerAuth(requests.auth.AuthBase):
 
 class ZiArchiveMuxer(AbsT0Muxer):
     """
-    Ingest data points from archived ZTF-IPAC alerts, and create compounds
-    representing the light curve from the start of ZTF operations to the alert
-    exposure.
+    Add datapoints from archived ZTF-IPAC alerts.
     """
 
+    #: Number of days of history to add, relative to the earliest point in the
+    #: t0 collection
     history_days: int
 
     shaper: Union[UnitModel, str] = "ZiDataPointShaper"
