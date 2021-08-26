@@ -34,6 +34,10 @@ class ZiAlertSupplier(BaseAlertSupplier[PhotoAlert]):
 			next(self.alert_loader) # type: ignore
 		)
 
+		return self.shape_alert_dict(d)
+
+	@staticmethod
+	def shape_alert_dict(d: dict[str, Any]) -> PhotoAlert:
 		if d['prv_candidates']:
 
 			pp = ReadOnlyDict(d['candidate'])

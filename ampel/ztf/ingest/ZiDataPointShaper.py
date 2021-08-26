@@ -8,6 +8,7 @@
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from typing import Dict, List, Any, Iterable, Optional
+from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.types import StockId
 from ampel.abstract.AbsT0Unit import AbsT0Unit
 from ampel.content.DataPoint import DataPoint
@@ -15,14 +16,11 @@ from ampel.log.AmpelLogger import AmpelLogger
 from ampel.ztf.ingest.tags import tags
 
 
-class ZiDataPointShaper(AbsT0Unit):
+class ZiDataPointShaperBase(AmpelBaseModel):
 	"""
 	This class 'shapes' datapoints in a format suitable
 	to be saved into the ampel database
 	"""
-
-	# override
-	logger: Optional[AmpelLogger] # type: ignore[assignment]
 
 	# JD2017 is used to define upper limits primary IDs
 	JD2017: float = 2457754.5
@@ -118,3 +116,9 @@ class ZiDataPointShaper(AbsT0Unit):
 			((rcid if (rcid := uld.get("rcid")) is not None else (uld["pid"] % 10000) // 100) * 100000) -
 			round(uld['diffmaglim'] * 1000)
 		)
+
+class ZiDataPointShaper(ZiDataPointShaperBase, AbsT0Unit):
+	
+	def process(self, arg: Any, stock: Optional[StockId] = None) -> List[DataPoint]:
+		assert stock is not None
+		return super().process(arg, stock)

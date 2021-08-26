@@ -7,6 +7,8 @@
 # Last Modified Date: 31.07.2020
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
+import random
+from ampel.model.UnitModel import UnitModel
 import fastavro, os, time
 from typing import Any, Dict, Optional, List
 from ampel.view.LightCurve import LightCurve
@@ -15,22 +17,21 @@ from ampel.content.DataPoint import DataPoint
 from ampel.content.T2Document import T2Document
 from ampel.alert.PhotoAlert import PhotoAlert
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
-from ampel.ztf.ingest.ZiT0PhotoPointShaper import ZiT0PhotoPointShaper
-from ampel.ztf.ingest.ZiT0UpperLimitShaper import ZiT0UpperLimitShaper
+from ampel.ztf.ingest.ZiDataPointShaper import ZiDataPointShaperBase
 
 
 class ZTFAlert:
 
 
 	@classmethod
-	def to_photo_alert(cls, file_path: Optional[str] = None) -> PhotoAlert:
+	def to_photo_alert(cls, file_path: str) -> PhotoAlert:
 		"""
 		Creates and returns an instance of ampel.view.LightCurve using a ZTF IPAC alert.
 		"""
-		als = ZiAlertSupplier(deserialize="avro")
-		if file_path:
-			from ampel.alert.load.FileAlertLoader import FileAlertLoader
-			als.set_alert_source(FileAlertLoader(files=file_path))
+		als = ZiAlertSupplier(
+			deserialize="avro",
+			loader=UnitModel(unit="FileAlertLoader", config={"files": file_path})
+		)
 
 		return next(als)
 
@@ -51,31 +52,17 @@ class ZTFAlert:
 		"""
 
 		if pal is None:
+			assert file_path is not None
 			pal = cls.to_photo_alert(file_path)
 
-
-		# Build upper limit ids (done by ingester for now)
-		uls = ZiT0UpperLimitShaper().process(
-			[
-				{
-					**el,
-					**{'_id': cls._upper_limit_id(el)}
-				}
-				for el in (pal.uls if pal.uls else [])
-			]
-		)
-		pps = ZiT0PhotoPointShaper().process([dict(el) for el in pal.pps])
-		for collection in uls, pps:
-			for pp in collection:
-				pp['stock'] = pal.stock_id
+		# convert to DataPoint
+		dps = ZiDataPointShaperBase().process(pal.dps, pal.stock_id)
 
 		return LightCurve(
-			os.urandom(16), # CompoundId
+			random.randint(0, (1<<32)-1), # CompoundId
 			pal.stock_id,
-			tuple(pps), # Photopoints
-			tuple(uls), # Upperlimit
-			0, # tier
-			time.time() # added
+			tuple(pp for pp in dps if pp["id"] > 0), # Photopoints
+			tuple(pp for pp in dps if pp["id"] < 0), # Upperlimit
 		)
 
 
@@ -93,6 +80,7 @@ class ZTFAlert:
 		"""
 
 		if alert is None:
+			assert file_path is not None
 			alert = cls.to_photo_alert(file_path)
 		lc = cls.to_lightcurve(pal=alert)
 
