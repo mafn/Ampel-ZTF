@@ -7,7 +7,7 @@
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
 import asyncio
-from typing import Dict, List, Optional, Sequence, Tuple, TYPE_CHECKING
+from typing import Dict, Generator, List, Optional, Sequence, Tuple, TYPE_CHECKING
 
 import nest_asyncio
 
@@ -29,8 +29,8 @@ class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
     annotate: bool = False
 
     def process(
-        self, tviews: Sequence["TransientView"]
-    ) -> Optional[Dict[StockId, JournalAttributes]]:
+        self, tviews: Generator["TransientView", JournalAttributes, None],
+    ) -> None:
         """Pass each view to :meth:`post_candidate`."""
         # Patch event loop to be reentrant if it is already running, e.g.
         # within a notebook
@@ -40,28 +40,26 @@ class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
         except RuntimeError:
             # second call raises: RuntimeError: There is no current event loop in thread 'MainThread'.
             ...
-        return asyncio.run(self.post_candidates(tviews))
+        asyncio.run(self.post_candidates(tviews))
 
     async def post_candidates(
-        self, tviews: Sequence["TransientView"]
-    ) -> Dict[StockId, JournalAttributes]:
+        self, tviews: Generator["TransientView", JournalAttributes, None]
+    ) -> None:
         """Pass each view to :meth:`post_candidate`."""
         async with self.session(limit_per_host=self.max_parallel_connections):
-            return dict(
-                await asyncio.gather(
-                    *[
-                        self.post_view(view)
-                        for view in tviews
-                        if view.stock is not None
-                    ],
-                )
+            await asyncio.gather(
+                *[
+                    self.post_view(view)
+                    for view in tviews
+                    if view.stock is not None
+                ],
             )
 
     async def post_view(self, view: "TransientView") -> Tuple[StockId, JournalAttributes]:
         return view.id, JournalAttributes(
             extra=dict(
                 await self.post_candidate(
-                    view
+                    view,
                     groups=self.groups,
                     filters=self.filters,
                     annotate=self.annotate,
