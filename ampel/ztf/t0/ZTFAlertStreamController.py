@@ -17,7 +17,7 @@ import backoff
 import requests
 
 from ampel.abstract.AbsProcessController import AbsProcessController
-from ampel.abstract.AbsSecretProvider import AbsSecretProvider
+from ampel.secret.AmpelVault import AmpelVault
 from ampel.config.AmpelConfig import AmpelConfig
 from ampel.core.AmpelContext import AmpelContext
 from ampel.model.ProcessModel import ProcessModel
@@ -37,11 +37,11 @@ class ZTFAlertStreamController(AbsProcessController):
         super().__init__(**kwargs)
 
         self._scale_event: Optional[asyncio.Event] = None
-        self.update(self.config, self.secrets, self.processes)
+        self.update(self.config, self.vault, self.processes)
 
     def update(self,
         config: AmpelConfig,
-        secrets: Optional[AbsSecretProvider],
+        secrets: Optional[AmpelVault],
         processes: Sequence[ProcessModel],
     ) -> None:
         self.config = config
@@ -166,7 +166,7 @@ class ZTFAlertStreamController(AbsProcessController):
     @concurrent.process(timeout=60)
     def run_mp_process(
         config: Dict[str, Any],
-        secrets: Optional[AbsSecretProvider],
+        secrets: Optional[AmpelVault],
         p: Dict[str, Any],
     ) -> bool:
 
@@ -179,9 +179,8 @@ class ZTFAlertStreamController(AbsProcessController):
         from ampel.alert.AlertConsumer import AlertConsumer
 
         # Create new context with frozen config
-        context = AmpelContext.new(
-            tier=p["tier"], config=AmpelConfig(config, freeze=True),
-            secrets=secrets
+        context = AmpelContext.load(
+            config=config, vault=secrets, freeze_config=True,
         )
 
         processor = context.loader.new_context_unit(

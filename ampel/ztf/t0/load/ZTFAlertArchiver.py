@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional
 import fastavro
 
 from ampel.abstract.AbsOpsUnit import AbsOpsUnit
-from ampel.model.Secret import Secret
+from ampel.secret.NamedSecret import NamedSecret
 from ampel.ztf.t0.load.AllConsumingConsumer import AllConsumingConsumer
 
 try:
@@ -36,7 +36,7 @@ class ZTFAlertArchiver(AbsOpsUnit):
     timeout: int = 300
     #: URI of postgres server hosting the archive
     archive_uri: str
-    archive_auth: Secret[Dict[str, str]] = {"key": "ztf/archive/writer"}  # type: ignore[assignment]
+    archive_auth: NamedSecret[Dict[str, str]] = NamedSecret(label="ztf/archive/writer")
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
