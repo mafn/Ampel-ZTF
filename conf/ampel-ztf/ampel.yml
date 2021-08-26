@@ -15,6 +15,7 @@ unit:
 - ampel.ztf.t3.select.T3AdHocStockSelector
 - ampel.ztf.t3.T3LegacyExtJournalAppender
 - ampel.ztf.ingest.ZiMongoMuxer
+- ampel.ztf.ingest.ZiArchiveMuxer
 
 # Logical units
 - ampel.ztf.t1.ZiT1Combiner
