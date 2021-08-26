@@ -135,9 +135,8 @@ class ZiMongoMuxer(AbsT0Muxer):
 					if dp in dps_db:
 						unique_dps[key] = dp
 			else:
-				unique_dps[key] = dp
-		print(ids_dps_superseded)
-				
+				unique_dps[key] = dp				
+
 
 		# Part 2: Insert new data points
 		################################
