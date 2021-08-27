@@ -8,11 +8,12 @@
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from typing import Dict, List, Any, Optional, Tuple
+from bisect import bisect_right
 from pymongo import UpdateOne
-from ampel.types import StockId
+from ampel.types import DataPointId, StockId
 from ampel.content.DataPoint import DataPoint
+from ampel.content.MetaRecord import MetaRecord
 from ampel.util.mappings import unflatten_dict
-from ampel.mongo.utils import maybe_use_each
 from ampel.abstract.AbsT0Muxer import AbsT0Muxer
 
 class ConcurrentUpdateError(Exception):
@@ -59,6 +60,8 @@ class ZiMongoMuxer(AbsT0Muxer):
 		self._photo_col = self.context.db.get_collection("t0")
 		self._projection_spec = unflatten_dict(self.projection)
 
+		self._run_id = self.updates_buffer.run_id[0] if isinstance(self.updates_buffer.run_id, list) else self.updates_buffer.run_id
+
 
 	def process(self,
 		dps: List[DataPoint],
@@ -82,6 +85,10 @@ class ZiMongoMuxer(AbsT0Muxer):
 			raise ConcurrentUpdateError(f"More than 10 iterations ingesting alert {dps[0]['id']}")
 
 
+	# NB: this 1-liner is a separate method to provide a patch point for race condition testing
+	def _get_dps(self, stock_id: Optional[StockId]) -> List[DataPoint]:
+		return list(self._photo_col.find({'stock': stock_id}, self.projection))
+
 	def _process(self,
 		dps: List[DataPoint],
 		stock_id: Optional[StockId] = None
@@ -97,9 +104,7 @@ class ZiMongoMuxer(AbsT0Muxer):
 		#######################################
 
 		# New pps/uls lists for db loaded datapoints
-		dps_db: List[DataPoint] = list(
-			self._photo_col.find({'stock': stock_id}, self.projection)
-		)
+		dps_db = self._get_dps(stock_id)
 
 		ops = []
 		if self.check_reprocessing:
@@ -115,103 +120,138 @@ class ZiMongoMuxer(AbsT0Muxer):
 
 		# uniquify photopoints by jd, rcid. For duplicate points,
 		# choose the one with the larger id
-		ids_dps_superseded = {}
-		unique_dps: Dict[Tuple[float, int], DataPoint] = {}
+		# (jd, rcid) -> ids
+		unique_dps_ids: dict[tuple[float, int], list[DataPointId]] = {}
+		# id -> superseding ids
+		ids_dps_superseded: dict[DataPointId, list[DataPointId]] = {}
+		# id -> final datapoint
+		unique_dps: Dict[DataPointId, DataPoint] = {}
 
-		for dp in sorted(dps + dps_db, key = lambda x: x['id']):
+		for dp in dps_db + dps:
 
 			# jd alone is actually enough for matching pps reproc, but an upper limit can
 			# be associated with multiple stocks at the same jd. here, match also by rcid
 			key = (dp['body']['jd'], dp['body']['rcid'])
 
-			if key in unique_dps:
-				if dp['id'] > unique_dps[key]['id']:
-					ids_dps_superseded[unique_dps[key]['id']] = dp['id']
-					unique_dps[key] = dp
-				elif dp['id'] < unique_dps[key]['id']:
-					ids_dps_superseded[dp['id']] = unique_dps[key]['id']
-				else:
-					# DB datapoints should be prefered as they contain channel association info
-					if dp in dps_db:
-						unique_dps[key] = dp
+			# print(dp['id'], key, key in unique_dps)
+
+			if target := unique_dps_ids.get(key):
+				# insert id in order
+				idx = bisect_right(target, dp['id'])
+				if idx == 0 or target[idx-1] != dp['id']:
+					target.insert(idx, dp['id'])
 			else:
-				unique_dps[key] = dp				
+				unique_dps_ids[key] = [dp['id']]
 
+		# build set of supersessions
+		for simultaneous_dps in unique_dps_ids.values():
+			for i in range(len(simultaneous_dps)-1):
+				ids_dps_superseded[simultaneous_dps[i]] = simultaneous_dps[i+1:]
+		
+		# build final set of datapoints, preferring entries loaded from the db
+		final_dps_set = {v[-1] for v in unique_dps_ids.values()}
+		for dp in dps_db + dps:
+			if dp['id'] in final_dps_set and not dp['id'] in unique_dps:
+				unique_dps[dp['id']] = dp
 
-		# Part 2: Insert new data points
-		################################
+		# Part 2: Update new data points that are already superseded
+		############################################################
 
 		# Difference between candids from the alert and candids present in DB
 		ids_dps_to_insert = ids_dps_alert - ids_dps_db
 
 		for dp in dps:
 
-			if dp['id'] in ids_dps_to_insert:
+			# If alerts were received out of order, this point may already be superseded.
+			# Update it in place so that it can be inserted with the correct tags.
+			if self.check_reprocessing and dp['id'] in ids_dps_to_insert and dp['id'] in ids_dps_superseded:
 
-				add_to_set = {'stock': stock_id}
-
-				# If alerts were received out of order, this point may already be superseded.
-				if (
-					self.check_reprocessing and
-					dp['id'] in ids_dps_superseded and
-					'SUPERSEDED' not in dp['tag']
-				):
-
-					# NB: here we modify the point in place, so the SUPERSEDED
-					# tag remains in place if there is a second pass
-					dp['tag'] = list(dp['tag'])
-					dp['tag'].append('SUPERSEDED') # type: ignore[attr-defined]
-					add_to_set['newId'] = ids_dps_superseded[dp['id']]
-
-					self.logger.info(
-						f'Marking datapoint {dp["id"]} '
-						f'as superseded by {ids_dps_superseded[dp["id"]]}'
-					)
-
-				add_to_set['tag'] = maybe_use_each(dp['tag'])
-
-				# Unconditionally update the doc
-				add_update(
-					UpdateOne(
-						{'id': dp['id']},
-						{
-							'$setOnInsert': {
-								k: v for k, v in dp.items()
-								if k not in {'tag', 'stock'}
-							},
-							'$addToSet': add_to_set
-						},
-						upsert=True
-					)
+				self.logger.info(
+					f'Marking datapoint {dp["id"]} '
+					f'as superseded by {ids_dps_superseded[dp["id"]]}'
 				)
 
+				# point is newly superseded
+				if not 'SUPERSEDED' in dp['tag']:
+					# mutate a copy, as the default tag list may be shared between all datapoints
+					dp['tag'] = list(dp['tag'])
+					dp['tag'].append('SUPERSEDED') # type: ignore[attr-defined]
+				
+				# point may be superseded by more than one new datapoint
+				meta: list[MetaRecord] = list(dp.get("meta", []))
+				for newId in ids_dps_superseded[dp['id']]:
+					if not any(
+						m.get('extra', {}).get('newId') == newId
+						for m in meta if m.get('tag') == 'SUPERSEDED'
+					):
+						meta.append({
+							"run": self._run_id,
+							"traceid": {"muxer": self._trace_id},
+							"tag": "SUPERSEDED",
+							"extra": {"newId": newId}
+						})
+				dp["meta"] = meta
 
-		# Part 3: Update data points that were superseded
-		#################################################
+		# Part 3: Update old data points that are superseded
+		####################################################
 
 		if self.check_reprocessing:
 			for dp in dps_db or []:
-				if dp['id'] in ids_dps_superseded and 'SUPERSEDED' not in dp['tag']:
+				if dp['id'] in ids_dps_superseded:
 
 					self.logger.info(
 						f'Marking datapoint {dp["id"]} '
 						f'as superseded by {ids_dps_superseded[dp["id"]]}'
 					)
 
-					dp['tag'] = list(dp['tag'])
-					dp['tag'].append('SUPERSEDED') # type: ignore[attr-defined]
-
-					add_update(
-						UpdateOne(
-							{'id': dp['id']},
-							{
-								'$addToSet': {
-									'newId': ids_dps_superseded[dp['id']],
-									'tag': 'SUPERSEDED'
+					# point is newly superseded
+					if not (has_tag := 'SUPERSEDED' in dp['tag']):
+						dp['tag'].append('SUPERSEDED') # type: ignore[attr-defined]
+						add_update(
+							UpdateOne(
+								{
+									'id': dp['id'],
+								},
+								{
+									'$addToSet': {'tag': 'SUPERSEDED'}
 								}
-							}
+							)
 						)
-					)
+					
+					# point may be superseded by more than one new datapoint
+					meta = list(dp.get("meta", []))
+					for newId in ids_dps_superseded[dp['id']]:
+						if not any(
+							m.get('extra', {}).get('newId') == newId
+							for m in meta if m.get('tag') == 'SUPERSEDED'
+						):
+							entry: MetaRecord = {
+								"run": self._run_id,
+								"traceid": {"muxer": self._trace_id},
+								"tag": "SUPERSEDED",
+								"extra": {"newId": newId}
+							}
+							meta.append(entry)
+							# issue idempotent update
+							add_update(
+								UpdateOne(
+									{
+										'id': dp['id'],
+										'meta': {
+											'$not': {
+												'$elemMatch': {
+													'tag': 'SUPERSEDED',
+													'extra.newId': newId
+												}
+											}
+										}
+									},
+									{
+										'$push': {'meta': entry}
+									}
+								)
+							)
+					dp['meta'] = meta
 
 		# Part 4: commit ops and check for conflicts
 		############################################

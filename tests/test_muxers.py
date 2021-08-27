@@ -1,12 +1,11 @@
 import itertools
 import os
 from collections import defaultdict
-from ampel.alert.PhotoAlert import PhotoAlert
 
 import fastavro
-from pymongo.operations import UpdateOne
 import pytest
-from ampel.util import concurrent
+import before_after
+from ampel.alert.PhotoAlert import PhotoAlert
 from ampel.core.AmpelContext import AmpelContext
 from ampel.dev.UnitTestAlertSupplier import UnitTestAlertSupplier
 from ampel.ingest.ChainedIngestionHandler import ChainedIngestionHandler
@@ -18,10 +17,12 @@ from ampel.mongo.update.DBUpdatesBuffer import DBUpdatesBuffer
 from ampel.mongo.update.MongoT0Ingester import MongoT0Ingester
 from ampel.secret.AmpelVault import AmpelVault
 from ampel.secret.DictSecretProvider import DictSecretProvider
+from ampel.util import concurrent
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
 from ampel.ztf.ingest.ZiArchiveMuxer import ZiArchiveMuxer
 from ampel.ztf.ingest.ZiCompilerOptions import ZiCompilerOptions
 from ampel.ztf.ingest.ZiDataPointShaper import ZiDataPointShaperBase
+from pymongo.operations import UpdateOne
 
 
 def _make_muxer(context: AmpelContext, model: UnitModel) -> ZiArchiveMuxer:
@@ -172,8 +173,7 @@ def test_get_earliest_jd(
         ), "min jd is min jd of last ingested alert"
 
 
-def get_handler(context, directives) -> ChainedIngestionHandler:
-    run_id = 0
+def get_handler(context, directives, run_id=0) -> ChainedIngestionHandler:
     logger = AmpelLogger.get_logger(console={"level": DEBUG})
     updates_buffer = DBUpdatesBuffer(context.db, run_id=run_id, logger=logger)
     return ChainedIngestionHandler(
@@ -385,125 +385,85 @@ def test_superseded_candidates_serial(
 
     assert "SUPERSEDED" in pp_db["tag"], f"{candids[0]} marked as superseded in db"
 
-@concurrent.process
-def run_ingester(config, port):
-    """
-    Run ingester in a subprocess.
-    """
 
-    ctx = DevAmpelContext.new(config=AmpelConfig(config, freeze=True))
-    ingester = _make_ingester(ctx)
-
-    conn = socket.create_connection(("127.0.0.1", port))
-
-    conn.send(b"hola")
-    reply = b""
-    while chunk := conn.recv(4096):
-        reply += chunk
-
-    alert = pickle.loads(reply)
-    candid = alert.pps[0]["candid"]
-    print(f"pid {os.getpid()} got alert {candid}")
-    dps = ingester.ingest(alert)
-    ingester.updates_buffer.push_updates()
-
-    return candid, dps
-
-
-@pytest.mark.skip(reason="Concurrency test still broken")
-@pytest.mark.asyncio
-async def test_superseded_candidates_concurrent(
-    dev_context, superseded_packets, unused_tcp_port
-):
-    """
-    Photopoints are marked superseded when alerts are ingested simultaneously
-    """
-
-    class Distributor:
-        """
-        Wait for all clients to connect, then deliver messages all at once
-        """
-
-        def __init__(self, payloads):
-            self.cond = asyncio.Condition()
-            self.payloads = payloads
-
-        async def __call__(self, reader, writer):
-            data = await reader.read(100)
-
-            payload = self.payloads.pop()
-
-            # block until all payloads are ready to send
-            async with self.cond:
-                self.cond.notify_all()
-            while self.payloads:
-                async with self.cond:
-                    await self.cond.wait()
-
-            writer.write(payload)
-            await writer.drain()
-
-            writer.close()
-
-    alerts = list(reversed(list(get_supplier(superseded_packets()))))
-    assert alerts[0].pps[0]["jd"] == alerts[1].pps[0]["jd"]
-    candids = [alert.pps[0]["candid"] for alert in alerts]
-    assert candids[0] < candids[1]
-
-    assert dev_context.db.get_collection("t0").find_one({}) is None
-
-    messages = [pickle.dumps(alert) for alert in alerts]
-
-    server = await asyncio.start_server(
-        Distributor(messages), "127.0.0.1", unused_tcp_port
-    )
-    serve = asyncio.create_task(server.start_serving())
-
-    try:
-        tasks = [
-            run_ingester(dev_context.config.get(), unused_tcp_port)
-            for _ in range(len(messages))
-        ]
-        returns = await asyncio.gather(*tasks)
-    finally:
-        serve.cancel()
-
-    ingester = _make_ingester(dev_context)
-
-    without = lambda d, ignored_keys: {
-        k: v for k, v in d.items() if not k in ignored_keys
+@pytest.mark.parametrize("ordering", list(itertools.permutations(range(3))))
+def test_superseded_candidates_concurrent(mock_context, superseded_alerts, ordering):
+    directive = {
+        "channel": "EXAMPLE_TNS_MSIP",
+        "ingest": {
+            "mux": {
+                "unit": "ZiMongoMuxer",
+                "combine": [
+                    {
+                        "unit": "ZiT1Combiner",
+                    }
+                ],
+            },
+        },
     }
 
-    for candid, dps in returns:
-        alert = alerts[candids.index(candid)]
+    alerts = list(reversed(list(superseded_alerts())))
+    assert alerts[0].pps[0]["jd"] == alerts[1].pps[0]["jd"]
+    candids = [alert.pps[0]["candid"] for alert in alerts]
 
-        # ensure that returned datapoints match the shaped alert content, save
-        # for tags, which can't be known from a single alert
-        assert [without(dp, {"tag"}) for dp in dps if dp["_id"] > 0] == sorted(
-            [
-                without(ingester.project(dp), {"tag"})
-                for dp in ingester.pp_shaper.process(copy.deepcopy(alert.pps))
-            ],
-            key=lambda pp: pp["body"]["jd"],
-        ), "photopoints match alert content (except tags)"
-        assert [without(dp, {"tag"}) for dp in dps if dp["_id"] < 0] == sorted(
-            [
-                without(ingester.project(dp), {"tag"})
-                for dp in ingester.ul_shaper.process(copy.deepcopy(alert.uls))
-            ],
-            key=lambda pp: pp["body"]["jd"],
-        ), "upper limits match alert content (except tags)"
+    ingesters = [
+        get_handler(mock_context, [IngestDirective(**directive)], i)
+        for i in range(len(alerts))
+    ]
 
-    t0 = dev_context.db.get_collection("t0")
+    assert len(alerts) == 3
+
+    def _ingest(indexes: list[int]):
+        for i in indexes:
+            next(iter(ingesters[i]._mux_cache.values())).index = i
+            ingesters[i].ingest(
+                alerts[i].dps, filter_results=[(0, True)], stock_id=alerts[i].stock_id
+            )
+            ingesters[i].updates_buffer.push_updates()
+
+    # simulate real-world race conditions by running an entire ingestion immediately after
+    # one ingester retrieves existing datapoints, but before it pushes any updates
+    #
+    # this creates sequences like the following:
+    # 0 begin 1391345455815015017
+    # 2 begin 1391345455815015019
+    # 1 begin 1391345455815015018
+    # 1 end  1391345455815015018
+    # 2 end  1391345455815015019
+    # 0 end  1391345455815015017
+    def ingest(indexes: list[int], interleave=True):
+        if interleave and len(indexes) > 1:
+            with before_after.after(
+                "ampel.ztf.ingest.ZiMongoMuxer.ZiMongoMuxer._get_dps",
+                lambda *args: ingest(indexes[1:], interleave),
+            ):
+                _ingest(indexes[:1])
+        else:
+            _ingest(indexes)
+
+    ingest(ordering)
+
+    t0 = mock_context.db.get_collection("t0")
 
     def assert_superseded(old, new):
-        doc = t0.find_one({"_id": old})
+        doc = t0.find_one({"id": old})
+        meta = doc.get("meta", [])
         assert (
-            "SUPERSEDED" in doc["tag"] and new in doc["newId"]
+            "SUPERSEDED" in doc["tag"]
+            and len(
+                [
+                    m
+                    for m in doc.get("meta", [])
+                    if m.get("tag") == "SUPERSEDED"
+                    and m.get("extra", {}).get("newId") == new
+                ]
+            )
+            == 1
         ), f"candid {old} superseded by {new}"
 
     assert_superseded(candids[0], candids[1])
+    assert_superseded(candids[0], candids[2])
     assert_superseded(candids[1], candids[2])
     assert (
-        "SUPERSEDED" not in t0.find_one({"_id": candids[2]})["tag"]
+        "SUPERSEDED" not in t0.find_one({"id": candids[2]})["tag"]
     ), f"candid {candids[2]} not superseded"

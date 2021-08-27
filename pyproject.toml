@@ -62,6 +62,7 @@ mypy = "^0.910"
 pytest-timeout = "^1.4.2"
 pytest-asyncio = "^0.15.1"
 types-requests = "^2.25.0"
+before_after = "^1.0.1"
 
 [tool.poetry.extras]
 archive = ["ampel-ztf-archive"]
