@@ -4,7 +4,7 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 16.07.2021
-# Last Modified Date: 16.07.2021
+# Last Modified Date: 31.08.2021
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from typing import Dict, List, Any, Literal
@@ -27,6 +27,8 @@ class ZTFProcessLocalAlerts(AbsProcessorTemplate):
 
 	extension: Literal['json', 'avro'] = "json"
 
+	supplier: str = 'ZiAlertSupplier'
+
  	#: T2 units to trigger when transient is updated. Dependencies of tied
 	#: units will be added automatically.
 	t2_compute: List[T2Compute] = []
@@ -44,7 +46,7 @@ class ZTFProcessLocalAlerts(AbsProcessorTemplate):
 				config = config,
 				t2_compute = self.t2_compute,
 				supplier = {
-					'unit': 'ZiAlertSupplier',
+					'unit': self.supplier,
 					'config': {
 						'deserialize': self.extension,
 						'loader': {
