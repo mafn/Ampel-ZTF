@@ -92,7 +92,7 @@ docs = ["Sphinx (>=3.5.1,<5.0.0)", "sphinx-autodoc-typehints (>=1.11.1,<2.0.0)",
 
 [[package]]
 name = "ampel-ztf-archive"
-version = "0.7.1"
+version = "0.8.0a0"
 description = "ZTF alert archive for the Ampel system"
 category = "main"
 optional = true
@@ -812,7 +812,7 @@ light-curve = ["light-curve-python"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.10"
-content-hash = "3274af7cb63ca6fec3dba483862b539ed79a908dc02f6dd3e3488c5586d25842"
+content-hash = "ee9d4f20ecc9bd7ea2aca76c14ad6d58c43a322ed9ee7fd9ce5331391003d8a7"
 
 [metadata.files]
 aiohttp = [
@@ -871,8 +871,8 @@ ampel-photometry = [
     {file = "ampel_photometry-0.8.0a0-py3-none-any.whl", hash = "sha256:71910ad837b521a70ebd9703ae035a6b81f3f1bf513a97907793e1a62dafe059"},
 ]
 ampel-ztf-archive = [
-    {file = "ampel-ztf-archive-0.7.1.tar.gz", hash = "sha256:30b2f00f4e75a0bd0259f1ab3ecd2eec5fd9a9d28ea6884b2f0c4a0bf9d54e1b"},
-    {file = "ampel_ztf_archive-0.7.1-py3-none-any.whl", hash = "sha256:426605b2965232c0e7575b1e16aaf86d504066d3a681e6c5e9dc082623f5b3f5"},
+    {file = "ampel-ztf-archive-0.8.0a0.tar.gz", hash = "sha256:d08062ca7177c348164410d48b7a5bf633c9890f47018f201137b38c352108ac"},
+    {file = "ampel_ztf_archive-0.8.0a0-py3-none-any.whl", hash = "sha256:0e188d0a31a601de8e1e681efa5262dc40b3aed853a11767516d326dd3c8b44d"},
 ]
 argcomplete = [
     {file = "argcomplete-1.12.3-py2.py3-none-any.whl", hash = "sha256:291f0beca7fd49ce285d2f10e4c1c77e9460cf823eef2de54df0c0fec88b0d81"},
