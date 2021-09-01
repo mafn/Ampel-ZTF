@@ -51,7 +51,7 @@ class PhotoAlertPlotter:
 			return None
 		stamp = alert.data['cutouts'][which]
 		with gzip.open(io.BytesIO(stamp), 'rb') as f:
-			raw = fits.open(io.BytesIO(f.read()))[0].data
+			raw = fits.open(f)[0].data
 			if scaler is not None:
 				scaler(raw)		# TODO: some astropy.visualization stuff do not like this
 			else:
