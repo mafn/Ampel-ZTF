@@ -24,6 +24,7 @@ unit:
 - ampel.ztf.base.CatalogMatchFilter
 - ampel.ztf.t2.T2LightCurveSummary
 - ampel.ztf.t2.T2CatalogMatch
+- ampel.ztf.t2.T2LightCurveFeatures
 - ampel.ztf.t3.skyportal.SkyPortalPublisher
 
 # Aux units
