@@ -39,7 +39,7 @@ class T2LightCurveFeatures(AbsLightCurveT2Unit):
             *(getattr(light_curve, k)(**(v or {})) for k, v in self.features.items())
         )
 
-    def run(self, lightcurve: LightCurve) -> UBson:
+    def process(self, lightcurve: LightCurve) -> UBson:
         result = {}
         for fid, band in self.bands.items():
             if (
