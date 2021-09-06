@@ -1,5 +1,8 @@
+from ampel.config.AmpelConfig import AmpelConfig
+from ampel.core.UnitLoader import UnitLoader
 from ampel.model.ingest.FilterModel import FilterModel
 from ampel.model.ingest.MuxModel import MuxModel
+from ampel.model.ProcessModel import ProcessModel
 import pytest
 import yaml
 from pathlib import Path
@@ -12,7 +15,11 @@ from ampel.log.AmpelLogger import AmpelLogger
 def logger():
     return AmpelLogger.get_logger()
 
-def test_alert_only(logger, first_pass_config):
+@pytest.fixture
+def unit_loader(first_pass_config):
+    return UnitLoader(AmpelConfig(first_pass_config, freeze=True), db=None, provenance=False)
+
+def test_alert_only(logger, first_pass_config, unit_loader: UnitLoader):
     template = ZTFLegacyChannelTemplate(
         **{
             "channel": "EXAMPLE_TNS_MSIP",
@@ -26,13 +33,17 @@ def test_alert_only(logger, first_pass_config):
     )
     process = template.get_processes(logger=logger, first_pass_config=first_pass_config)[0]
     assert process["tier"] == 0
-    directive = IngestDirective(**process["processor"]["config"]["directives"][0])
+    with unit_loader.validate_unit_models():
+        directive = IngestDirective(**process["processor"]["config"]["directives"][0])
     assert isinstance(directive.filter, FilterModel)
     assert isinstance(directive.ingest.mux, MuxModel)
     assert len(directive.ingest.mux.combine) == 1
     assert len(units := directive.ingest.mux.combine[0].state_t2) == 1
     assert units[0].unit == "T2LightCurveSummary"
     assert directive.ingest.combine is None
+
+    with unit_loader.validate_unit_models():
+        ProcessModel(**(process | {"version": 0}))
 
 def test_alert_t2(logger, first_pass_config):
     """

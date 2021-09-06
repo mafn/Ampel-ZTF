@@ -89,24 +89,31 @@ class ZTFLegacyChannelTemplate(AbsEasyChannelTemplate):
 		else:
 			muxer = None
 
+		supplier = {
+			"unit": "ZiAlertSupplier",
+			"config": {
+				"loader": {
+					"unit": "UWAlertLoader",
+					"config": {
+						**first_pass_config["resource"]["ampel-ztf/kafka"],
+						**{"stream": self.template},
+					},
+				}
+			}
+		}
+
 		ret.insert(
 			0,
 			self.craft_t0_process(
 				first_pass_config,
 				controller="ZTFAlertStreamController",
-				supplier="ZiAlertSupplier",
+				supplier=supplier,
 				shaper="ZiDataPointShaper",
 				muxer=muxer,
 				combiner="ZiT1Combiner",
 			),
 		)
 
-		ret[0]["processor"]["config"]["loader"] = {
-			"unit": "UWAlertLoader",
-			"config": {
-				**first_pass_config["resource"]["ampel-ztf/kafka"],
-				**{"stream": self.template},
-			},
-		}
+
 
 		return ret
