@@ -39,7 +39,7 @@ from typing import (
 from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.metrics.AmpelMetricsRegistry import AmpelMetricsRegistry
-from ampel.abstract.Secret import Secret
+from ampel.secret.NamedSecret import NamedSecret
 from ampel.protocol.LoggerProtocol import LoggerProtocol
 from ampel.enum.DocumentCode import DocumentCode
 from ampel.util.collections import ampel_iter
@@ -188,7 +188,7 @@ class SkyPortalClient(AmpelBaseModel):
     #: Base URL of SkyPortal server
     base_url: BaseHttpUrl
     #: API token
-    token: Secret[str]
+    token: NamedSecret[str]
     #: Maximum number of in-flight requests
     max_parallel_connections: int = 1
 

@@ -14,7 +14,7 @@ import nest_asyncio
 from pydantic.tools import parse_obj_as
 
 from ampel.struct.AmpelBuffer import AmpelBuffer
-from ampel.abstract.Secret import Secret
+from ampel.secret.NamedSecret import NamedSecret
 from ampel.abstract.AbsBufferComplement import AbsBufferComplement
 from ampel.ztf.t3.skyportal.SkyPortalClient import (
     BaseHttpUrl,
@@ -31,7 +31,7 @@ class FritzReport(SkyPortalClient, AbsBufferComplement):
     #: Base URL of SkyPortal server
     base_url: BaseHttpUrl = parse_obj_as(BaseHttpUrl, "https://fritz.science")
     #: API token
-    token: Secret[str] = {"key": "fritz/jno/ampelbot"}  # type: ignore[assignment]
+    token: NamedSecret[str] = NamedSecret(label="fritz/jno/ampelbot")
 
     async def get_catalog_item(
         self, names: Tuple[str, ...]

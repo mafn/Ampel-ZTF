@@ -39,7 +39,7 @@ class ZiArchiveMuxer(AbsT0Muxer):
     history_days: int
 
     shaper: Union[UnitModel, str] = "ZiDataPointShaper"
-    archive_token: Secret[str] = NamedSecret(label="ztf/archive/token")
+    archive_token: NamedSecret[str] = NamedSecret(label="ztf/archive/token")
 
     # Standard projection used when checking DB for existing PPS/ULS
     projection: Dict[str, int] = {
