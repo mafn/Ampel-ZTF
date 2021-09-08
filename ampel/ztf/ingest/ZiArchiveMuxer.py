@@ -11,7 +11,7 @@ from ampel.abstract.AbsT0Unit import AbsT0Unit
 from ampel.alert.PhotoAlert import PhotoAlert
 from ampel.content.DataPoint import DataPoint
 from ampel.core.UnitLoader import CT
-from ampel.abstract.Secret import Secret
+from ampel.secret.Secret import Secret
 from ampel.secret.NamedSecret import NamedSecret
 from ampel.model.UnitModel import UnitModel
 from ampel.types import ChannelId, StockId

@@ -36,7 +36,7 @@ class ZTFAlertArchiver(AbsOpsUnit):
     timeout: int = 300
     #: URI of postgres server hosting the archive
     archive_uri: str
-    archive_auth: NamedSecret[Dict[str, str]] = NamedSecret(label="ztf/archive/writer")
+    archive_auth: NamedSecret[dict] = NamedSecret(label="ztf/archive/writer")
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
