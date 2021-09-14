@@ -35,6 +35,17 @@ unit:
 - ampel.ztf.util.ZTFIdMapper
 - ampel.ztf.ingest.ZiCompilerOptions
 
+alias:
+  t2:
+    '%FIRST_ZTF_PHOTOPOINT':
+      filter: PPSFilter
+      sort: jd
+      select: first
+    '%FIRST_ZTF_UPPER_LIMIT':
+      filter: ULSFilter
+      sort: jd
+      select: first
+
 template:
   ztf_uw_private: ampel.template.ZTFLegacyChannelTemplate
   ztf_uw_public: ampel.template.ZTFLegacyChannelTemplate
