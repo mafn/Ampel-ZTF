@@ -14,9 +14,7 @@ T2LightCurveFeatures = pytest.importorskip("ampel.ztf.t2.T2LightCurveFeatures")
 def lightcurve():
     path = str(Path(__file__).parent/"test-data"/"ZTF20abyfpze.avro")
 
-    supplier = ZiAlertSupplier(deserialize="avro")
-    supplier.set_alert_source(FileAlertLoader(files=[path]))
-    return ZTFAlert.to_lightcurve(pal=next(supplier))
+    return ZTFAlert.to_lightcurve(file_path=path)
 
 def test_features(lightcurve):
     t2 = T2LightCurveFeatures.T2LightCurveFeatures(logger=logging.getLogger())
