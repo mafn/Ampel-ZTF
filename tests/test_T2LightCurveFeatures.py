@@ -18,6 +18,6 @@ def lightcurve(mock_context):
 
 def test_features(lightcurve):
     t2 = T2LightCurveFeatures.T2LightCurveFeatures(logger=logging.getLogger())
-    result = t2.run(lightcurve)
+    result = t2.process(lightcurve)
     for prefix in t2.extractor.names:
         assert any(k.startswith(prefix) for k in result)
