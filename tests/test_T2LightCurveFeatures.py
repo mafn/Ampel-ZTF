@@ -11,7 +11,7 @@ from ampel.alert.load.TarAlertLoader import TarAlertLoader
 T2LightCurveFeatures = pytest.importorskip("ampel.ztf.t2.T2LightCurveFeatures")
 
 @pytest.fixture
-def lightcurve():
+def lightcurve(mock_context):
     path = str(Path(__file__).parent/"test-data"/"ZTF20abyfpze.avro")
 
     return ZTFAlert.to_lightcurve(file_path=path)

@@ -30,7 +30,7 @@ class ZTFAlert:
 		"""
 		als = ZiAlertSupplier(
 			deserialize="avro",
-			loader=UnitModel(unit="FileAlertLoader", config={"files": file_path})
+			loader=UnitModel(unit="FileAlertLoader", config={"files": [file_path]})
 		)
 
 		return next(als)
