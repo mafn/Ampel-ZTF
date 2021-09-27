@@ -12,7 +12,6 @@ from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.types import StockId
 from ampel.abstract.AbsT0Unit import AbsT0Unit
 from ampel.content.DataPoint import DataPoint
-from ampel.log.AmpelLogger import AmpelLogger
 from ampel.ztf.ingest.tags import tags
 
 
