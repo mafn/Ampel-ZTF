@@ -19,30 +19,30 @@ speedups = ["aiodns", "brotlipy", "cchardet"]
 
 [[package]]
 name = "ampel-alerts"
-version = "0.8.0a2"
+version = "0.8.0a3"
 description = "Alert support for the Ampel system"
 category = "main"
 optional = false
 python-versions = ">=3.9,<3.10"
 
 [package.dependencies]
-ampel-core = ">=0.8.0-alpha.2,<0.9.0"
-ampel-interface = ">=0.8.0-alpha.0,<0.9.0"
-ampel-photometry = ">=0.8.0-alpha.0,<0.9.0"
+ampel-core = ">=0.8.0-alpha.10,<0.9.0"
+ampel-interface = ">=0.8.0-alpha.9,<0.9.0"
+ampel-photometry = ">=0.8.0-alpha.1,<0.9.0"
 
 [package.extras]
 docs = ["Sphinx (>=3.5.1,<5.0.0)", "sphinx-autodoc-typehints (>=1.11.1,<2.0.0)", "tomlkit (>=0.7.0,<0.8.0)"]
 
 [[package]]
 name = "ampel-core"
-version = "0.8.0a8"
+version = "0.8.0a11"
 description = "Asynchronous and Modular Platform with Execution Layers"
 category = "main"
 optional = false
 python-versions = ">=3.9,<3.10"
 
 [package.dependencies]
-ampel-interface = "0.8.0-alpha.5"
+ampel-interface = ">=0.8.0-alpha.12,<0.9.0"
 prometheus-client = ">=0.10,<0.12"
 psutil = ">=5.8.0,<6.0.0"
 pydantic = ">=1.8.1,<2.0.0"
@@ -61,7 +61,7 @@ docs = ["Sphinx (>=3.5.1,<5.0.0)", "sphinx-press-theme (>=0.5.1,<0.9.0)", "sphin
 
 [[package]]
 name = "ampel-interface"
-version = "0.8.0a5"
+version = "0.8.0a12"
 description = "Base classes for the Ampel analysis platform"
 category = "main"
 optional = false
@@ -77,15 +77,15 @@ docs = ["Sphinx (>=3.5.1,<4.0.0)", "sphinx-autodoc-typehints (>=1.11.1,<2.0.0)",
 
 [[package]]
 name = "ampel-photometry"
-version = "0.8.0a0"
+version = "0.8.0a1"
 description = "Photometry add-on for the Ampel system"
 category = "main"
 optional = false
 python-versions = ">=3.9,<3.10"
 
 [package.dependencies]
-ampel-core = ">=0.8.0-alpha.1,<0.9.0"
-ampel-interface = ">=0.8.0-alpha.0,<0.9.0"
+ampel-core = ">=0.8.0-alpha.10,<0.9.0"
+ampel-interface = ">=0.8.0-alpha.9,<0.9.0"
 
 [package.extras]
 docs = ["Sphinx (>=3.5.1,<5.0.0)", "sphinx-autodoc-typehints (>=1.11.1,<2.0.0)", "tomlkit (>=0.7.0,<0.8.0)"]
@@ -812,7 +812,7 @@ light-curve = ["light-curve-python"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.10"
-content-hash = "ee9d4f20ecc9bd7ea2aca76c14ad6d58c43a322ed9ee7fd9ce5331391003d8a7"
+content-hash = "1f77b9abf3cb85ed8b5bf4b65b504e6a2833d378bc9786703f4b672b8cd8c77b"
 
 [metadata.files]
 aiohttp = [
@@ -855,20 +855,20 @@ aiohttp = [
     {file = "aiohttp-3.7.4.post0.tar.gz", hash = "sha256:493d3299ebe5f5a7c66b9819eacdcfbbaaf1a8e84911ddffcdc48888497afecf"},
 ]
 ampel-alerts = [
-    {file = "ampel-alerts-0.8.0a2.tar.gz", hash = "sha256:552c086fa101aa6116115b3b8d1c70f6a1022a8a63eb614ae9173dd2ace915c9"},
-    {file = "ampel_alerts-0.8.0a2-py3-none-any.whl", hash = "sha256:7d433826cc2fe9fe0276a878d723f9f6c1fbd38867c792a68782ce020ec30929"},
+    {file = "ampel-alerts-0.8.0a3.tar.gz", hash = "sha256:4f5373e6c12e4d664fa54fcdad99741bfd378f0038f2e06b1cdad56353f4dc8f"},
+    {file = "ampel_alerts-0.8.0a3-py3-none-any.whl", hash = "sha256:0b676c7845276a135c6116a6bf40088677fe7d32f0fc226b0bb165df1e2299f0"},
 ]
 ampel-core = [
-    {file = "ampel-core-0.8.0a8.tar.gz", hash = "sha256:26406cb5f276755c4d7d1d15b91fe31b50926e52ada62d4237d62971f8100f12"},
-    {file = "ampel_core-0.8.0a8-py3-none-any.whl", hash = "sha256:7f23973bb83115f665a3656cced76048f2afb572b9cb83ca87e469cf0d5db6ea"},
+    {file = "ampel-core-0.8.0a11.tar.gz", hash = "sha256:ce981fda241be19a62fd603b5a3b24d68c03ce0af076eaa7b6c480faf20d04d3"},
+    {file = "ampel_core-0.8.0a11-py3-none-any.whl", hash = "sha256:f6aef2dc5b3229f13dc02b80345868e3877e4393c7e80c2208b042e6be44bd85"},
 ]
 ampel-interface = [
-    {file = "ampel-interface-0.8.0a5.tar.gz", hash = "sha256:76a1ef0bff8901a1e15afd91163a62d54c47307e1ae4ece3508395417c313b34"},
-    {file = "ampel_interface-0.8.0a5-py3-none-any.whl", hash = "sha256:3929885ef19a39e4bd5a3c241c257d64263b25a4042d058498f5ec78f938516b"},
+    {file = "ampel-interface-0.8.0a12.tar.gz", hash = "sha256:dbe3f5d3f2f6a07327a8f5a7569a835e69fcbe13eee80d2329f6535a221cde73"},
+    {file = "ampel_interface-0.8.0a12-py3-none-any.whl", hash = "sha256:b02bedec85bb80cf1cc0a0e02722cad2eccd8edc5948723dbe3828f219cb5602"},
 ]
 ampel-photometry = [
-    {file = "ampel-photometry-0.8.0a0.tar.gz", hash = "sha256:68d7a3ec4b7d276872fc07d9cd751bb5b99c4753e3e5f740db4c268155695d79"},
-    {file = "ampel_photometry-0.8.0a0-py3-none-any.whl", hash = "sha256:71910ad837b521a70ebd9703ae035a6b81f3f1bf513a97907793e1a62dafe059"},
+    {file = "ampel-photometry-0.8.0a1.tar.gz", hash = "sha256:1f0962294381c863272c54dda9d4b197043e9bc330c29efb2393ec86fdb249f6"},
+    {file = "ampel_photometry-0.8.0a1-py3-none-any.whl", hash = "sha256:8a89a2a4ced28f10b06f50f365c9e37370e73981157e526691e8716043d9df95"},
 ]
 ampel-ztf-archive = [
     {file = "ampel-ztf-archive-0.8.0a0.tar.gz", hash = "sha256:d08062ca7177c348164410d48b7a5bf633c9890f47018f201137b38c352108ac"},
