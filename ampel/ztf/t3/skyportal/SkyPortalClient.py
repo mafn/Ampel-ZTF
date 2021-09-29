@@ -531,9 +531,8 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 self.logger.debug(f"posting {t2['unit']}")
                 try:
                     await self.post(
-                        "annotation",
+                        f"sources/{name}/annotation",
                         json={
-                            "obj_id": name,
                             "origin": f"ampel:{t2['unit']}",
                             "data": flatten_dict(result, ":"),
                         },
@@ -547,7 +546,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 self.logger.debug(f"updating {t2['unit']}")
                 try:
                     await self.put(
-                        f"annotation/{annotation['id']}",
+                        f"sources/{name}/annotation/{annotation['id']}",
                         json={
                             "obj_id": name,
                             "author_id": annotation["author_id"],
@@ -580,9 +579,8 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 self.logger.debug(f"posting {t2['unit']}")
                 try:
                     await self.post(
-                        "comment",
+                        f"sources/{name}/comment",
                         json={
-                            "obj_id": name,
                             "text": t2["unit"],
                             "attachment": {
                                 "body": encode_t2_body(t2),
@@ -602,7 +600,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 self.logger.debug(f"updating {t2['unit']}")
                 try:
                     await self.put(
-                        f"comment/{comment['id']}",
+                        f"sources/{name}/comment/{comment['id']}",
                         json={
                             "attachment_bytes": encode_t2_body(t2),
                             "author_id": comment["author_id"],
