@@ -54,14 +54,14 @@ ampel-photometry = "^0.8.0-alpha.1"
 ampel-alerts = "^0.8.0-alpha.3"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2.4"
+pytest = "^6.2.5"
 pytest-cov = "^2.12.1"
 pytest-mock = "^3.6.1"
 mongomock = "^3.23.0"
 mypy = "^0.910"
 pytest-timeout = "^1.4.2"
 pytest-asyncio = "^0.15.1"
-types-requests = "^2.25.0"
+types-requests = "^2.25.9"
 before_after = "^1.0.1"
 
 [tool.poetry.extras]
