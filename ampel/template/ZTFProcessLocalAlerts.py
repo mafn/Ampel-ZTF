@@ -4,7 +4,7 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 16.07.2021
-# Last Modified Date: 31.08.2021
+# Last Modified Date: 04.10.2021
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from typing import Dict, List, Any, Literal
@@ -18,7 +18,7 @@ from ampel.template.AbsEasyChannelTemplate import AbsEasyChannelTemplate
 
 class ZTFProcessLocalAlerts(AbsProcessorTemplate):
 	"""
-	Periodic summary process with sensible defaults for ZTF.
+	Returns adequate config for an alert consumer configured to process local alerts
 	"""
 
 	channel: ChannelId
@@ -28,6 +28,8 @@ class ZTFProcessLocalAlerts(AbsProcessorTemplate):
 	extension: Literal['json', 'avro'] = "json"
 
 	supplier: str = 'ZiAlertSupplier'
+
+	loader: str = 'DirAlertLoader'
 
  	#: T2 units to trigger when transient is updated. Dependencies of tied
 	#: units will be added automatically.
@@ -50,7 +52,7 @@ class ZTFProcessLocalAlerts(AbsProcessorTemplate):
 					'config': {
 						'deserialize': self.extension,
 						'loader': {
-							'unit': 'DirAlertLoader',
+							'unit': self.loader,
 							'config': {
 								'folder': self.folder,
 								'extension': f'*.{self.extension}'
