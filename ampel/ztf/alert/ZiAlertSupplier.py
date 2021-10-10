@@ -4,10 +4,11 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 23.04.2018
-# Last Modified Date: 29.07.2021
+# Last Modified Date: 04.10.2021
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
-from typing import Literal, List, Union, Callable, Any, Dict
+from typing import Literal, List, Union, Callable, Any, Dict, Optional
+from ampel.types import Tag
 from ampel.ztf.util.ZTFIdMapper import to_ampel_id
 from ampel.alert.PhotoAlert import PhotoAlert
 from ampel.view.ReadOnlyDict import ReadOnlyDict
@@ -37,7 +38,10 @@ class ZiAlertSupplier(BaseAlertSupplier[PhotoAlert]):
 		return self.shape_alert_dict(d)
 
 	@staticmethod
-	def shape_alert_dict(d: dict[str, Any]) -> PhotoAlert:
+	def shape_alert_dict(
+		d: dict[str, Any],
+		tag: Optional[Union[Tag, List[Tag]]] = None
+	) -> PhotoAlert:
 		if d['prv_candidates']:
 
 			pp = ReadOnlyDict(d['candidate'])
@@ -80,6 +84,7 @@ class ZiAlertSupplier(BaseAlertSupplier[PhotoAlert]):
 				pps = tuple(pps),
 				uls = tuple(uls) if uls else None,
 				name = d['objectId'], # ZTF name
+				tag = tag
 			)
 
 		datapoints = (ReadOnlyDict(d['candidate']),)
@@ -92,4 +97,5 @@ class ZiAlertSupplier(BaseAlertSupplier[PhotoAlert]):
 			pps = datapoints,
 			uls = None,
 			name = d['objectId'], # ZTF name
+			tag = tag
 		)
