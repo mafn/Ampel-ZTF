@@ -138,15 +138,15 @@ class ZiMongoMuxer(AbsT0Muxer):
 			if target := unique_dps_ids.get(key):
 				# insert id in order
 				idx = bisect_right(target, dp['id'])
-				if idx == 0 or target[idx-1] != dp['id']:
+				if idx == 0 or target[idx - 1] != dp['id']:
 					target.insert(idx, dp['id'])
 			else:
 				unique_dps_ids[key] = [dp['id']]
 
 		# build set of supersessions
 		for simultaneous_dps in unique_dps_ids.values():
-			for i in range(len(simultaneous_dps)-1):
-				ids_dps_superseded[simultaneous_dps[i]] = simultaneous_dps[i+1:]
+			for i in range(len(simultaneous_dps) - 1):
+				ids_dps_superseded[simultaneous_dps[i]] = simultaneous_dps[i + 1:]
 		
 		# build final set of datapoints, preferring entries loaded from the db
 		final_dps_set = {v[-1] for v in unique_dps_ids.values()}
@@ -172,7 +172,7 @@ class ZiMongoMuxer(AbsT0Muxer):
 				)
 
 				# point is newly superseded
-				if not 'SUPERSEDED' in dp['tag']:
+				if 'SUPERSEDED' not in dp['tag']:
 					# mutate a copy, as the default tag list may be shared between all datapoints
 					dp['tag'] = list(dp['tag'])
 					dp['tag'].append('SUPERSEDED') # type: ignore[attr-defined]
@@ -205,7 +205,7 @@ class ZiMongoMuxer(AbsT0Muxer):
 					)
 
 					# point is newly superseded
-					if not (has_tag := 'SUPERSEDED' in dp['tag']):
+					if 'SUPERSEDED' not in dp['tag']:
 						dp['tag'].append('SUPERSEDED') # type: ignore[attr-defined]
 						add_update(
 							UpdateOne(
