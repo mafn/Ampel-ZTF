@@ -4,7 +4,7 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 29.03.2021
-# Last Modified Date: 01.04.2021
+# Last Modified Date: 14.10.2021
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 import sys
@@ -82,10 +82,10 @@ class ZTFForcedPhotometryAlertSupplier(BaseAlertSupplier[PhotoAlert]):
 		:raises AttributeError: if alert_loader was not set properly before this method is called
 		"""
 
-		fd = next(self.alert_loader) # type: ignore
+		fd, tag = next(self.alert_loader) # type: ignore
 
-		# Convert first line comment "# key1: val1, key2: val2" into dict
-		cdict = {(x := el.split(b":"))[0].strip().decode(): x[1].strip().decode() for el in fd.readline()[1:].split(b",")}
+		# Convert first line comment "# key1: val1, key2: val2" into dict (requires loader binary_mode=False)
+		cdict = {(x := el.split(":"))[0].strip(): x[1].strip() for el in fd.readline()[1:].split(",")}
 		dict_reader = self.deserialize(fd) # type: ignore
 
 		all_ids = b""
@@ -125,5 +125,9 @@ class ZTFForcedPhotometryAlertSupplier(BaseAlertSupplier[PhotoAlert]):
 				byteorder=sys.byteorder
 			),
 			stock_id = to_ampel_id(cdict['name']), # internal ampel id
-			dps = t, pps = t, uls = tuple([]), name = cdict['name']
+			dps = t,
+			pps = t,
+			uls = tuple([]),
+			name = cdict['name'],
+			tag = tag
 		)
