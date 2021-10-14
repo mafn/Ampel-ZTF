@@ -4,7 +4,7 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 16.07.2021
-# Last Modified Date: 04.10.2021
+# Last Modified Date: 14.10.2021
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from typing import Dict, List, Any, Literal
@@ -22,14 +22,11 @@ class ZTFProcessLocalAlerts(AbsProcessorTemplate):
 	"""
 
 	channel: ChannelId
-
 	folder: str
-
-	extension: Literal['json', 'avro'] = "json"
-
+	extension: Literal['json', 'avro', 'csv'] = "json"
 	supplier: str = 'ZiAlertSupplier'
-
 	loader: str = 'DirAlertLoader'
+	binary_mode: bool = True
 
  	#: T2 units to trigger when transient is updated. Dependencies of tied
 	#: units will be added automatically.
@@ -55,7 +52,8 @@ class ZTFProcessLocalAlerts(AbsProcessorTemplate):
 							'unit': self.loader,
 							'config': {
 								'folder': self.folder,
-								'extension': f'*.{self.extension}'
+								'extension': f'*.{self.extension}',
+								'binary_mode': self.binary_mode
 							}
 						}
 					}
