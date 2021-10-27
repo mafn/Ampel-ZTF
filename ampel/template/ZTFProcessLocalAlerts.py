@@ -4,10 +4,10 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 16.07.2021
-# Last Modified Date: 14.10.2021
+# Last Modified Date: 26.10.2021
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
-from typing import Dict, List, Any, Literal
+from typing import Dict, List, Any, Literal, Optional
 from ampel.types import ChannelId
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.model.UnitModel import UnitModel
@@ -26,7 +26,7 @@ class ZTFProcessLocalAlerts(AbsProcessorTemplate):
 	extension: Literal['json', 'avro', 'csv'] = "json"
 	supplier: str = 'ZiAlertSupplier'
 	loader: str = 'DirAlertLoader'
-	binary_mode: bool = True
+	binary_mode: Optional[bool] = True
 
  	#: T2 units to trigger when transient is updated. Dependencies of tied
 	#: units will be added automatically.
@@ -37,6 +37,14 @@ class ZTFProcessLocalAlerts(AbsProcessorTemplate):
 
 	# Mandatory override
 	def get_model(self, config: Dict[str, Any], logger: AmpelLogger) -> UnitModel:
+
+		loader_conf: dict = {
+			'folder': self.folder,
+			'extension': f'*.{self.extension}'
+		}
+
+		if self.binary_mode is not None:
+			loader_conf['binary_mode'] = self.binary_mode
 
 		return UnitModel(
 			unit = 'AlertConsumer',
@@ -50,11 +58,7 @@ class ZTFProcessLocalAlerts(AbsProcessorTemplate):
 						'deserialize': self.extension,
 						'loader': {
 							'unit': self.loader,
-							'config': {
-								'folder': self.folder,
-								'extension': f'*.{self.extension}',
-								'binary_mode': self.binary_mode
-							}
+							'config': loader_conf
 						}
 					}
 				},
