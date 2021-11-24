@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 from astropy.time import Time
 from matplotlib.colors import Normalize
-from ampel.alert.PhotoAlert import PhotoAlert
+from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
 
 
 import logging
@@ -28,7 +28,7 @@ class PhotoAlertPlotter:
 
 
 	@staticmethod
-	def get_cutout_numeric(alert: PhotoAlert, which, scaler = None):
+	def get_cutout_numeric(alert: AmpelAlertProtocol, which, scaler = None):
 		"""
 		parse the cutout tstamp into numeric data
 
@@ -97,7 +97,7 @@ class PhotoAlertPlotter:
 		self.base_plot_name_tmpl = plot_name_tmpl
 
 
-	def save_current_plot(self, alert: PhotoAlert, file_name_template, **kwargs):
+	def save_current_plot(self, alert: AmpelAlertProtocol, file_name_template, **kwargs):
 
 		alert_props = {**alert.pps[0], 'objectId': alert.stock_id}
 		fname = file_name_template.format(**alert_props)
@@ -108,7 +108,7 @@ class PhotoAlertPlotter:
 		self.logger.info("current figure saved to %s" % fname)
 
 
-	def exit(self, alert: PhotoAlert, fine_name_tag, ax_given, ax, **kwargs):
+	def exit(self, alert: AmpelAlertProtocol, fine_name_tag, ax_given, ax, **kwargs):
 		"""
 			depeding on wheather you are in interactive mode, and if an
 			axes was given to the function, either show, save, or return axes.
@@ -125,7 +125,7 @@ class PhotoAlertPlotter:
 			return None
 
 
-	def scatter_plot(self, alert: PhotoAlert, p1, p2, ax = None, **kwargs):
+	def scatter_plot(self, alert: AmpelAlertProtocol, p1, p2, ax = None, **kwargs):
 		"""
 		Make scatter plot of parameter p1 vs p2.
 
@@ -162,7 +162,7 @@ class PhotoAlertPlotter:
 		return self.exit(alert, "scatter_%s_%s" % (p1, p2), ax_given, ax, **kwargs)
 
 
-	def plot_lc(self, alert: PhotoAlert, ax = None, time_format = 'datetime', **kwargs):
+	def plot_lc(self, alert: AmpelAlertProtocol, ax = None, time_format = 'datetime', **kwargs):
 		"""
 			plot lightcurve for transient: magpsf vs. jd
 		"""
@@ -233,7 +233,7 @@ class PhotoAlertPlotter:
 		return self.exit(alert, "lc_", ax_given, ax, **kwargs)
 
 
-	def plot_cutout(self, alert: PhotoAlert, which, ax = None, cb = False, scaler = None, **kwargs):
+	def plot_cutout(self, alert: AmpelAlertProtocol, which, ax = None, cb = False, scaler = None, **kwargs):
 		""" plot image cutout """
 
 		ax_given = True

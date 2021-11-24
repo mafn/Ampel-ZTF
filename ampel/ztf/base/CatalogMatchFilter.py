@@ -4,14 +4,14 @@
 # License           : BSD-3-Clause
 # Author            : Jakob van Santen <jakob.van.santen@desy.de>
 # Date              : 19.03.2021
-# Last Modified Date: 19.03.2021
+# Last Modified Date: 24.11.2021
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
-from typing import Literal, Dict, Any, Union, Optional, List, cast
+from typing import Literal, Dict, Any, Union, Optional, cast
 
 from ampel.abstract.AbsAlertFilter import AbsAlertFilter
-from ampel.alert.PhotoAlert import PhotoAlert
 from ampel.ztf.base.CatalogMatchUnit import CatalogMatchUnit, ConeSearchRequest
+from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
 from ampel.model.operator.AnyOf import AnyOf
 from ampel.model.operator.AllOf import AllOf
 from ampel.model.StrictModel import StrictModel
@@ -32,7 +32,7 @@ class ExtcatsMatchRequest(BaseCatalogMatchRequest):
 CatalogMatchRequest = Union[BaseCatalogMatchRequest, ExtcatsMatchRequest]
 
 
-class CatalogMatchFilter(CatalogMatchUnit, AbsAlertFilter[PhotoAlert]):
+class CatalogMatchFilter(CatalogMatchUnit, AbsAlertFilter):
     """
     A simple filter that matches candidates with a minimum number of previous
     detections (and the most recent detection from a positive subtraction)
@@ -78,14 +78,14 @@ class CatalogMatchFilter(CatalogMatchUnit, AbsAlertFilter[PhotoAlert]):
         else:
             return all(self.cone_search_any(ra, dec, [cast(ConeSearchRequest, r.dict()) for r in [selection]]))
 
-    def process(self, alert: PhotoAlert) -> bool:
+    def process(self, alert: AmpelAlertProtocol) -> bool:
 
         # cut on the number of previous detections
-        if len(alert.pps) < self.min_ndet:
+        if len([el for el in alert.datapoints if el['id'] > 0]) < self.min_ndet:
             return False
 
         # now consider the last photopoint
-        latest = alert.pps[0]
+        latest = alert.datapoints[0]
 
         # check if it a positive subtraction
         if not (
@@ -95,8 +95,8 @@ class CatalogMatchFilter(CatalogMatchUnit, AbsAlertFilter[PhotoAlert]):
             self.logger.debug("rejected: 'isdiffpos' is %s", latest["isdiffpos"])
             return False
 
-        latest = alert.pps[0]
-        ra, dec = latest["ra"], latest["dec"]
+        ra = latest["ra"]
+        dec = latest["dec"]
         if self.accept:
             if not self._evaluate_match(ra, dec, self.accept):
                 return False

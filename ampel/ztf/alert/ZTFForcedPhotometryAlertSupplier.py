@@ -4,7 +4,7 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 29.03.2021
-# Last Modified Date: 14.10.2021
+# Last Modified Date: 24.11.2021
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 import sys
@@ -12,9 +12,11 @@ from math import log10
 from bson import encode
 from hashlib import blake2b
 from typing import Literal
+from os.path import basename
 from ampel.ztf.util.ZTFIdMapper import to_ampel_id
-from ampel.alert.PhotoAlert import PhotoAlert
+from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
 from ampel.view.ReadOnlyDict import ReadOnlyDict
+from ampel.alert.AmpelAlert import AmpelAlert
 from ampel.alert.BaseAlertSupplier import BaseAlertSupplier
 
 dcast = {
@@ -59,10 +61,9 @@ dcast = {
 }
 
 
-class ZTFForcedPhotometryAlertSupplier(BaseAlertSupplier[PhotoAlert]):
+class ZTFForcedPhotometryAlertSupplier(BaseAlertSupplier):
 	"""
-	Iterable class that, for each alert payload provided by the underlying alert_loader,
-	returns an PhotoAlert instance.
+	Returns an AmpelAlert instance for each file path provided by the underlying alert loader.
 	"""
 
 	dpid: Literal['hash', 'inc'] = 'hash'
@@ -75,18 +76,19 @@ class ZTFForcedPhotometryAlertSupplier(BaseAlertSupplier[PhotoAlert]):
 		self.counter = 0 if self.dpid == "hash" else 1
 
 
-	def __next__(self) -> PhotoAlert:
+	def __next__(self) -> AmpelAlertProtocol:
 		"""
-		:returns: a dict with a structure that AlertConsumer understands
 		:raises StopIteration: when alert_loader dries out.
 		:raises AttributeError: if alert_loader was not set properly before this method is called
 		"""
 
-		fd, tag = next(self.alert_loader) # type: ignore
+		fpath = next(self.alert_loader) # type: ignore
+		with open(fpath, "r") as fd: # type: ignore
+			# Convert first line comment "# key1: val1, key2: val2" into dict (requires loader binary_mode=False)
+			cdict = {(x := el.split(":"))[0].strip(): x[1].strip() for el in fd.readline()[1:].split(",")}
+			dict_reader = self.deserialize(fd) # type: ignore
 
-		# Convert first line comment "# key1: val1, key2: val2" into dict (requires loader binary_mode=False)
-		cdict = {(x := el.split(":"))[0].strip(): x[1].strip() for el in fd.readline()[1:].split(",")}
-		dict_reader = self.deserialize(fd) # type: ignore
+		tags = basename(fpath).split(".")[1:-1] or None # type: ignore
 
 		all_ids = b""
 		pps = []
@@ -116,18 +118,13 @@ class ZTFForcedPhotometryAlertSupplier(BaseAlertSupplier[PhotoAlert]):
 		if not pps:
 			return self.__next__()
 
-		# Update stats
-		t = tuple(pps)
-
-		return PhotoAlert(
+		return AmpelAlert(
 			id = int.from_bytes( # alert id
 				blake2b(all_ids, digest_size=7).digest(),
 				byteorder=sys.byteorder
 			),
-			stock_id = to_ampel_id(cdict['name']), # internal ampel id
-			dps = t,
-			pps = t,
-			uls = tuple([]),
-			name = cdict['name'],
-			tag = tag
+			stock = to_ampel_id(cdict['name']), # internal ampel id
+			datapoints = tuple(pps),
+			extra = {'name': cdict['name']},
+			tag = tags
 		)

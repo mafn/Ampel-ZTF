@@ -2,7 +2,7 @@ import pytest
 from pathlib import Path
 import tarfile
 
-from ampel.alert.PhotoAlert import PhotoAlert
+from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
 from ampel.ztf.alert.PhotoAlertPlotter import PhotoAlertPlotter
 from ampel.ztf.dev.DevAlertConsumer import DevAlertConsumer
 
@@ -24,6 +24,6 @@ def test_PhotoAlertPlotter(recent_alerts):
 
     plotter = PhotoAlertPlotter(interactive=False)
 
-    alert: PhotoAlert = next(recent_alerts())
+    alert: AmpelAlertProtocol = next(recent_alerts())
 
     plotter.summary_plot(alert)

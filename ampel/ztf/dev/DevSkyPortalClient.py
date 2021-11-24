@@ -14,7 +14,7 @@ from typing import Sequence, Dict, Any, Generator
 
 import numpy as np
 import requests
-from ampel.alert.PhotoAlert import PhotoAlert
+from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
 from astropy.io import fits
 from astropy.time import Time
 from matplotlib.colors import Normalize
@@ -135,7 +135,7 @@ class DevSkyPortalClient:
     def post(self, endpoint, **kwargs):
         return self.request("POST", endpoint, **kwargs)
 
-    def make_photometry(self, alert: PhotoAlert, after=-float("inf")):
+    def make_photometry(self, alert: AmpelAlertProtocol, after=-float("inf")):
         base = {
             "obj_id": alert.id,
             "alert_id": alert.pps[0]["candid"],
@@ -170,7 +170,7 @@ class DevSkyPortalClient:
                 content = {k: None for k in ("mag", "magerr", "ra", "dec")}
             yield {**base, **content}
 
-    def post_alert(self, alert: PhotoAlert):
+    def post_alert(self, alert: AmpelAlertProtocol):
         # cribbed from https://github.com/dmitryduev/kowalski-dev/blob/882a7fa7e292676dd4864212efa696fb99668b4c/kowalski/alert_watcher_ztf.py#L801-L937
         after = -float("inf")
         if (candidate := self.get(f"/candidates/{alert.id}"))["status"] != "success":

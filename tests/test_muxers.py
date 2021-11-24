@@ -1,11 +1,7 @@
-import itertools
-import os
+import itertools, os, fastavro, pytest, before_after
 from collections import defaultdict
+from pymongo.operations import UpdateOne
 
-import fastavro
-import pytest
-import before_after
-from ampel.alert.PhotoAlert import PhotoAlert
 from ampel.core.AmpelContext import AmpelContext
 from ampel.dev.UnitTestAlertSupplier import UnitTestAlertSupplier
 from ampel.ingest.ChainedIngestionHandler import ChainedIngestionHandler
@@ -17,12 +13,11 @@ from ampel.mongo.update.DBUpdatesBuffer import DBUpdatesBuffer
 from ampel.mongo.update.MongoT0Ingester import MongoT0Ingester
 from ampel.secret.AmpelVault import AmpelVault
 from ampel.secret.DictSecretProvider import DictSecretProvider
-from ampel.util import concurrent
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
 from ampel.ztf.ingest.ZiArchiveMuxer import ZiArchiveMuxer
 from ampel.ztf.ingest.ZiCompilerOptions import ZiCompilerOptions
 from ampel.ztf.ingest.ZiDataPointShaper import ZiDataPointShaperBase
-from pymongo.operations import UpdateOne
+from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
 
 
 def _make_muxer(context: AmpelContext, model: UnitModel) -> ZiArchiveMuxer:
@@ -161,15 +156,15 @@ def test_get_earliest_jd(
     for i in [2, 0, 1]:
 
         datapoints = ZiDataPointShaperBase().process(
-            alert_list[i].dps, stock=alert_list[i].stock_id
+            alert_list[i].datapoints, stock=alert_list[i].stock
         )
         compiler.add(datapoints, channel="EXAMPLE_TNS_MSIP", trace_id=0)
         compiler.commit(ingester, 0)
 
         assert mock_archive_muxer.get_earliest_jd(
-            alert_list[i].stock_id, datapoints
+            alert_list[i].stock, datapoints
         ) == min(
-            dp["jd"] for dp in alert_list[i].pps
+            dp["jd"] for dp in [el for el in alert_list[i].datapoints if el['id'] > 0]
         ), "min jd is min jd of last ingested alert"
 
 
@@ -219,7 +214,7 @@ def test_integration(patch_mongo, dev_context, mock_get_photopoints, alerts):
     alert_list = list(alerts())
 
     handler.ingest(
-        alert_list[1].dps, stock_id=alert_list[1].stock_id, filter_results=[(0, True)]
+        alert_list[1].datapoints, stock_id=alert_list[1].stock, filter_results=[(0, True)]
     )
     handler.updates_buffer.push_updates()
 
@@ -228,20 +223,20 @@ def test_integration(patch_mongo, dev_context, mock_get_photopoints, alerts):
     # note lack of handler.updates_buffer.push_updates() here;
     # ZiAlertContentIngester has to be synchronous to deal with superseded
     # photopoints
-    assert t0.count_documents({}) == len(alert_list[1].dps) + len(
-        alert_list[0].dps
+    assert t0.count_documents({}) == len(alert_list[1].datapoints) + len(
+        alert_list[0].datapoints
     ), "datapoints ingested for archival alert"
 
     assert t1.count_documents({}) == 2, "two compounds produced"
     assert t2.count_documents({}) == 2, "two t2 docs produced"
 
     assert t2.find_one(
-        {"link": t1.find_one({"dps": {"$size": len(alert_list[1].dps)}})["link"]}
+        {"link": t1.find_one({"dps": {"$size": len(alert_list[1].datapoints)}})["link"]}
     )
     assert t2.find_one(
         {
             "link": t1.find_one(
-                {"dps": {"$size": len(alert_list[1].dps) + len(alert_list[0].dps)}}
+                {"dps": {"$size": len(alert_list[1].datapoints) + len(alert_list[0].datapoints)}}
             )["link"]
         }
     )
@@ -283,13 +278,15 @@ def test_deduplication(
     alert_list = list(itertools.islice(alerts(), 1, None))
 
     ingester, compiler = t0_ingester
+    filter_pps = [{'attribute': 'id', 'operator': '>', 'value': 0}]
+    filter_uls = [{'attribute': 'id', 'operator': '<', 'value': 0}]
 
     pps = []
     uls = []
     for alert in alert_list:
-        pps += alert.get_tuples("jd", "fid", data="pps")
-        uls += alert.get_values("jd", data="uls")
-        datapoints = ZiDataPointShaperBase().process(alert.dps, stock=alert.stock_id)
+        pps += alert.get_tuples("jd", "fid", filters=filter_pps)
+        uls += alert.get_values("jd", filters=filter_uls)
+        datapoints = ZiDataPointShaperBase().process(alert.datapoints, stock=alert.stock)
         compiler.add(datapoints, "channychan", 0)
 
     assert len(set(uls)) < len(uls), "Some upper limits duplicated in alerts"
@@ -322,8 +319,8 @@ def ingestion_handler_with_mongomuxer(mock_context):
     return get_handler(mock_context, [IngestDirective(**directive)])
 
 
-def _ingest(handler: ChainedIngestionHandler, alert: PhotoAlert):
-    handler.ingest(alert.dps, filter_results=[(0, True)], stock_id=alert.stock_id)
+def _ingest(handler: ChainedIngestionHandler, alert: AmpelAlertProtocol):
+    handler.ingest(alert.datapoints, filter_results=[(0, True)], stock_id=alert.stock)
     len(updates := handler.updates_buffer.db_ops["t1"]) == 1
     update = updates[0]
     assert isinstance(update, UpdateOne)
@@ -341,7 +338,7 @@ def test_out_of_order_ingestion(
     """
 
     alert_list = list(alerts())
-    assert alert_list[-1].pps[0]["jd"] > alert_list[-2].pps[0]["jd"]
+    assert alert_list[-1].datapoints[0]["jd"] > alert_list[-2].datapoints[0]["jd"]
 
     in_order = {
         idx: _ingest(ingestion_handler_with_mongomuxer, alert_list[idx])
@@ -373,8 +370,8 @@ def test_superseded_candidates_serial(
 
     alerts = list(reversed(list(superseded_alerts())))
 
-    assert alerts[0].pps[0]["jd"] == alerts[1].pps[0]["jd"]
-    candids = [alert.pps[0]["candid"] for alert in alerts]
+    assert alerts[0].datapoints[0]["jd"] == alerts[1].datapoints[0]["jd"]
+    candids = [alert.datapoints[0]["candid"] for alert in alerts]
     assert candids[0] < candids[1]
 
     dps = [_ingest(ingestion_handler_with_mongomuxer, alert) for alert in alerts]
@@ -403,8 +400,8 @@ def test_superseded_candidates_concurrent(mock_context, superseded_alerts, order
     }
 
     alerts = list(reversed(list(superseded_alerts())))
-    assert alerts[0].pps[0]["jd"] == alerts[1].pps[0]["jd"]
-    candids = [alert.pps[0]["candid"] for alert in alerts]
+    assert alerts[0].datapoints[0]["jd"] == alerts[1].datapoints[0]["jd"]
+    candids = [alert.datapoints[0]["candid"] for alert in alerts]
 
     ingesters = [
         get_handler(mock_context, [IngestDirective(**directive)], i)
@@ -417,7 +414,7 @@ def test_superseded_candidates_concurrent(mock_context, superseded_alerts, order
         for i in indexes:
             next(iter(ingesters[i]._mux_cache.values())).index = i
             ingesters[i].ingest(
-                alerts[i].dps, filter_results=[(0, True)], stock_id=alerts[i].stock_id
+                alerts[i].datapoints, filter_results=[(0, True)], stock_id=alerts[i].stock
             )
             ingesters[i].updates_buffer.push_updates()
 

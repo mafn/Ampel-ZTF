@@ -4,50 +4,47 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 23.04.2018
-# Last Modified Date: 04.10.2021
+# Last Modified Date: 24.11.2021
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
-from typing import Literal, List, Union, Callable, Any, Dict, Optional
+from typing import Literal, List, Union, Any, Optional
 from ampel.types import Tag
 from ampel.ztf.util.ZTFIdMapper import to_ampel_id
-from ampel.alert.PhotoAlert import PhotoAlert
 from ampel.view.ReadOnlyDict import ReadOnlyDict
 from ampel.alert.BaseAlertSupplier import BaseAlertSupplier
+from ampel.alert.AmpelAlert import AmpelAlert
 
 
-class ZiAlertSupplier(BaseAlertSupplier[PhotoAlert]):
+class ZiAlertSupplier(BaseAlertSupplier):
 	"""
-	Iterable class that, for each alert payload provided by the underlying alert_loader,
-	returns an PhotoAlert instance.
+	Returns an AmpelAlert instance for each alert payload provided by the underlying alert_loader
 	"""
 
 	# Override default
-	deserialize: Union[None, Literal["avro", "json"], Callable[[Any], Dict]] = "avro"
+	deserialize: Optional[Literal["avro", "json"]] = "avro"
 
 
-	def __next__(self) -> PhotoAlert:
+	def __next__(self) -> AmpelAlert:
 		"""
-		:returns: a dict with a structure that AlertConsumer understands
 		:raises StopIteration: when alert_loader dries out.
 		:raises AttributeError: if alert_loader was not set properly before this method is called
 		"""
-		d = self.deserialize(
+		d = self._deserialize(
 			next(self.alert_loader) # type: ignore
 		)
 
 		return self.shape_alert_dict(d)
 
+
 	@staticmethod
 	def shape_alert_dict(
 		d: dict[str, Any],
 		tag: Optional[Union[Tag, List[Tag]]] = None
-	) -> PhotoAlert:
+	) -> AmpelAlert:
+
 		if d['prv_candidates']:
 
-			pp = ReadOnlyDict(d['candidate'])
-			dps: List[ReadOnlyDict] = [pp]
-			uls: List[ReadOnlyDict] = []
-			pps: List[ReadOnlyDict] = [pp]
+			dps: List[ReadOnlyDict] = [ReadOnlyDict(d['candidate'])]
 
 			for el in d['prv_candidates']:
 
@@ -69,33 +66,24 @@ class ZiAlertSupplier(BaseAlertSupplier[PhotoAlert]):
 					)
 
 					dps.append(ul)
-					uls.append(ul)
 
 				# PhotoPoint
 				else:
-					pp = ReadOnlyDict(el)
-					dps.append(pp)
-					pps.append(pp)
+					dps.append(ReadOnlyDict(el))
 
-			return PhotoAlert(
+			return AmpelAlert(
 				id = d['candid'], # alert id
-				stock_id = to_ampel_id(d['objectId']), # internal ampel id
-				dps = tuple(dps),
-				pps = tuple(pps),
-				uls = tuple(uls) if uls else None,
-				name = d['objectId'], # ZTF name
+				stock = to_ampel_id(d['objectId']), # internal ampel id
+				datapoints = tuple(dps),
+				extra = ReadOnlyDict({'name': d['objectId']}), # ZTF name
 				tag = tag
 			)
 
-		datapoints = (ReadOnlyDict(d['candidate']),)
-
 		# No "previous candidate"
-		return PhotoAlert(
+		return AmpelAlert(
 			id = d['candid'], # alert id
-			stock_id = to_ampel_id(d['objectId']), # internal ampel id
-			dps = datapoints,
-			pps = datapoints,
-			uls = None,
-			name = d['objectId'], # ZTF name
+			stock = to_ampel_id(d['objectId']), # internal ampel id
+			datapoints = (ReadOnlyDict(d['candidate']), ),
+			extra = ReadOnlyDict({'name': d['objectId']}), # ZTF name
 			tag = tag
 		)

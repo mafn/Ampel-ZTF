@@ -8,7 +8,7 @@ from requests_toolbelt.sessions import BaseUrlSession
 
 from ampel.abstract.AbsT0Muxer import AbsT0Muxer
 from ampel.abstract.AbsT0Unit import AbsT0Unit
-from ampel.alert.PhotoAlert import PhotoAlert
+from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
 from ampel.content.DataPoint import DataPoint
 from ampel.core.UnitLoader import CT
 from ampel.secret.Secret import Secret

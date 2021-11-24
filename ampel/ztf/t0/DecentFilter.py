@@ -12,12 +12,12 @@ from typing import Optional, Union, Dict, Any
 from astropy.table import Table
 from astropy.coordinates import SkyCoord
 
-from ampel.alert.PhotoAlert import PhotoAlert
 from ampel.abstract.AbsAlertFilter import AbsAlertFilter
 from ampel.ztf.base.CatalogMatchUnit import CatalogMatchUnit
+from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
 
 
-class DecentFilter(CatalogMatchUnit, AbsAlertFilter[PhotoAlert]):
+class DecentFilter(CatalogMatchUnit, AbsAlertFilter):
     """
     General-purpose filter with ~ 0.6% acceptance. It selects alerts based on:
     * numper of previous detections
@@ -227,7 +227,7 @@ class DecentFilter(CatalogMatchUnit, AbsAlertFilter[PhotoAlert]):
             # among the remaining sources there is anything with
             # significant proper motion or parallax measurement
             if (
-                any(gaia_tab["FLAG_PMRA"] == True)
+                any(gaia_tab["FLAG_PMRA"] == True) # noqa
                 or any(gaia_tab["FLAG_PMDec"] == True)
                 or any(gaia_tab["FLAG_Plx"] == True)
             ):
@@ -236,7 +236,7 @@ class DecentFilter(CatalogMatchUnit, AbsAlertFilter[PhotoAlert]):
         return False
 
     # Override
-    def process(self, alert: PhotoAlert) -> Optional[Union[bool, int]]:
+    def process(self, alert: AmpelAlertProtocol) -> Optional[Union[bool, int]]:
         """
         Mandatory implementation.
         To exclude the alert, return *None*
@@ -248,14 +248,14 @@ class DecentFilter(CatalogMatchUnit, AbsAlertFilter[PhotoAlert]):
         # CUT ON THE HISTORY OF THE ALERT
         #################################
 
-        npp = len(alert.pps)
-        if npp < self.min_ndet:
+        pps = [el for el in alert.datapoints if el['id'] > 0]
+        if len(pps) < self.min_ndet:
             # self.logger.debug("rejected: %d photopoints in alert (minimum required %d)"% (npp, self.min_ndet))
-            self.logger.info(None, extra={"nDet": npp})
+            self.logger.info(None, extra={"nDet": len(pps)})
             return None
 
         # cut on length of detection history
-        detections_jds = alert.get_values("jd")
+        detections_jds = (el['jd'] for el in pps)
         det_tspan = max(detections_jds) - min(detections_jds)
         if not (self.min_tspan <= det_tspan <= self.max_tspan):
             # self.logger.debug("rejected: detection history is %.3f d long, \
@@ -266,7 +266,7 @@ class DecentFilter(CatalogMatchUnit, AbsAlertFilter[PhotoAlert]):
         # IMAGE QUALITY CUTS
         ####################
 
-        latest = alert.pps[0]
+        latest = alert.datapoints[0]
         if not self._alert_has_keys(latest):
             return None
 
@@ -302,12 +302,10 @@ class DecentFilter(CatalogMatchUnit, AbsAlertFilter[PhotoAlert]):
 
         # cut on archive length
         if 'jdendhist' in latest.keys() and 'jdstarthist' in latest.keys():
-            archive_tspan = latest['jdendhist'] - latest['jdstarthist'] 
+            archive_tspan = latest['jdendhist'] - latest['jdstarthist']
             if not (self.min_archive_tspan < archive_tspan < self.max_archive_tspan):
                 self.logger.info(None, extra={'archive_tspan': archive_tspan})
                 return None
-
-
 
 
         # ASTRONOMY
@@ -343,7 +341,6 @@ class DecentFilter(CatalogMatchUnit, AbsAlertFilter[PhotoAlert]):
             self.logger.info(None, extra={"gaiaIsStar": True})
             return None
 
-        # congratulation alert! you made it!
         # self.logger.debug("Alert %s accepted. Latest pp ID: %d"%(alert.tran_id, latest['candid']))
         self.logger.debug("Alert accepted", extra={"latestPpId": latest["candid"]})
 

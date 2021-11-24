@@ -4,12 +4,12 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 26.05.2020
-# Last Modified Date: 27.05.2020
+# Last Modified Date: 24.11.2021
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from struct import pack
 from typing import Optional, ClassVar, Tuple, Literal, Union, BinaryIO, List, Generator
-from ampel.alert.AmpelAlert import AmpelAlert
+from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
 from ampel.alert.reject.BaseAlertRegister import BaseAlertRegister
 from ampel.util.register import reg_iter
 
@@ -20,15 +20,15 @@ class ZTFGeneralAlertRegister(BaseAlertRegister):
 	That is because:
 	In []: 2**36 < to_ampel_id('ZTF33zzzzzzz') < 2**37
 	Out[]: True
-	Logs: alert_id, filter_res, stock_id
+	Logs: alert_id, filter_res, stock
 	"""
 
 	__slots__: ClassVar[Tuple[str, ...]] = '_write', # type: ignore
 	struct: Literal['<QB5s'] = '<QB5s'
 
 
-	def file(self, alert: AmpelAlert, filter_res: Optional[int] = None) -> None:
-		self._write(pack('<QBQ', alert.id, filter_res or 0, alert.stock_id)[:-3])
+	def file(self, alert: AmpelAlertProtocol, filter_res: Optional[int] = None) -> None:
+		self._write(pack('<QBQ', alert.id, filter_res or 0, alert.stock)[:-3])
 
 
 	@classmethod

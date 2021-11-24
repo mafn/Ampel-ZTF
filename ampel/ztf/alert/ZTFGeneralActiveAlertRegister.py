@@ -4,12 +4,12 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 26.05.2020
-# Last Modified Date: 27.05.2020
+# Last Modified Date: 24.11.2021
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from struct import pack
 from typing import Optional, ClassVar, Tuple, Union, BinaryIO, List, Sequence, Set, Dict, Any
-from ampel.alert.AmpelAlert import AmpelAlert
+from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
 from ampel.ztf.alert.ZTFGeneralAlertRegister import ZTFGeneralAlertRegister
 from ampel.log.AmpelLogger import AmpelLogger
 
@@ -20,7 +20,7 @@ class ZTFGeneralActiveAlertRegister(ZTFGeneralAlertRegister):
 	That is because:
 	In []: 2**36 < to_ampel_id('ZTF33zzzzzzz') < 2**37
 	Out[]: True
-	Logs: alert_id, filter_res, stock_id
+	Logs: alert_id, filter_res, stock
 	"""
 
 	__slots__: ClassVar[Tuple[str, ...]] = '_write', 'alert_max', 'alert_min', 'stock_max', 'stock_min' # type: ignore
@@ -43,7 +43,7 @@ class ZTFGeneralActiveAlertRegister(ZTFGeneralAlertRegister):
 			self.ztf_years = set(hdr['ztf_years'])
 
 
-	def file(self, alert: AmpelAlert, filter_res: Optional[int] = None) -> None:
+	def file(self, alert: AmpelAlertProtocol, filter_res: Optional[int] = None) -> None:
 
 		alid = alert.id
 		if alid > self.alert_max:
@@ -51,7 +51,7 @@ class ZTFGeneralActiveAlertRegister(ZTFGeneralAlertRegister):
 		if alid < self.alert_min:
 			self.alert_min = alid
 
-		sid = alert.stock_id
+		sid = alert.stock
 		if sid > self.stock_max: # type: ignore[operator]
 			self.stock_max = sid # type: ignore[assignment]
 		if sid < self.stock_min: # type: ignore[operator]
@@ -60,7 +60,7 @@ class ZTFGeneralActiveAlertRegister(ZTFGeneralAlertRegister):
 		if (sid & 15) not in self.ztf_years: # type: ignore[operator]
 			self.ztf_years.add(sid & 15) # type: ignore[operator]
 
-		self._write(pack('<QBQ', alert.id, filter_res or 0, alert.stock_id)[:-3])
+		self._write(pack('<QBQ', alert.id, filter_res or 0, alert.stock)[:-3])
 
 
 	def close(self, **kwargs) -> None: # type: ignore[override]

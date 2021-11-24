@@ -9,7 +9,7 @@
 
 
 import logging, time, sys, fastavro, tarfile # type: ignore[import]
-from ampel.alert.PhotoAlert import PhotoAlert
+from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
 
 
 class DevAlertConsumer:
