@@ -9,7 +9,7 @@
 
 
 import logging, time, sys, fastavro, tarfile # type: ignore[import]
-from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
+from ampel.alert.AmpelAlert import AmpelAlert
 
 
 class DevAlertConsumer:
@@ -24,17 +24,17 @@ class DevAlertConsumer:
 
 		alert_filter:
 			Instance of a t0 alert filter. It must implement method:
-			process(<instance of ampel.alert.PhotoAlert>)
+			process(<instance of ampel.protocol.AmpelAlertProtocol>)
 
 		save:
 			either
-				* 'alert': references to PhotoAlert instances will be kept
+				* 'alert': references to AmpelAlert instances will be kept
 				* 'objectId': only objectId strings will be kept
 				* 'candid': only candid integers will be kept
 				* 'objectId_candid': tuple ('candid', 'objectId') will be kept
 
 		include_cutouts:
-			If True, PhotoAlert will contain cutouts images as attribute 'cutouts'
+			If True, AmpelAlert will contain cutouts images as attribute 'cutouts'
 		"""
 		logging.basicConfig( # Setup logger
 			format = '%(asctime)s %(levelname)s %(message)s',
@@ -62,7 +62,7 @@ class DevAlertConsumer:
 	def process_tar(self, tar_file_path, tar_mode="r:gz", iter_max=5000, iter_offset=0):
 		""" For each alert: load, filter, ingest """
 		self.tar_file = tarfile.open(tar_file_path, mode=tar_mode)
-		return self._run(self.tar_file, self._unpack, iter_max=iter_max, iter_offset=iter_offset	)
+		return self._run(self.tar_file, self._unpack, iter_max=iter_max, iter_offset=iter_offset)
 
 
 	def process_loaded_alerts(self, list_of_alerts, iter_max=5000):
@@ -122,15 +122,18 @@ class DevAlertConsumer:
 			self.tar_file.extractfile(tar_info)
 		)
 
-		# Create PhotoAlert instance
-		alert = PhotoAlert(
-			alert_content['objectId'],
-			alert_content['objectId'],
-			*self._shape(alert_content)
+		dps, pps, uls = self._shape(alert_content)
+
+		# Create AmpelAlert instance
+		alert = AmpelAlert(
+			id = alert_content['objectId'],
+			stock = alert_content['objectId'],
+			datapoints = dps,
+			extra = {'pps': pps, 'uls': uls}
 		)
 
 		if self.include_cutouts:
-			alert.data['cutouts'] = {
+			alert.extra['cutouts'] = {
 				k: alert_content.get(k).get('stampData')
 				for k in ('cutoutScience', 'cutoutTemplate', 'cutoutDifference')
 				if alert_content.get(k)
