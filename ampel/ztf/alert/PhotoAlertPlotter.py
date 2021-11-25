@@ -35,9 +35,6 @@ class PhotoAlertPlotter:
 		Parameters:
 		----------
 
-		alert:
-			instance of `ampel.alert.PhotoAlert`
-
 		which: `str`
 			either 'cutoutScience', 'cutoutTemplate', or 'cutoutDiffernce'.
 
@@ -47,9 +44,9 @@ class PhotoAlertPlotter:
 		"""
 
 		# TODO: check that alert is a DevPhotoAlert
-		if not which in alert.data['cutouts']:
+		if alert.extra is None or 'cutouts' not in alert.extra or which not in alert.extra['cutouts']:
 			return None
-		stamp = alert.data['cutouts'][which]
+		stamp = alert.extra['cutouts'][which]
 		with gzip.open(io.BytesIO(stamp), 'rb') as f:
 			raw = fits.open(f)[0].data
 			if scaler is not None:
@@ -99,7 +96,7 @@ class PhotoAlertPlotter:
 
 	def save_current_plot(self, alert: AmpelAlertProtocol, file_name_template, **kwargs):
 
-		alert_props = {**alert.pps[0], 'objectId': alert.stock_id}
+		alert_props = {**alert.datapoints[0], 'objectId': alert.stock}
 		fname = file_name_template.format(**alert_props)
 		fname = os.path.join(self.plot_dir, fname)
 		fig = plt.gcf()
@@ -110,8 +107,8 @@ class PhotoAlertPlotter:
 
 	def exit(self, alert: AmpelAlertProtocol, fine_name_tag, ax_given, ax, **kwargs):
 		"""
-			depeding on wheather you are in interactive mode, and if an
-			axes was given to the function, either show, save, or return axes.
+		depending on whether you are in interactive mode, and if an
+		axes was given to the function, either show, save, or return axes.
 		"""
 
 		if ax_given:
@@ -131,10 +128,6 @@ class PhotoAlertPlotter:
 
 		Parameters:
 		-----------
-
-		alert:
-			instance of `ampel.t0.PhotoAlert` or `ampel.t0.DevPhotoAlert`
-
 		p1[2]: `str`
 			x[y]-axis parameter (ex: p1 = 'obs_date', p2 = 'magpsf' to plot lightcurve)
 
@@ -164,19 +157,25 @@ class PhotoAlertPlotter:
 
 	def plot_lc(self, alert: AmpelAlertProtocol, ax = None, time_format = 'datetime', **kwargs):
 		"""
-			plot lightcurve for transient: magpsf vs. jd
+		plot lightcurve for transient: magpsf vs. jd
 		"""
 
 		# dectections and upper limits
 		mag, mag_err, jd, fid = [
-			np.array(x) for x in zip(*alert.get_ntuples(["magpsf", "sigmapsf", "jd", "fid"]))
+			np.array(x) for x in zip(
+				*alert.get_ntuples(
+					["magpsf", "sigmapsf", "jd", "fid"],
+					filters=[{'attribute': 'magpsf', 'operator': 'is not', 'value': None}]
+				)
+			)
 		]
 
-		# if there are upper limits get them
 		has_ulim = False
-		if alert.uls is not None and len(alert.uls) > 0:
-			ul_mag_lim, ul_jd, ul_fid = [
-				np.array(x) for x in zip(*alert.get_ntuples(["diffmaglim", "jd", "fid"], data='uls'))]
+		if r := alert.get_ntuples(
+			["diffmaglim", "jd", "fid"],
+			filters=[{'attribute': 'magpsf', 'operator': 'is', 'value': None}]
+		):
+			ul_mag_lim, ul_jd, ul_fid = [np.array(x) for x in zip(*r)]
 			has_ulim = True
 
 		# convert the time
@@ -248,11 +247,11 @@ class PhotoAlertPlotter:
 				img_data,
 				norm=Normalize(*np.percentile(img_data[mask], [0.5, 99.5])),
 				aspect="auto"
-				)
+			)
 			if cb:
 				plt.colorbar(im, ax=ax)
 		else:
-			ax.text(0.5,0.5,'no data', va='center', ha='center', transform=ax.transAxes)
+			ax.text(0.5, 0.5, 'no data', va='center', ha='center', transform=ax.transAxes)
 		ax.set_title(which)
 		ax.set_yticks([])
 		ax.set_xticks([])
@@ -268,9 +267,9 @@ class PhotoAlertPlotter:
 
 	def summary_plot(self, alert, ps1_cutout=False, **kwargs):
 		"""
-			create a summary plot for the given alert. This includes
-			the three cutouts (ref, sci, diff), the light curve, and
-			some printouts of several alert parameters.
+		create a summary plot for the given alert. This includes
+		the three cutouts (ref, sci, diff), the light curve, and
+		some printouts of several alert parameters.
 		"""
 
 		# set figure and axis
@@ -296,7 +295,7 @@ class PhotoAlertPlotter:
 		self.plot_lc(alert, ax=axlc)
 
 		# add text
-		candidate = alert.pps[0]
+		candidate = alert.datapoints[0]
 		info = []
 		for k in ["rb", "fwhm", "nbad", "elong", "isdiffpos", "ssdistnr"]:
 			try:
@@ -307,7 +306,7 @@ class PhotoAlertPlotter:
 			for k in [k for k in candidate.keys() if kk in k]:
 				info.append("%s : %.2f" % (k, float(candidate.get(k))))
 		fig.text(0.68, 0.6, " \n".join(info), va="top", fontsize="medium", color="0.3")
-		fig.text(0.01, 0.99, alert.stock_id, fontsize="x-large", color="k", va="top", ha="left")
+		fig.text(0.01, 0.99, alert.stock, fontsize="x-large", color="k", va="top", ha="left")
 
 		# now go back to previous state
 		if self.interactive:
