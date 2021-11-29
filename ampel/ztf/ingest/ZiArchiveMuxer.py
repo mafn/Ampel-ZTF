@@ -152,7 +152,7 @@ class ZiArchiveMuxer(AbsT0Muxer):
             return dps, dps
 
         alert = ZiAlertSupplier.shape_alert_dict(history)
-        dps_to_insert = self._shaper.process(alert.dps, stock_id)
+        dps_to_insert = self._shaper.process(alert.datapoints, stock_id)
 
         extended_dps = sorted(dps_to_insert + dps, key=lambda d: d["body"]["jd"])
 

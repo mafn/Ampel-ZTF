@@ -160,7 +160,7 @@ class PhotoAlertPlotter:
 		plot lightcurve for transient: magpsf vs. jd
 		"""
 
-		# dectections and upper limits
+		# dectections
 		mag, mag_err, jd, fid = [
 			np.array(x) for x in zip(
 				*alert.get_ntuples(
@@ -265,7 +265,7 @@ class PhotoAlertPlotter:
 		pass
 
 
-	def summary_plot(self, alert, ps1_cutout=False, **kwargs):
+	def summary_plot(self, alert: AmpelAlertProtocol, ps1_cutout=False, **kwargs):
 		"""
 		create a summary plot for the given alert. This includes
 		the three cutouts (ref, sci, diff), the light curve, and
@@ -299,12 +299,12 @@ class PhotoAlertPlotter:
 		info = []
 		for k in ["rb", "fwhm", "nbad", "elong", "isdiffpos", "ssdistnr"]:
 			try:
-				info.append("%s : %.3f" % (k, candidate.get(k)))
+				info.append("%s : %.3f" % (k, candidate.get(k, np.nan)))
 			except Exception:
 				info.append("%s : %s" % (k, candidate.get(k)))
 		for kk in ["objectidps", "sgscore", "distpsnr", "srmag"]:
 			for k in [k for k in candidate.keys() if kk in k]:
-				info.append("%s : %.2f" % (k, float(candidate.get(k))))
+				info.append("%s : %.2f" % (k, float(candidate.get(k, np.nan))))
 		fig.text(0.68, 0.6, " \n".join(info), va="top", fontsize="medium", color="0.3")
 		fig.text(0.01, 0.99, alert.stock, fontsize="x-large", color="k", va="top", ha="left")
 

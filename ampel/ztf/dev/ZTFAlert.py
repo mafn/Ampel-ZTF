@@ -24,7 +24,7 @@ class ZTFAlert:
 
 
 	@classmethod
-	def to_alert(cls, file_path: str) -> AmpelAlertProtocol:
+	def to_alert(cls, file_path: str) -> AmpelAlert:
 		"""
 		Creates and returns an instance of ampel.view.LightCurve using a ZTF IPAC alert.
 		"""
@@ -33,7 +33,9 @@ class ZTFAlert:
 			loader=UnitModel(unit="FileAlertLoader", config={"files": [file_path]})
 		)
 
-		return next(als)
+		alert = next(als)
+		assert isinstance(alert, AmpelAlert)
+		return alert
 
 	@staticmethod
 	def _upper_limit_id(el: Dict[str, Any]) -> int:
@@ -57,6 +59,7 @@ class ZTFAlert:
 		if pal is None:
 			assert file_path is not None
 			pal = cls.to_alert(file_path)
+		assert pal is not None
 
 		# convert to DataPoint
 		dps = ZiDataPointShaperBase().process(pal.datapoints, pal.stock)
@@ -84,7 +87,8 @@ class ZTFAlert:
 
 		if alert is None:
 			assert file_path is not None
-			alert: AmpelAlertProtocol = cls.to_alert(file_path)
+			alert = cls.to_alert(file_path)
+		assert alert is not None
 		lc = cls.to_lightcurve(pal=alert)
 
 		datapoints: List[DataPoint] = []

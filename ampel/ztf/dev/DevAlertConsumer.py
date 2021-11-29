@@ -9,6 +9,7 @@
 
 
 import logging, time, sys, fastavro, tarfile # type: ignore[import]
+from typing import Any, Optional
 from ampel.alert.AmpelAlert import AmpelAlert
 
 
@@ -106,55 +107,51 @@ class DevAlertConsumer:
 		return iter_count - iter_offset
 
 
-	def _unpack(self, tar_info):
+	def _unpack(self, tar_info) -> Optional[AmpelAlert]:
 
 		# Reach end of archive
 		if tar_info is None:
 			self._logger.info("Reached end of tar files")
 			self.tar_file.close()
-			return
+			return None
 
 		if not tar_info.isfile():
-			return
+			return None
 
 		# deserialize extracted alert content
 		alert_content = self._deserialize(
 			self.tar_file.extractfile(tar_info)
 		)
 
-		dps, pps, uls = self._shape(alert_content)
-
-		# Create AmpelAlert instance
+		# Create alert instance
 		alert = AmpelAlert(
-			id = alert_content['objectId'],
-			stock = alert_content['objectId'],
-			datapoints = dps,
-			extra = {'pps': pps, 'uls': uls}
+			alert_content['candid'],
+			alert_content['objectId'],
+			self._shape(alert_content),
+			extra = {
+				'cutouts': {
+					k: alert_content.get(k).get('stampData')
+					for k in ('cutoutScience', 'cutoutTemplate', 'cutoutDifference')
+					if alert_content.get(k)
+				}
+			} if self.include_cutouts else None,
 		)
-
-		if self.include_cutouts:
-			alert.extra['cutouts'] = {
-				k: alert_content.get(k).get('stampData')
-				for k in ('cutoutScience', 'cutoutTemplate', 'cutoutDifference')
-				if alert_content.get(k)
-			}
 
 		return alert
 
 
-	def _filter(self, alert):
+	def _filter(self, alert: AmpelAlert):
 
 		filter_result = self._alert_filter.process(alert)
+		assert isinstance(alert.stock, str)
 		if filter_result is None or filter_result < 0:
 			self._logger.debug(
-				"- Rejecting %i (objectId: %s)" %
-				(alert.pps[0]['candid'], alert.stock_id)
+				f"- Rejecting {alert.id} (objectId: {alert.stock})"
 			)
 			target_array = self._rejected_alerts
 		else:
 			self._logger.debug(
-				"+ Ingesting %i (objectId: %s)" %
-				(alert.pps[0]['candid'], alert.stock_id)
+				f"+ Ingesting {alert.id} (objectId: {alert.stock})"
 			)
 			target_array = self._accepted_alerts
 
@@ -163,9 +160,9 @@ class DevAlertConsumer:
 		elif self.save == 'objectId':
 			target_array.append(alert.id)
 		elif self.save == 'candid':
-			target_array.append(alert.pps[0]['candid'])
+			target_array.append(alert.datapoints[0]['candid'])
 		elif self.save == 'objectId_candid':
-			target_array.append((alert.id, alert.pps[0]['candid']))
+			target_array.append((alert.id, alert.datapoints[0]['candid']))
 
 
 	def _deserialize(self, f):
@@ -173,16 +170,14 @@ class DevAlertConsumer:
 		return next(reader, None)
 
 
-	def _shape(self, alert_content):
+	def _shape(self, alert_content: dict[str, Any]) -> list[dict[str,Any]]:
 		"""
-		Returns datapoints, photopoints, upperlimits
+		Returns datapoints
 		"""
 
 		if alert_content.get('prv_candidates') is not None:
 			dps = [el for el in alert_content['prv_candidates']]
-			pps = [el for el in alert_content['prv_candidates'] if el.get('candid') is not None]
 			dps.insert(0, alert_content['candidate'])
-			pps.insert(0, alert_content['candidate'])
-			return dps, pps, [el for el in alert_content['prv_candidates'] if el.get('candid') is None]
+			return dps
 		else:
-			return [alert_content['candidate']], [alert_content['candidate']], None
+			return [alert_content['candidate']]

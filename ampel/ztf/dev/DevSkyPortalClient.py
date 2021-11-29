@@ -138,13 +138,13 @@ class DevSkyPortalClient:
     def make_photometry(self, alert: AmpelAlertProtocol, after=-float("inf")):
         base = {
             "obj_id": alert.id,
-            "alert_id": alert.pps[0]["candid"],
+            "alert_id": alert.datapoints[0]["candid"],
             "group_ids": [self.source["group"]],
             "instrument_id": self.source["instrument"],
             "magsys": "ab",
         }
         content = defaultdict(list)
-        for doc in self._transform_datapoints(alert.dps, after):
+        for doc in self._transform_datapoints(alert.datapoints, after):
             for k, v in doc.items():
                 content[k].append(v)
         return {**base, **content}
@@ -174,7 +174,7 @@ class DevSkyPortalClient:
         # cribbed from https://github.com/dmitryduev/kowalski-dev/blob/882a7fa7e292676dd4864212efa696fb99668b4c/kowalski/alert_watcher_ztf.py#L801-L937
         after = -float("inf")
         if (candidate := self.get(f"/candidates/{alert.id}"))["status"] != "success":
-            candidate = alert.pps[0]
+            candidate = alert.datapoints[0]
             alert_thin = {
                 "id": alert.id,
                 "ra": candidate.get("ra"),
