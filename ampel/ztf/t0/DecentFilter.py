@@ -248,14 +248,14 @@ class DecentFilter(CatalogMatchUnit, AbsAlertFilter):
         # CUT ON THE HISTORY OF THE ALERT
         #################################
 
-        pps = [el for el in alert.datapoints if el['id'] > 0]
+        pps = [el for el in alert.datapoints if el.get("candid") is not None]
         if len(pps) < self.min_ndet:
             # self.logger.debug("rejected: %d photopoints in alert (minimum required %d)"% (npp, self.min_ndet))
             self.logger.info(None, extra={"nDet": len(pps)})
             return None
 
         # cut on length of detection history
-        detections_jds = (el['jd'] for el in pps)
+        detections_jds = [el['jd'] for el in pps]
         det_tspan = max(detections_jds) - min(detections_jds)
         if not (self.min_tspan <= det_tspan <= self.max_tspan):
             # self.logger.debug("rejected: detection history is %.3f d long, \
