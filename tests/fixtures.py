@@ -18,6 +18,7 @@ from ampel.config.AmpelConfig import AmpelConfig
 from ampel.dev.DevAmpelContext import DevAmpelContext
 from ampel.secret.PotemkinSecretProvider import PotemkinSecretProvider
 from ampel.model.UnitModel import UnitModel
+from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
 
 
 @pytest.fixture
@@ -134,9 +135,36 @@ def forced_photometry_loader_model():
     return UnitModel(
         unit="TarAlertLoader",
         config={
-            "file_path": str(Path(__file__).parent / "test-data" / "alerts_2021720_programid1.tar.gz"),
+            "file_path": str(
+                Path(__file__).parent / "test-data" / "alerts_2021720_programid1.tar.gz"
+            ),
         },
     )
+
+
+@pytest.fixture
+def forced_photometry_alerts(mock_context, forced_photometry_loader_model):
+    supplier = ZiAlertSupplier(
+        deserialize="avro", loader=forced_photometry_loader_model
+    )
+    return supplier
+
+
+@pytest.fixture
+def upper_limit_alerts(mock_context, forced_photometry_loader_model):
+    supplier = ZiAlertSupplier(
+        deserialize="avro",
+        loader=UnitModel(
+            unit="TarAlertLoader",
+            config={
+                "file_path": str(
+                    Path(__file__).parent / "test-data" / "ZTF18abxhyqv.tar.gz"
+                )
+            },
+        ),
+    )
+    return supplier
+
 
 @pytest.fixture
 def ampel_logger():

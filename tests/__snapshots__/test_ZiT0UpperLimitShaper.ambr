@@ -1,0 +1,48 @@
+# name: test_id_stability[forced_photometry_alerts]
+  <class 'list'> [
+    <class 'list'> [
+      'ZTF_DP',
+      -8401630013622326164,
+    ],
+    <class 'list'> [
+      'ZTF_FP',
+      4991147366817558538,
+    ],
+    <class 'list'> [
+      'ZTF_FP',
+      2537755154193710639,
+    ],
+    <class 'list'> [
+      'ZTF_FP',
+      -2910199018425664100,
+    ],
+    <class 'list'> [
+      'ZTF_FP',
+      2047056588465319479,
+    ],
+  ]
+---
+# name: test_id_stability[upper_limit_alerts]
+  <class 'list'> [
+    <class 'list'> [
+      'ZTF_DP',
+      2344825665841831642,
+    ],
+    <class 'list'> [
+      'ZTF_UL',
+      -3942484602462584055,
+    ],
+    <class 'list'> [
+      'ZTF_UL',
+      1347655682051931692,
+    ],
+    <class 'list'> [
+      'ZTF_UL',
+      -3434488651513415193,
+    ],
+    <class 'list'> [
+      'ZTF_UL',
+      8238397291142546942,
+    ],
+  ]
+---
