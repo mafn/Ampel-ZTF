@@ -166,7 +166,7 @@ def test_get_earliest_jd(
         assert mock_archive_muxer.get_earliest_jd(
             alert_list[i].stock, datapoints
         ) == min(
-            dp["jd"] for dp in [el for el in alert_list[i].datapoints if el["id"] > 0]
+            dp["jd"] for dp in [el for el in alert_list[i].datapoints if el.get("candid")]
         ), "min jd is min jd of last ingested alert"
 
 
