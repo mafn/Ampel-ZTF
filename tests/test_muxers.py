@@ -1,4 +1,6 @@
 import itertools, os, fastavro, pytest, before_after
+from ampel.content.DataPoint import DataPoint
+from ampel.types import DataPointId
 from collections import defaultdict
 from pymongo.operations import UpdateOne
 
@@ -164,7 +166,7 @@ def test_get_earliest_jd(
         assert mock_archive_muxer.get_earliest_jd(
             alert_list[i].stock, datapoints
         ) == min(
-            dp["jd"] for dp in [el for el in alert_list[i].datapoints if el['id'] > 0]
+            dp["jd"] for dp in [el for el in alert_list[i].datapoints if el["id"] > 0]
         ), "min jd is min jd of last ingested alert"
 
 
@@ -177,7 +179,8 @@ def get_handler(context, directives, run_id=0) -> ChainedIngestionHandler:
         run_id=0,
         updates_buffer=updates_buffer,
         directives=directives,
-        compiler_opts=ZiCompilerOptions(),
+        # do not attempt to sort datapoint ids
+        compiler_opts=ZiCompilerOptions(t1={'tag': 'ZTF', 'sort': False}),
         shaper=UnitModel(unit="ZiDataPointShaper"),
         trace_id={},
         tier=0,
@@ -214,7 +217,9 @@ def test_integration(patch_mongo, dev_context, mock_get_photopoints, alerts):
     alert_list = list(alerts())
 
     handler.ingest(
-        alert_list[1].datapoints, stock_id=alert_list[1].stock, filter_results=[(0, True)]
+        alert_list[1].datapoints,
+        stock_id=alert_list[1].stock,
+        filter_results=[(0, True)],
     )
     handler.updates_buffer.push_updates()
 
@@ -236,7 +241,12 @@ def test_integration(patch_mongo, dev_context, mock_get_photopoints, alerts):
     assert t2.find_one(
         {
             "link": t1.find_one(
-                {"dps": {"$size": len(alert_list[1].datapoints) + len(alert_list[0].datapoints)}}
+                {
+                    "dps": {
+                        "$size": len(alert_list[1].datapoints)
+                        + len(alert_list[0].datapoints)
+                    }
+                }
             )["link"]
         }
     )
@@ -278,15 +288,17 @@ def test_deduplication(
     alert_list = list(itertools.islice(alerts(), 1, None))
 
     ingester, compiler = t0_ingester
-    filter_pps = [{'attribute': 'id', 'operator': '>', 'value': 0}]
-    filter_uls = [{'attribute': 'id', 'operator': '<', 'value': 0}]
+    filter_pps = [{"attribute": "id", "operator": ">", "value": 0}]
+    filter_uls = [{"attribute": "id", "operator": "<", "value": 0}]
 
     pps = []
     uls = []
     for alert in alert_list:
         pps += alert.get_tuples("jd", "fid", filters=filter_pps)
         uls += alert.get_values("jd", filters=filter_uls)
-        datapoints = ZiDataPointShaperBase().process(alert.datapoints, stock=alert.stock)
+        datapoints = ZiDataPointShaperBase().process(
+            alert.datapoints, stock=alert.stock
+        )
         compiler.add(datapoints, "channychan", 0)
 
     assert len(set(uls)) < len(uls), "Some upper limits duplicated in alerts"
@@ -321,7 +333,7 @@ def ingestion_handler_with_mongomuxer(mock_context):
 
 def _ingest(handler: ChainedIngestionHandler, alert: AmpelAlertProtocol):
     handler.ingest(alert.datapoints, filter_results=[(0, True)], stock_id=alert.stock)
-    len(updates := handler.updates_buffer.db_ops["t1"]) == 1
+    assert len(updates := handler.updates_buffer.db_ops["t1"]) == 1
     update = updates[0]
     assert isinstance(update, UpdateOne)
     dps = update._doc["$setOnInsert"]["dps"]
@@ -340,9 +352,13 @@ def test_out_of_order_ingestion(
     alert_list = list(alerts())
     assert alert_list[-1].datapoints[0]["jd"] > alert_list[-2].datapoints[0]["jd"]
 
+    ingestion_handler_with_mongomuxer.logger.info("in order")
     in_order = {
         idx: _ingest(ingestion_handler_with_mongomuxer, alert_list[idx])
         for idx in (-3, -1, -2)
+    }
+    in_order_dps: dict[DataPointId, DataPoint] = {
+        dp["id"]: dp for dp in mock_context.db.get_collection("t0").find()
     }
 
     # clean up mutations
@@ -350,13 +366,32 @@ def test_out_of_order_ingestion(
     mock_context.db.get_collection("t1").delete_many({})
     alert_list = list(alerts())
 
+    ingestion_handler_with_mongomuxer.logger.info("out of order")
     out_of_order = {
         idx: _ingest(ingestion_handler_with_mongomuxer, alert_list[idx])
         for idx in (-3, -2, -1)
     }
+    out_of_order_dps: dict[DataPointId, DataPoint] = {
+        dp["id"]: dp for dp in mock_context.db.get_collection("t0").find()
+    }
+
+    def resolve_dps(dps_ids, dps):
+        t0 = min(dp["body"]["jd"] for dp in dps.values())
+        return [
+            ((dp := dps[dp_id])["body"]["jd"], dp["body"].get("candid"))
+            for dp_id in dps_ids
+        ]
 
     for idx in sorted(in_order.keys()):
-        assert in_order[idx] == out_of_order[idx]
+        in_order_jds = [in_order_dps[id]["body"]["jd"] for id in in_order[idx]]
+        out_of_order_jds = [
+            out_of_order_dps[id]["body"]["jd"] for id in out_of_order[idx]
+        ]
+        assert in_order_jds == out_of_order_jds
+        assert out_of_order_jds == sorted(out_of_order_jds)
+        assert resolve_dps(in_order[idx], in_order_dps) == resolve_dps(
+            out_of_order[idx], out_of_order_dps
+        )
 
 
 def test_superseded_candidates_serial(
@@ -377,7 +412,7 @@ def test_superseded_candidates_serial(
     dps = [_ingest(ingestion_handler_with_mongomuxer, alert) for alert in alerts]
 
     pp_db = mock_context.db.get_collection("t0").find_one(
-        {"id": candids[0]},
+        {"body.candid": candids[0]},
     )
 
     assert "SUPERSEDED" in pp_db["tag"], f"{candids[0]} marked as superseded in db"
@@ -414,7 +449,9 @@ def test_superseded_candidates_concurrent(mock_context, superseded_alerts, order
         for i in indexes:
             next(iter(ingesters[i]._mux_cache.values())).index = i
             ingesters[i].ingest(
-                alerts[i].datapoints, filter_results=[(0, True)], stock_id=alerts[i].stock
+                alerts[i].datapoints,
+                filter_results=[(0, True)],
+                stock_id=alerts[i].stock,
             )
             ingesters[i].updates_buffer.push_updates()
 
@@ -443,16 +480,17 @@ def test_superseded_candidates_concurrent(mock_context, superseded_alerts, order
     t0 = mock_context.db.get_collection("t0")
 
     def assert_superseded(old, new):
-        doc = t0.find_one({"id": old})
+        doc = t0.find_one({"body.candid": old})
+        newdoc = t0.find_one({"body.candid": new})
         meta = doc.get("meta", [])
         assert (
             "SUPERSEDED" in doc["tag"]
             and len(
                 [
                     m
-                    for m in doc.get("meta", [])
+                    for m in meta
                     if m.get("tag") == "SUPERSEDED"
-                    and m.get("extra", {}).get("newId") == new
+                    and m.get("extra", {}).get("newId") == newdoc["id"]
                 ]
             )
             == 1
@@ -462,5 +500,5 @@ def test_superseded_candidates_concurrent(mock_context, superseded_alerts, order
     assert_superseded(candids[0], candids[2])
     assert_superseded(candids[1], candids[2])
     assert (
-        "SUPERSEDED" not in t0.find_one({"id": candids[2]})["tag"]
+        "SUPERSEDED" not in t0.find_one({"body.candid": candids[2]})["tag"]
     ), f"candid {candids[2]} not superseded"
