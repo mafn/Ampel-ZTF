@@ -111,6 +111,22 @@ class ZiMongoMuxer(AbsT0Muxer):
 			add_update = lambda op: ops.append(op)
 		else:
 			add_update = self.updates_buffer.add_t0_update
+		
+		# If completing states from the db, remove differential photometry from prv_candidates
+		# that corresponds to previously ingested alert photometry
+		if self.db_complete:
+			existing_candids = {candid: dp["tag"] for dp in dps_db if (candid := dp["body"].get("candid"))}
+			dps = [
+				dp
+				for dp in dps
+				if (
+					("candid" not in dp["body"])
+					or not (
+						("ZTF_ALERT" in existing_candids.get(dp["body"].get("candid"), []))
+						and ("ZTF_ALERT" not in dp["tag"])
+					)
+				)
+			]
 
 		# Create set with datapoint ids from alert
 		ids_dps_alert = {el['id'] for el in dps}

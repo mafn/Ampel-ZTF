@@ -44,6 +44,8 @@ class ZiDataPointShaperBase(AmpelBaseModel):
 
 			base_tags = tags[photo_dict['programid']][photo_dict['fid']]
 
+			is_prv_candidate = popitem(photo_dict, '_is_prv_candidate', False)
+
 			# Photopoint
 			if photo_dict.get('candid'):
 
@@ -59,7 +61,13 @@ class ZiDataPointShaperBase(AmpelBaseModel):
 				# Remove programpi (redundant with programid)
 				popitem(photo_dict, 'programpi', None)
 
-				ret_list.append(self._create_datapoint(stock, ["ZTF_DP"], photo_dict))
+				ret_list.append(
+					self._create_datapoint(
+						stock,
+						(["ZTF_ALERT"] if not is_prv_candidate else []) + ["ZTF_DP"],
+						photo_dict
+					)
+				)
 
 			elif "forcediffimflux" in photo_dict:
 				

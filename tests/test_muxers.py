@@ -1,4 +1,5 @@
 import itertools, os, fastavro, pytest, before_after
+from ampel.dev.DevAmpelContext import DevAmpelContext
 from ampel.content.DataPoint import DataPoint
 from ampel.types import DataPointId
 from collections import defaultdict
@@ -20,7 +21,7 @@ from ampel.ztf.ingest.ZiArchiveMuxer import ZiArchiveMuxer
 from ampel.ztf.ingest.ZiCompilerOptions import ZiCompilerOptions
 from ampel.ztf.ingest.ZiDataPointShaper import ZiDataPointShaperBase
 from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
-
+from ampel.ztf.ingest.ZiMongoMuxer import ZiMongoMuxer
 
 def _make_muxer(context: AmpelContext, model: UnitModel) -> ZiArchiveMuxer:
     run_id = 0
@@ -137,23 +138,24 @@ def mock_archive_muxer(patch_mongo, dev_context, mock_get_photopoints):
 
 
 @pytest.fixture
-def t0_ingester(patch_mongo, dev_context):
+def t0_ingester(patch_mongo, dev_context: DevAmpelContext):
     run_id = 0
     logger = AmpelLogger.get_logger()
     updates_buffer = DBUpdatesBuffer(dev_context.db, run_id=run_id, logger=logger)
     ingester = MongoT0Ingester(updates_buffer=updates_buffer)
     compiler = T0Compiler(tier=0, run_id=run_id)
-    return ingester, compiler
+    muxer = ZiMongoMuxer(context=dev_context, updates_buffer=updates_buffer, logger=logger)
+    return ingester, compiler, muxer
 
 
 def test_get_earliest_jd(
-    t0_ingester: tuple[MongoT0Ingester, T0Compiler], mock_archive_muxer, alerts
+    t0_ingester: tuple[MongoT0Ingester, T0Compiler, ZiMongoMuxer], mock_archive_muxer, alerts
 ):
     """earliest jd is stable under out-of-order ingestion"""
 
     alert_list = list(alerts())
 
-    ingester, compiler = t0_ingester
+    ingester, compiler, muxer = t0_ingester
 
     for i in [2, 0, 1]:
 
@@ -279,7 +281,7 @@ def test_get_photopoints_from_api(mock_context, archive_token):
 
 
 def test_deduplication(
-    dev_context, t0_ingester: tuple[MongoT0Ingester, T0Compiler], alerts
+    dev_context, t0_ingester: tuple[MongoT0Ingester, T0Compiler, ZiMongoMuxer], alerts
 ):
     """
     Database gets only one copy of each datapoint
@@ -287,9 +289,9 @@ def test_deduplication(
 
     alert_list = list(itertools.islice(alerts(), 1, None))
 
-    ingester, compiler = t0_ingester
-    filter_pps = [{"attribute": "id", "operator": ">", "value": 0}]
-    filter_uls = [{"attribute": "id", "operator": "<", "value": 0}]
+    ingester, compiler, muxer = t0_ingester
+    filter_pps = [{"attribute": "candid", "operator": "exists", "value": True}]
+    filter_uls = [{"attribute": "candid", "operator": "exists", "value": False}]
 
     pps = []
     uls = []
@@ -299,17 +301,18 @@ def test_deduplication(
         datapoints = ZiDataPointShaperBase().process(
             alert.datapoints, stock=alert.stock
         )
-        compiler.add(datapoints, "channychan", 0)
+        to_insert, to_combine = muxer.process(datapoints, alert.stock)
+        compiler.add(to_insert, "channychan", 0)
+        compiler.commit(ingester, 0)
+        ingester.updates_buffer.push_updates(force=True)
 
     assert len(set(uls)) < len(uls), "Some upper limits duplicated in alerts"
     assert len(set(pps)) < len(pps), "Some photopoints duplicated in alerts"
-
-    compiler.commit(ingester, 0)
-    ingester.updates_buffer.push_updates()
+    
 
     t0 = dev_context.db.get_collection("t0")
-    assert t0.count_documents({"id": {"$gt": 0}}) == len(set(pps))
-    assert t0.count_documents({"id": {"$lt": 0}}) == len(set(uls))
+    assert t0.count_documents({"tag": "ZTF_DP"}) == len(set(pps))
+    assert t0.count_documents({"tag": "ZTF_UL"}) == len(set(uls))
 
 
 @pytest.fixture
