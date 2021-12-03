@@ -9,6 +9,7 @@
 
 from typing import Dict, List, Any, Iterable, Optional, Sequence
 from bson import encode
+from ampel.util.hash import hash_payload
 from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.types import StockId, Tag
 from ampel.abstract.AbsT0Unit import AbsT0Unit
@@ -102,11 +103,7 @@ class ZiDataPointShaperBase(AmpelBaseModel):
 		# ensure that keys are ordered
 		sorted_body = dict(sorted(body.items()))
 		return {
-			"id": int.from_bytes(
-				blake2b(encode(sorted_body), digest_size=self.digest_size).digest(),
-				byteorder="big",
-				signed=True,
-			),
+			"id": hash_payload(encode(sorted_body), size=-self.digest_size*8),
 			"stock": stock,
 			"tag": [*tags[body['programid']][body['fid']], *tag],
 			"body": sorted_body,
