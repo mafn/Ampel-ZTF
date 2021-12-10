@@ -85,7 +85,7 @@ class ZTFProcessLocalAlerts(AbsProcessorTemplate):
 
 		d: dict[str, Any] = {
 			'folder': self.folder,
-			'extension': f'*.{self.extension}'
+			'extension': self.extension
 		}
 
 		if self.binary_mode is not None:
