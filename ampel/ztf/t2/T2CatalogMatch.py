@@ -8,7 +8,7 @@
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
 from pydantic import Field
-from typing import Any, Dict, Literal, Optional, Sequence, Union
+from typing import Any, Dict, Literal, Optional, Sequence, Union, ClassVar
 from ampel.types import UBson
 from ampel.abstract.AbsPointT2Unit import AbsPointT2Unit
 from ampel.content.DataPoint import DataPoint
@@ -16,6 +16,7 @@ from ampel.model.StrictModel import StrictModel
 from ampel.struct.UnitResult import UnitResult
 from ampel.ztf.base.CatalogMatchUnit import CatalogMatchUnit
 from ampel.enum.DocumentCode import DocumentCode
+from ampel.model.DPSelection import DPSelection
 
 
 class CatalogModel(StrictModel):
@@ -56,7 +57,7 @@ class CatalogModel(StrictModel):
 
     use: Literal["extcats", "catsHTM"]
     rs_arcsec: float
-    catq_kwargs: Dict[str, Any] = Field({}, deprecated=True)
+    catq_kwargs: dict[str, Any] = Field({}, deprecated=True)
     keys_to_append: Optional[Sequence[str]]
     pre_filter: Optional[Dict[str, Any]]
     post_filter: Optional[Dict[str, Any]]
@@ -68,10 +69,10 @@ class T2CatalogMatch(CatalogMatchUnit, AbsPointT2Unit):
     """
 
     # run only on first datapoint by default
-    eligible = {"filter": "PPSFilter", "sort": "jd", "select": "first"}
+    eligible: ClassVar[DPSelection] = DPSelection(filter='PPSFilter', sort='jd', select='first')
 
     # Each value specifies a catalog in extcats or catsHTM format and the query parameters
-    catalogs: Dict[str, CatalogModel]
+    catalogs: dict[str, CatalogModel]
 
 
     def process(self, datapoint: DataPoint) -> Union[UBson, UnitResult]:
