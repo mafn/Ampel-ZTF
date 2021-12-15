@@ -7,8 +7,7 @@
 # Last Modified Date: 15.04.2021
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
-from typing import Any, Dict, List, Optional
-
+from typing import Any, Optional
 import numpy as np
 import light_curve
 
@@ -25,13 +24,13 @@ class T2LightCurveFeatures(AbsLightCurveT2Unit):
 
     #: Features to extract from the light curve.
     #: See: https://docs.rs/light-curve-feature/0.2.2/light_curve_feature/features/index.html
-    features: Dict[str, Optional[Dict[str, Any]]] = {
+    features: dict[str, Optional[dict[str, Any]]] = {
         "InterPercentileRange": {"quantile": 0.25},
         "LinearFit": None,
         "StetsonK": None,
     }
     #: Bandpasses to use
-    bands: Dict[int, str] = {1: "g", 2: "r", 3: "i"}
+    bands: dict[int, str] = {1: "g", 2: "r", 3: "i"}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
