@@ -9,13 +9,13 @@
 
 
 from typing import Iterable, Optional, Dict, Any
-from ampel.enum.DocumentCode import DocumentCode
 
 from pydantic import Field
-
 from ampel.struct.AmpelBuffer import AmpelBuffer
 from ampel.abstract.AbsBufferComplement import AbsBufferComplement
 from ampel.ztf.base.CatalogMatchUnit import CatalogMatchContextUnit
+from ampel.enum.DocumentCode import DocumentCode
+from ampel.view.T3Store import T3Store
 
 
 class TNSNames(CatalogMatchContextUnit, AbsBufferComplement):
@@ -26,7 +26,7 @@ class TNSNames(CatalogMatchContextUnit, AbsBufferComplement):
     search_radius: float = Field(3, description="Matching radius in arcsec")
     include_report: bool = False
 
-    def complement(self, records: Iterable[AmpelBuffer]) -> None:
+    def complement(self, records: Iterable[AmpelBuffer], t3s: T3Store) -> None:
         for record in records:
 
             # find the latest T2LightCurveSummary result
