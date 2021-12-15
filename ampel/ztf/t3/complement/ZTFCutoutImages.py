@@ -6,13 +6,12 @@
 # Last Modified Date: 18.09.2020
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
+import backoff, requests # type: ignore[import]
 from base64 import b64decode
-from typing import Iterable, Literal, Any, Optional, Dict
-
-import backoff
-import requests
 from requests_toolbelt.sessions import BaseUrlSession
+from typing import Iterable, Literal, Optional, Dict
 
+from ampel.view.T3Store import T3Store
 from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.struct.AmpelBuffer import AmpelBuffer
 from ampel.core.AmpelContext import AmpelContext
@@ -32,7 +31,7 @@ class ZTFCutoutImages(AbsBufferComplement):
         AmpelBaseModel.__init__(self, **kwargs)
 
         self.session = BaseUrlSession(
-            base_url=context.config.get(f"resource.ampel-ztf/archive", str, raise_exc=True)
+            base_url=context.config.get("resource.ampel-ztf/archive", str, raise_exc=True)
         )
 
     @backoff.on_exception(
@@ -53,9 +52,9 @@ class ZTFCutoutImages(AbsBufferComplement):
             return None
         else:
             response.raise_for_status()
-        return {k: b64decode(v) for k,v in response.json().items()}
+        return {k: b64decode(v) for k, v in response.json().items()}
 
-    def complement(self, records: Iterable[AmpelBuffer]) -> None:
+    def complement(self, records: Iterable[AmpelBuffer], t3s: T3Store) -> None:
         for record in records:
             if (photopoints := record.get("t0")) is None:
                 raise ValueError(f"{type(self).__name__} requires t0 records")
@@ -80,4 +79,3 @@ class ZTFCutoutImages(AbsBufferComplement):
                 record["extra"] = {self.__class__.__name__: cutouts}
             else:
                 record["extra"][self.__class__.__name__] = cutouts
-

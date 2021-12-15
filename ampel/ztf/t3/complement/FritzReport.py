@@ -7,20 +7,15 @@
 # Date              : 03.11.2020
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
-import asyncio
+import asyncio, nest_asyncio
+from pydantic.tools import parse_obj_as
 from typing import Any, Dict, Iterable, Optional, Tuple
 
-import nest_asyncio
-from pydantic.tools import parse_obj_as
-
+from ampel.view.T3Store import T3Store
 from ampel.struct.AmpelBuffer import AmpelBuffer
 from ampel.secret.NamedSecret import NamedSecret
 from ampel.abstract.AbsBufferComplement import AbsBufferComplement
-from ampel.ztf.t3.skyportal.SkyPortalClient import (
-    BaseHttpUrl,
-    SkyPortalAPIError,
-    SkyPortalClient,
-)
+from ampel.ztf.t3.skyportal.SkyPortalClient import BaseHttpUrl, SkyPortalAPIError, SkyPortalClient
 
 
 class FritzReport(SkyPortalClient, AbsBufferComplement):
@@ -47,7 +42,7 @@ class FritzReport(SkyPortalClient, AbsBufferComplement):
                 return {
                     k: v
                     for k, v in record["data"].items()
-                    if not k in {"thumbnails", "annotations", "groups", "internal_key"}
+                    if k not in {"thumbnails", "annotations", "groups", "internal_key"}
                 }
         return None
 
@@ -66,7 +61,7 @@ class FritzReport(SkyPortalClient, AbsBufferComplement):
         async with self.session():
             await asyncio.gather(*[self.update_record(record) for record in records])
 
-    def complement(self, records: Iterable[AmpelBuffer]) -> None:
+    def complement(self, records: Iterable[AmpelBuffer], t3s: T3Store) -> None:
         # Patch event loop to be reentrant if it is already running, e.g.
         # within a notebook
         try:
