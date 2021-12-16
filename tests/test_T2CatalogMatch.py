@@ -3,6 +3,7 @@ from ampel.base.LogicalUnit import LogicalUnit
 from ampel.core.AmpelContext import AmpelContext
 from ampel.model.UnitModel import UnitModel
 from ampel.protocol.LoggerProtocol import LoggerProtocol
+from ampel.view.T3Store import T3Store
 import pytest
 from pathlib import Path
 import yaml
@@ -132,7 +133,7 @@ def test_tnsnames(
             ],
         }
     )
-    unit.complement([buf])
+    unit.complement([buf], T3Store())
     assert (stockdoc := buf["stock"]) is not None
     assert stockdoc["name"] == ("sourceysource", "TNS2020ubb")
     assert not "extra" in buf
@@ -143,7 +144,7 @@ def test_tnsnames(
         context=dev_context,
         sub_type=TNSNames,
     )
-    unit.complement([buf])
+    unit.complement([buf], T3Store())
     assert stockdoc["name"] == ("sourceysource", "TNS2020ubb")
     assert buf["extra"] == {
         "TNSReports": [
