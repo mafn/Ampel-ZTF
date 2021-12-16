@@ -164,7 +164,7 @@ def test_get_earliest_jd(
         assert mock_archive_muxer.get_earliest_jd(
             alert_list[i].stock, datapoints
         ) == min(
-            dp["jd"] for dp in [el for el in alert_list[i].datapoints if el['id'] > 0]
+            dp["body"]["jd"] for dp in [el for el in datapoints if el['id'] > 0]
         ), "min jd is min jd of last ingested alert"
 
 
@@ -278,8 +278,8 @@ def test_deduplication(
     alert_list = list(itertools.islice(alerts(), 1, None))
 
     ingester, compiler = t0_ingester
-    filter_pps = [{'attribute': 'id', 'operator': '>', 'value': 0}]
-    filter_uls = [{'attribute': 'id', 'operator': '<', 'value': 0}]
+    filter_pps = [{'attribute': 'candid', 'operator': 'exists', 'value': True}]
+    filter_uls = [{'attribute': 'candid', 'operator': 'exists', 'value': False}]
 
     pps = []
     uls = []
