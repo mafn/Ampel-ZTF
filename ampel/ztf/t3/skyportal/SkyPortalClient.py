@@ -6,7 +6,7 @@
 # Last Modified Date: 16.09.2020
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
-import asyncio, base64, gzip, io, json, math, time, sys, aiohttp, backoff, pydantic.errors
+import asyncio, base64, gzip, io, json, math, time, aiohttp, backoff, pydantic.errors
 import numpy as np
 
 from collections import defaultdict
@@ -16,25 +16,7 @@ from astropy.io import fits
 from matplotlib.colors import Normalize
 from matplotlib.figure import Figure
 from pydantic import AnyHttpUrl
-
-if sys.version_info.minor > 8:
-    from typing import TypedDict
-else:
-    from typing_extensions import TypedDict
-from typing import (
-    Any,
-    Dict,
-    Generator,
-    Iterable,
-    List,
-    Optional,
-    Tuple,
-    overload,
-    Sequence,
-    Set,
-    TYPE_CHECKING,
-    Union,
-)
+from typing import Any, TypedDict, Generator, Iterable, Optional, overload, Sequence, TYPE_CHECKING, Union
 
 from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.log.AmpelLogger import AmpelLogger
@@ -52,8 +34,8 @@ if TYPE_CHECKING:
 
     from ampel.config.AmpelConfig import AmpelConfig
     from ampel.content.DataPoint import DataPoint
-    from ampel.content.T2Document import T2Document
     from ampel.view.TransientView import TransientView
+    from ampel.view.T2DocView import T2DocView
 
 
 stat_http_errors = AmpelMetricsRegistry.counter(
@@ -95,14 +77,14 @@ def sanitize_json(obj):
         return obj
 
 
-def encode_t2_body(t2: "T2Document") -> str:
-    assert t2["body"] is not None
-    doc = t2["body"][-1]
+def encode_t2_body(t2: "T2DocView") -> str:
+    assert t2.body is not None
+    doc = t2.body[-1]
     assert isinstance(doc, dict)
     return base64.b64encode(
         json.dumps(
             {
-                "timestamp": datetime.fromtimestamp(doc["meta"][-1]["ts"]).isoformat(),
+                "timestamp": datetime.fromtimestamp(t2.meta[-1]["ts"]).isoformat(),
                 **{k: sanitize_json(v) for k, v in doc.items() if k != "ts"},
             },
             default=lambda o: None,
@@ -110,14 +92,14 @@ def encode_t2_body(t2: "T2Document") -> str:
     ).decode()
 
 
-def decode_t2_body(blob: str) -> Dict[str, Any]:
+def decode_t2_body(blob: str) -> dict[str, Any]:
     doc = json.loads(base64.b64decode(blob.encode()).decode())
     return {"ts": int(datetime.fromisoformat(doc.pop("timestamp")).timestamp()), **doc}
 
 
-def get_t2_result(t2: "T2Document") -> Union[Tuple[None, None], Tuple[datetime, Dict[str, Any]]]:
-    assert t2["body"] is not None
-    for meta, record in zip(reversed(t2["meta"]), reversed(t2["body"])):
+def get_t2_result(t2: "T2DocView") -> Union[tuple[None, None], tuple[datetime, dict[str, Any]]]:
+    assert t2.body is not None
+    for meta, record in zip(reversed(t2.meta), reversed(t2.body)):
         if meta.get("code", DocumentCode.OK) == DocumentCode.OK:
             break
     else:
@@ -178,7 +160,7 @@ class BaseHttpUrl(AnyHttpUrl):
         return url
 
     # @classmethod
-    # def validate_parts(cls, parts: Dict[str, str]) -> Dict[str, str]:
+    # def validate_parts(cls, parts: dict[str, str]) -> dict[str, str]:
     #     parts["path"] = None
     #     return super().validate_parts(parts)
 
@@ -198,7 +180,7 @@ class SkyPortalClient(AmpelBaseModel):
         self._request_kwargs = {
             "headers": {"Authorization": f"token {self.token.get()}"}
         }
-        self._ids: Dict[str, Dict[str, int]] = {}
+        self._ids: dict[str, dict[str, int]] = {}
         self._session: Optional[aiohttp.ClientSession] = None
         self._semaphore: Optional[asyncio.Semaphore] = None
 
@@ -220,7 +202,7 @@ class SkyPortalClient(AmpelBaseModel):
         endpoint: str,
         raise_exc: bool,
         _decode_json: None,
-        **kwargs: Dict[str, Any],
+        **kwargs: dict[str, Any],
     ) -> aiohttp.ClientResponse:
         ...
 
@@ -231,8 +213,8 @@ class SkyPortalClient(AmpelBaseModel):
         endpoint: str,
         raise_exc: bool,
         _decode_json: bool,
-        **kwargs: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        **kwargs: dict[str, Any],
+    ) -> dict[str, Any]:
         ...
 
     @backoff.on_exception(
@@ -250,8 +232,8 @@ class SkyPortalClient(AmpelBaseModel):
         endpoint: str,
         raise_exc: bool = True,
         _decode_json: Optional[bool] = True,
-        **kwargs: Dict[str, Any],
-    ) -> Union[aiohttp.ClientResponse, Dict[str, Any]]:
+        **kwargs: dict[str, Any],
+    ) -> Union[aiohttp.ClientResponse, dict[str, Any]]:
         if self._session is None or self._semaphore is None:
             raise ValueError(
                 "call operations within an `async with self.session()` block"
@@ -316,13 +298,13 @@ class SkyPortalClient(AmpelBaseModel):
             pass
         raise KeyError(f"No {endpoint} named {name}")
 
-    async def get(self, endpoint: str, **kwargs) -> Dict[str, Any]:
+    async def get(self, endpoint: str, **kwargs) -> dict[str, Any]:
         return await self.request("GET", endpoint, **kwargs)
 
-    async def post(self, endpoint: str, **kwargs) -> Dict[str, Any]:
+    async def post(self, endpoint: str, **kwargs) -> dict[str, Any]:
         return await self.request("POST", endpoint, **kwargs)
 
-    async def put(self, endpoint: str, **kwargs) -> Dict[str, Any]:
+    async def put(self, endpoint: str, **kwargs) -> dict[str, Any]:
         return await self.request("PUT", endpoint, **kwargs)
 
     async def head(self, endpoint: str, **kwargs) -> aiohttp.ClientResponse:
@@ -335,7 +317,7 @@ class FilterGroupProvisioner(SkyPortalClient):
     """
 
     #: mapping from ampel stream name to Fritz stream name
-    stream_names: Dict[str, str] = {
+    stream_names: dict[str, str] = {
         "ztf_uw_public": "ZTF Public",
         "ztf_uw_private": "ZTF Public+Partnership",
         "ztf_uw_caltech": "ZTF Public+Partnership+Caltech",
@@ -448,13 +430,13 @@ async def provision_seed_data(client: SkyPortalClient):
 
 class PostReport(TypedDict):
     new: bool  #: is this a new source?
-    candidates: List[int]  #: new candidates created
+    candidates: list[int]  #: new candidates created
     save_error: Optional[str]  #: error raised while saving source
     photometry_count: int  #: size of posted photometry
     photometry_error: Optional[str]  #: error raised while posting photometry
     thumbnail_count: int  #: number of thumbnails posted
     comments: int  #: number of comments posted
-    comment_errors: List[str]  #: errors raised while posting comments
+    comment_errors: list[str]  #: errors raised while posting comments
     dt: float  #: elapsed time in seconds
 
 
@@ -469,7 +451,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
 
     def _transform_datapoints(
         self, dps: Sequence["DataPoint"], after=-float("inf")
-    ) -> Generator[Dict[str, Any], None, None]:
+    ) -> Generator[dict[str, Any], None, None]:
         for dp in dps:
             body = dp["body"]
             if body["jd"] <= after:
@@ -495,7 +477,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
 
     def make_photometry(
         self, datapoints: Sequence["DataPoint"], after=-float("inf")
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         content = defaultdict(list)
         for doc in self._transform_datapoints(datapoints, after):
             for k, v in doc.items():
@@ -513,27 +495,27 @@ class BaseSkyPortalPublisher(SkyPortalClient):
     async def post_t2_annotations(
         self,
         name: str,
-        t2_docs: Iterable["T2Document"],
-        object_record: Optional[Dict[str, Any]],
+        t2_views: Iterable["T2DocView"],
+        object_record: Optional[dict[str, Any]],
         ret: PostReport,
     ):
         previous_annotations = object_record["annotations"] if object_record else []
-        for t2 in t2_docs:
+        for t2 in t2_views:
             last_modified, result = get_t2_result(t2)
             if result is None or last_modified is None:
                 continue
             # find associated annotation
             for annotation in previous_annotations:
-                if ":".split(annotation["origin"])[-1] == t2["unit"]:
+                if ":".split(annotation["origin"])[-1] == t2.unit:
                     break
             else:
                 # post new annotation
-                self.logger.debug(f"posting {t2['unit']}")
+                self.logger.debug(f"posting {t2.unit}")
                 try:
                     await self.post(
                         f"sources/{name}/annotation",
                         json={
-                            "origin": f"ampel:{t2['unit']}",
+                            "origin": f"ampel:{t2.unit}",
                             "data": flatten_dict(result, ":"),
                         },
                     )
@@ -543,14 +525,14 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 continue
             # update previous annotation
             if last_modified > datetime.fromisoformat(annotation["updated"]):
-                self.logger.debug(f"updating {t2['unit']}")
+                self.logger.debug(f"updating {t2.unit}")
                 try:
                     await self.put(
                         f"sources/{name}/annotation/{annotation['id']}",
                         json={
                             "obj_id": name,
                             "author_id": annotation["author_id"],
-                            "origin": f"ampel:{t2['unit']}",
+                            "origin": f"ampel:{t2.unit}",
                             "data": flatten_dict(result, ":"),
                         },
                     )
@@ -558,33 +540,33 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 except SkyPortalAPIError as exc:
                     ret["comment_errors"].append(exc.args[0])
             else:
-                self.logger.debug(f"{t2['unit']} exists and is current")
+                self.logger.debug(f"{t2.unit} exists and is current")
 
     async def post_t2_comments(
         self,
         name: str,
-        t2_docs: Iterable["T2Document"],
-        object_record: Optional[Dict[str, Any]],
+        t2_views: Iterable["T2DocView"],
+        object_record: Optional[dict[str, Any]],
         ret: PostReport,
     ):
         previous_comments = object_record["comments"] if object_record else []
 
-        for t2 in t2_docs:
+        for t2 in t2_views:
             # find associated comment
             for comment in previous_comments:
-                if comment["text"] == t2["unit"]:
+                if comment["text"] == t2.unit:
                     break
             else:
                 # post new comment
-                self.logger.debug(f"posting {t2['unit']}")
+                self.logger.debug(f"posting {t2.unit}")
                 try:
                     await self.post(
                         f"sources/{name}/comment",
                         json={
-                            "text": t2["unit"],
+                            "text": t2.unit,
                             "attachment": {
                                 "body": encode_t2_body(t2),
-                                "name": f"{name}-{t2['unit']}.json",
+                                "name": f"{name}-{t2.unit}.json",
                             },
                         },
                     )
@@ -594,10 +576,10 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 continue
             # update previous comment
             previous_body = decode_t2_body(comment["attachment_bytes"])
-            if (t2["body"] is not None) and (
-                t2["meta"][-1]["ts"] > previous_body["ts"]
+            if (t2.body is not None) and (
+                t2.meta[-1]["ts"] > previous_body["ts"]
             ):
-                self.logger.debug(f"updating {t2['unit']}")
+                self.logger.debug(f"updating {t2.unit}")
                 try:
                     await self.put(
                         f"sources/{name}/comment/{comment['id']}",
@@ -612,13 +594,13 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 except SkyPortalAPIError as exc:
                     ret["comment_errors"].append(exc.args[0])
             else:
-                self.logger.debug(f"{t2['unit']} exists and is current")
+                self.logger.debug(f"{t2.unit} exists and is current")
 
     async def post_candidate(
         self,
         view: "TransientView",
-        filters: Optional[List[str]] = None,
-        groups: Optional[List[str]] = None,
+        filters: Optional[list[str]] = None,
+        groups: Optional[list[str]] = None,
         instrument: Optional[str] = None,
         annotate: bool = False,
     ) -> PostReport:
@@ -795,7 +777,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         # SkyPortal only supports one of thumbnail per object and type
         # ('new', 'ref', 'sub', 'sdss', 'dr8', 'new_gz', 'ref_gz', 'sub_gz')
         # Post one of each type only if they do not yet exist.
-        existing_cutouts: Set[str] = (
+        existing_cutouts: set[str] = (
             {t["type"] for t in response["data"]["thumbnails"]}
             if response["status"] == "success"
             else set()
@@ -819,13 +801,13 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 ret["thumbnail_count"] += 1
 
         # represent latest T2 results as a comments
-        latest_t2: Dict[str, "T2Document"] = {}
+        latest_t2: dict[str, "T2DocView"] = {}
         for t2 in view.t2 or []:
-            if t2["code"] != DocumentCode.OK or not t2["body"]:
+            if t2.code != DocumentCode.OK or not t2.body:
                 continue
-            assert isinstance(t2["unit"], str)
-            if t2["unit"] not in latest_t2 or latest_t2[t2["unit"]]["meta"][-1]["ts"] < t2["meta"][-1]["ts"]:
-                latest_t2[t2["unit"]] = t2
+            assert isinstance(t2.unit, str)
+            if t2.unit not in latest_t2 or latest_t2[t2.unit].meta[-1]["ts"] < t2.meta[-1]["ts"]:
+                latest_t2[t2.unit] = t2
 
         if annotate:
             await self.post_t2_annotations(

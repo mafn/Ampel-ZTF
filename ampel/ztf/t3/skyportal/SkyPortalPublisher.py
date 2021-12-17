@@ -6,10 +6,8 @@
 # Last Modified Date: 16.09.2020
 # Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
 
-import asyncio
-from typing import Dict, Generator, List, Optional, Sequence, Tuple, TYPE_CHECKING
-
-import nest_asyncio
+import asyncio, nest_asyncio
+from typing import Generator, Optional, Tuple, TYPE_CHECKING
 
 from ampel.abstract.AbsPhotoT3Unit import AbsPhotoT3Unit
 from ampel.struct.JournalAttributes import JournalAttributes
@@ -17,19 +15,21 @@ from ampel.types import StockId
 from ampel.ztf.t3.skyportal.SkyPortalClient import BaseSkyPortalPublisher
 
 if TYPE_CHECKING:
+    from ampel.view.T3Store import T3Store
     from ampel.view.TransientView import TransientView
 
 
 class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
 
     #: Save sources to these groups
-    groups: Optional[List[str]] = None
-    filters: Optional[List[str]] = None
+    groups: Optional[list[str]] = None
+    filters: Optional[list[str]] = None
     #: Post T2 results as annotations instead of comments
     annotate: bool = False
 
-    def process(
-        self, tviews: Generator["TransientView", JournalAttributes, None],
+    def process(self,
+        tviews: Generator["TransientView", JournalAttributes, None],
+        t3s: Optional["T3Store"] = None
     ) -> None:
         """Pass each view to :meth:`post_candidate`."""
         # Patch event loop to be reentrant if it is already running, e.g.
