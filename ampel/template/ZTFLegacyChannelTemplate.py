@@ -7,13 +7,13 @@
 # Last Modified Date:  30.05.2021
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
-from typing import Dict, Any, ClassVar, List, Optional, Union
+from typing import Any, ClassVar, Optional, Union
 from ampel.model.UnitModel import UnitModel
 from pydantic import validator
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.config.builder.FirstPassConfig import FirstPassConfig
 from ampel.template.AbsEasyChannelTemplate import AbsEasyChannelTemplate
-from ampel.model.StrictModel import StrictModel
+from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.model.ingest.T2Compute import T2Compute
 
 
@@ -31,7 +31,7 @@ class ZTFLegacyChannelTemplate(AbsEasyChannelTemplate):
 	"""
 
 	# static variables (ClassVar type) are ignored by pydantic
-	_access: ClassVar[Dict[str, List[str]]] = {
+	_access: ClassVar[dict[str, list[str]]] = {
 		"ztf_uw_private": ["ZTF", "ZTF_PUB", "ZTF_PRIV"],
 		"ztf_uw_public": ["ZTF", "ZTF_PUB"],
 		"ztf_uw_caltech": ["ZTF", "ZTF_PUB"],
@@ -45,7 +45,7 @@ class ZTFLegacyChannelTemplate(AbsEasyChannelTemplate):
 	archive_history: Optional[int] = None
 
 	# Mandatory implementation
-	def get_channel(self, logger: AmpelLogger) -> Dict[str, Any]:
+	def get_channel(self, logger: AmpelLogger) -> dict[str, Any]:
 		assert self.template is not None
 		return {
 			**super().get_channel(logger),
@@ -55,10 +55,10 @@ class ZTFLegacyChannelTemplate(AbsEasyChannelTemplate):
 	# Mandatory implementation
 	def get_processes(
 		self, logger: AmpelLogger, first_pass_config: FirstPassConfig
-	) -> List[Dict[str, Any]]:
+	) -> list[dict[str, Any]]:
 
 		# T3 processes
-		ret: List[Dict[str, Any]] = []
+		ret: list[dict[str, Any]] = []
 
 		for index, el in enumerate(self.t3_supervise):
 			# populate name and tier if unset

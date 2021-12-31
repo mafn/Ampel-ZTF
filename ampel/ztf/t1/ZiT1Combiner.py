@@ -7,7 +7,8 @@
 # Last Modified Date:  23.05.2021
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
-from typing import Iterable, List, Union
+from typing import Union
+from collections.abc import Iterable
 from ampel.content.DataPoint import DataPoint
 from ampel.types import DataPointId
 from ampel.struct.T1CombineResult import T1CombineResult
@@ -16,7 +17,7 @@ from ampel.t1.T1SimpleCombiner import T1SimpleCombiner
 
 class ZiT1Combiner(T1SimpleCombiner):
 
-	def combine(self, datapoints: Iterable[DataPoint]) -> Union[List[DataPointId], T1CombineResult]: # type: ignore[override]
+	def combine(self, datapoints: Iterable[DataPoint]) -> Union[list[DataPointId], T1CombineResult]: # type: ignore[override]
 		"""
 		:param datapoints: dict instances representing datapoints
 		"""

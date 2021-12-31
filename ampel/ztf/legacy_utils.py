@@ -7,7 +7,7 @@
 # Last Modified Date:  19.03.2020
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
-from typing import overload, List, Union, Tuple
+from typing import overload, Union, Tuple
 
 
 number_map = {
@@ -32,10 +32,10 @@ def to_ampel_id(ztf_id: str) -> int:
 	...
 
 @overload
-def to_ampel_id(ztf_id: Union[List[str], Tuple[str, ...]]) -> List[int]:
+def to_ampel_id(ztf_id: Union[list[str], tuple[str, ...]]) -> list[int]:
 	...
 
-def to_ampel_id(ztf_id: Union[str, List[str], Tuple[str, ...]]) -> Union[int, List[int]]:
+def to_ampel_id(ztf_id: Union[str, list[str], tuple[str, ...]]) -> Union[int, list[int]]:
 	""" :returns: Ampel ID (int).  """
 
 	# Handle sequences
@@ -62,10 +62,10 @@ def to_ztf_id(ampel_id: int) -> str:
 	...
 
 @overload
-def to_ztf_id(ampel_id: Union[List[int], Tuple[int, ...]]) -> List[str]:
+def to_ztf_id(ampel_id: Union[list[int], tuple[int, ...]]) -> list[str]:
 	...
 
-def to_ztf_id(ampel_id: Union[int, List[int], Tuple[int, ...]]) -> Union[str, List[str]]:
+def to_ztf_id(ampel_id: Union[int, list[int], tuple[int, ...]]) -> Union[str, list[str]]:
 	"""
 	:param ampel_id: int or list of int
 	:returns: ZTF ID (string).

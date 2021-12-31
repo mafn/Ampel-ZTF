@@ -9,7 +9,8 @@
 
 import asyncio, nest_asyncio
 from pydantic.tools import parse_obj_as
-from typing import Any, Dict, Iterable, Optional, Tuple
+from typing import Any, Optional, Tuple
+from collections.abc import Iterable
 
 from ampel.view.T3Store import T3Store
 from ampel.struct.AmpelBuffer import AmpelBuffer
@@ -29,8 +30,8 @@ class FritzReport(SkyPortalClient, AbsBufferComplement):
     token: NamedSecret[str] = NamedSecret(label="fritz/jno/ampelbot")
 
     async def get_catalog_item(
-        self, names: Tuple[str, ...]
-    ) -> Optional[Dict[str, Any]]:
+        self, names: tuple[str, ...]
+    ) -> Optional[dict[str, Any]]:
         """Get catalog entry associated with the stock name"""
         for name in names:
             if name.startswith("ZTF"):

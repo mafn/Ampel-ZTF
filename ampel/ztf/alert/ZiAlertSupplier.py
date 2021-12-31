@@ -7,7 +7,7 @@
 # Last Modified Date:  24.11.2021
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
-from typing import Literal, List, Union, Any, Optional
+from typing import Literal, Union, Any, Optional
 from ampel.types import Tag
 from ampel.ztf.util.ZTFIdMapper import to_ampel_id
 from ampel.view.ReadOnlyDict import ReadOnlyDict
@@ -39,12 +39,12 @@ class ZiAlertSupplier(BaseAlertSupplier):
 	@staticmethod
 	def shape_alert_dict(
 		d: dict[str, Any],
-		tag: Optional[Union[Tag, List[Tag]]] = None
+		tag: Optional[Union[Tag, list[Tag]]] = None
 	) -> AmpelAlert:
 
 		if d['prv_candidates']:
 
-			dps: List[ReadOnlyDict] = [ReadOnlyDict(d['candidate'])]
+			dps: list[ReadOnlyDict] = [ReadOnlyDict(d['candidate'])]
 
 			for el in d['prv_candidates']:
 

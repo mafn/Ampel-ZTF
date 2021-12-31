@@ -10,7 +10,7 @@
 
 import io
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import fastavro
 
@@ -31,7 +31,7 @@ class ZTFAlertArchiver(AbsOpsUnit):
     #: Consumer group name
     group_name: str
     #: Topic name regexes to subscribe to
-    topics: List[str] = ["^ztf_.*_programid1$", "^ztf_.*_programid2$"]
+    topics: list[str] = ["^ztf_.*_programid1$", "^ztf_.*_programid2$"]
     #: Time to wait for messages before giving up, in seconds
     timeout: int = 300
     #: URI of postgres server hosting the archive
@@ -53,7 +53,7 @@ class ZTFAlertArchiver(AbsOpsUnit):
             **{"group.id": self.group_name},
         )
 
-    def run(self, beacon: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    def run(self, beacon: Optional[dict[str, Any]] = None) -> Optional[dict[str, Any]]:
 
         try:
             for message in self.consumer:

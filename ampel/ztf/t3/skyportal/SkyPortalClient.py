@@ -16,7 +16,8 @@ from astropy.io import fits
 from matplotlib.colors import Normalize
 from matplotlib.figure import Figure
 from pydantic import AnyHttpUrl
-from typing import Any, TypedDict, Generator, Iterable, Optional, overload, Sequence, TYPE_CHECKING, Union
+from typing import Any, TypedDict, Optional, overload, TYPE_CHECKING, Union
+from collections.abc import Sequence, Generator, Iterable
 
 from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.log.AmpelLogger import AmpelLogger

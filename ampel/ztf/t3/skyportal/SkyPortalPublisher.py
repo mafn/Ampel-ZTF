@@ -7,7 +7,8 @@
 # Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 import asyncio, nest_asyncio
-from typing import Generator, Optional, Tuple, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
+from collections.abc import Generator
 
 from ampel.abstract.AbsPhotoT3Unit import AbsPhotoT3Unit
 from ampel.struct.JournalAttributes import JournalAttributes
@@ -55,7 +56,7 @@ class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
                 ],
             )
 
-    async def post_view(self, view: "TransientView") -> Tuple[StockId, JournalAttributes]:
+    async def post_view(self, view: "TransientView") -> tuple[StockId, JournalAttributes]:
         return view.id, JournalAttributes(
             extra=dict(
                 await self.post_candidate(

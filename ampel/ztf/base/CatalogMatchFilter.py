@@ -7,17 +7,17 @@
 # Last Modified Date:  24.11.2021
 # Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
-from typing import Literal, Dict, Any, Union, Optional, cast
+from typing import Literal, Any, Union, Optional, cast
 
 from ampel.abstract.AbsAlertFilter import AbsAlertFilter
 from ampel.ztf.base.CatalogMatchUnit import CatalogMatchUnit, ConeSearchRequest
 from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
 from ampel.model.operator.AnyOf import AnyOf
 from ampel.model.operator.AllOf import AllOf
-from ampel.model.StrictModel import StrictModel
+from ampel.base.AmpelBaseModel import AmpelBaseModel
 
 
-class BaseCatalogMatchRequest(StrictModel):
+class BaseCatalogMatchRequest(AmpelBaseModel):
     use: Literal["catsHTM", "extcats"]
     name: str
     rs_arcsec: float
@@ -25,8 +25,8 @@ class BaseCatalogMatchRequest(StrictModel):
 
 class ExtcatsMatchRequest(BaseCatalogMatchRequest):
     use: Literal["extcats"]
-    pre_filter: Optional[Dict[str, Any]]
-    post_filter: Optional[Dict[str, Any]]
+    pre_filter: Optional[dict[str, Any]]
+    post_filter: Optional[dict[str, Any]]
 
 
 CatalogMatchRequest = Union[BaseCatalogMatchRequest, ExtcatsMatchRequest]

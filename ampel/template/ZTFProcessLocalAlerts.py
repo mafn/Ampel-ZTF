@@ -7,7 +7,7 @@
 # Last Modified Date:  24.11.2021
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
-from typing import Dict, List, Any, Literal, Optional, Union
+from typing import Any, Literal, Optional, Union
 from ampel.types import ChannelId
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.model.UnitModel import UnitModel
@@ -33,13 +33,13 @@ class ZTFProcessLocalAlerts(AbsProcessorTemplate):
 
  	#: T2 units to trigger when transient is updated. Dependencies of tied
 	#: units will be added automatically.
-	t2_compute: List[T2Compute] = []
+	t2_compute: list[T2Compute] = []
 
-	extra: Dict = {}
+	extra: dict = {}
 
 
 	# Mandatory override
-	def get_model(self, config: Dict[str, Any], logger: AmpelLogger) -> UnitModel:
+	def get_model(self, config: dict[str, Any], logger: AmpelLogger) -> UnitModel:
 
 		return UnitModel(
 			unit = 'AlertConsumer',

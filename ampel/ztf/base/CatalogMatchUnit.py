@@ -70,12 +70,12 @@ class BaseConeSearchRequest(TypedDict):
 
 class ConeSearchRequest(BaseConeSearchRequest, total=False):
     keys_to_append: Optional[Sequence[str]]
-    pre_filter: Optional[Dict[str, Any]]
-    post_filter: Optional[Dict[str, Any]]
+    pre_filter: Optional[dict[str, Any]]
+    post_filter: Optional[dict[str, Any]]
 
 
 class CatalogItem(TypedDict):
-    body: Dict[str, Any]
+    body: dict[str, Any]
     dist_arcsec: float
 
 
@@ -98,7 +98,7 @@ class CatalogMatchUnitBase:
         ra: float,
         dec: float,
         catalogs: Sequence[ConeSearchRequest],
-    ) -> List[bool]:
+    ) -> list[bool]:
         ...
 
     @overload
@@ -108,7 +108,7 @@ class CatalogMatchUnitBase:
         ra: float,
         dec: float,
         catalogs: Sequence[ConeSearchRequest],
-    ) -> List[Optional[CatalogItem]]:
+    ) -> list[Optional[CatalogItem]]:
         ...
 
     @overload
@@ -118,7 +118,7 @@ class CatalogMatchUnitBase:
         ra: float,
         dec: float,
         catalogs: Sequence[ConeSearchRequest],
-    ) -> List[Optional[List[CatalogItem]]]:
+    ) -> list[Optional[list[CatalogItem]]]:
         ...
 
     @backoff.on_exception(
@@ -140,7 +140,7 @@ class CatalogMatchUnitBase:
         dec: float,
         catalogs: Sequence[ConeSearchRequest],
     ) -> Union[
-        List[bool], List[Optional[CatalogItem]], List[Optional[List[CatalogItem]]]
+        list[bool], list[Optional[CatalogItem]], list[Optional[list[CatalogItem]]]
     ]:
         response = self.session.post(
             f"cone_search/{method}",
@@ -155,17 +155,17 @@ class CatalogMatchUnitBase:
 
     def cone_search_any(
         self, ra: float, dec: float, catalogs: Sequence[ConeSearchRequest]
-    ) -> List[bool]:
+    ) -> list[bool]:
         return self._cone_search("any", ra, dec, catalogs)
 
     def cone_search_nearest(
         self, ra: float, dec: float, catalogs: Sequence[ConeSearchRequest]
-    ) -> List[Optional[CatalogItem]]:
+    ) -> list[Optional[CatalogItem]]:
         return self._cone_search("nearest", ra, dec, catalogs)
 
     def cone_search_all(
         self, ra: float, dec: float, catalogs: Sequence[ConeSearchRequest]
-    ) -> List[Optional[List[CatalogItem]]]:
+    ) -> list[Optional[list[CatalogItem]]]:
         return self._cone_search("all", ra, dec, catalogs)
 
 

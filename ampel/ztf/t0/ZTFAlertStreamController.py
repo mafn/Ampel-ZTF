@@ -7,14 +7,10 @@
 # Last Modified Date:  07.08.2020
 # Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
-import asyncio
-import copy
-import logging
+import asyncio, copy, logging
 from collections import Counter
-from typing import Any, Dict, List, Optional, Set, Sequence
-
-import backoff
-import requests
+from typing import Any, Optional
+from collections.abc import Sequence
 
 from ampel.abstract.AbsProcessController import AbsProcessController
 from ampel.secret.AmpelVault import AmpelVault
@@ -50,7 +46,7 @@ class ZTFAlertStreamController(AbsProcessController):
         self._process = self.merge_processes(list(self.processes))
 
     @staticmethod
-    def merge_processes(processes: List[ProcessModel]) -> ProcessModel:
+    def merge_processes(processes: list[ProcessModel]) -> ProcessModel:
         assert len(processes) > 0
         process = copy.deepcopy(processes[0])
 
@@ -120,7 +116,7 @@ class ZTFAlertStreamController(AbsProcessController):
         assert self._process.active
         pending = {launch() for _ in range(self.multiplier)}
         pending.add(asyncio.create_task(self._scale_event.wait(), name="scale"))
-        done: Set[asyncio.Task] = set()
+        done: set[asyncio.Task] = set()
         try:
             while self._process.active and len(pending) > 1:
                 try:
@@ -165,9 +161,9 @@ class ZTFAlertStreamController(AbsProcessController):
     @staticmethod
     @concurrent.process(timeout=60)
     def run_mp_process(
-        config: Dict[str, Any],
+        config: dict[str, Any],
         secrets: Optional[AmpelVault],
-        p: Dict[str, Any],
+        p: dict[str, Any],
     ) -> bool:
 
         try:
@@ -190,6 +186,6 @@ class ZTFAlertStreamController(AbsProcessController):
             process_name = p["name"],
         )
 
-        n_alerts = processor.run()
+        processor.run()
 
         return True

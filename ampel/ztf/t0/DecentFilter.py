@@ -8,7 +8,7 @@
 # Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 import numpy as np
-from typing import Optional, Union, Dict, Any
+from typing import Optional, Union, Any
 from astropy.table import Table
 from astropy.coordinates import SkyCoord
 
@@ -154,7 +154,7 @@ class DecentFilter(CatalogMatchUnit, AbsAlertFilter):
 
         return sg_confused and very_close
 
-    def is_star_in_gaia(self, transient: Dict[str, Any]) -> bool:
+    def is_star_in_gaia(self, transient: dict[str, Any]) -> bool:
         """
         match tranient position with GAIA DR2 and uses parallax
         and proper motion to evaluate star-likeliness

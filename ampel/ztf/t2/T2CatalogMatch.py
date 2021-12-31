@@ -8,18 +8,19 @@
 # Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 from pydantic import Field
-from typing import Any, Dict, Literal, Optional, Sequence, Union, ClassVar
+from typing import Any, Literal, Optional, Union, ClassVar
+from collections.abc import Sequence
 from ampel.types import UBson
 from ampel.abstract.AbsPointT2Unit import AbsPointT2Unit
 from ampel.content.DataPoint import DataPoint
-from ampel.model.StrictModel import StrictModel
+from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.struct.UnitResult import UnitResult
 from ampel.ztf.base.CatalogMatchUnit import CatalogMatchUnit
 from ampel.enum.DocumentCode import DocumentCode
 from ampel.model.DPSelection import DPSelection
 
 
-class CatalogModel(StrictModel):
+class CatalogModel(AmpelBaseModel):
     """
     :param use: either extcats or catsHTM, depending on how the catalog is set up.
     :param rs_arcsec: search radius for the cone search, in arcseconds
@@ -59,8 +60,8 @@ class CatalogModel(StrictModel):
     rs_arcsec: float
     catq_kwargs: dict[str, Any] = Field({}, deprecated=True)
     keys_to_append: Optional[Sequence[str]]
-    pre_filter: Optional[Dict[str, Any]]
-    post_filter: Optional[Dict[str, Any]]
+    pre_filter: Optional[dict[str, Any]]
+    post_filter: Optional[dict[str, Any]]
 
 
 class T2CatalogMatch(CatalogMatchUnit, AbsPointT2Unit):

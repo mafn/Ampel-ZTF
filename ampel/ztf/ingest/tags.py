@@ -7,11 +7,11 @@
 # Last Modified Date:  18.03.2020
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
-from typing import Dict, List
+from typing import Dict
 
 # tags is used by ZiT0PhotoPointShaper and ZiT0UpperLimitShaper
 # First key: programid, second key: filter id
-tags: Dict[int, Dict[int, List[str]]] = {
+tags: dict[int, dict[int, list[str]]] = {
 	1: {
 		1: ["ZTF", "ZTF_PUB", "ZTF_G"],
 		2: ["ZTF", "ZTF_PUB", "ZTF_R"],

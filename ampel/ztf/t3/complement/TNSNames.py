@@ -8,7 +8,8 @@
 # Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 
-from typing import Iterable, Optional, Dict, Any
+from typing import Optional, Any
+from collections.abc import Iterable
 
 from pydantic import Field
 from ampel.struct.AmpelBuffer import AmpelBuffer
@@ -80,7 +81,7 @@ class TNSNames(CatalogMatchContextUnit, AbsBufferComplement):
 
     def _get_t2_result(
         self, record: AmpelBuffer, unit_id: str
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         """
         Get the result of the latest invocation of the given unit
         """

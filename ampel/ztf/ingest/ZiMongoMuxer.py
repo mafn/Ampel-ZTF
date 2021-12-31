@@ -7,7 +7,7 @@
 # Last Modified Date:  25.05.2021
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Any, Optional, Tuple
 from bisect import bisect_right
 from pymongo import UpdateOne
 from ampel.types import DataPointId, StockId
@@ -64,9 +64,9 @@ class ZiMongoMuxer(AbsT0Muxer):
 
 
 	def process(self,
-		dps: List[DataPoint],
+		dps: list[DataPoint],
 		stock_id: Optional[StockId] = None
-	) -> Tuple[Optional[List[DataPoint]], Optional[List[DataPoint]]]:
+	) -> tuple[Optional[list[DataPoint]], Optional[list[DataPoint]]]:
 		"""
 		:param dps: datapoints from alert
 		:param stock_id: stock id from alert
@@ -86,13 +86,13 @@ class ZiMongoMuxer(AbsT0Muxer):
 
 
 	# NB: this 1-liner is a separate method to provide a patch point for race condition testing
-	def _get_dps(self, stock_id: Optional[StockId]) -> List[DataPoint]:
+	def _get_dps(self, stock_id: Optional[StockId]) -> list[DataPoint]:
 		return list(self._photo_col.find({'stock': stock_id}, self.projection))
 
 	def _process(self,
-		dps: List[DataPoint],
+		dps: list[DataPoint],
 		stock_id: Optional[StockId] = None
-	) -> Tuple[Optional[List[DataPoint]], Optional[List[DataPoint]]]:
+	) -> tuple[Optional[list[DataPoint]], Optional[list[DataPoint]]]:
 		"""
 		:param dps: datapoints from alert
 		:param stock_id: stock id from alert
@@ -125,7 +125,7 @@ class ZiMongoMuxer(AbsT0Muxer):
 		# id -> superseding ids
 		ids_dps_superseded: dict[DataPointId, list[DataPointId]] = {}
 		# id -> final datapoint
-		unique_dps: Dict[DataPointId, DataPoint] = {}
+		unique_dps: dict[DataPointId, DataPoint] = {}
 
 		for dp in dps_db + dps:
 
@@ -295,7 +295,7 @@ class ZiMongoMuxer(AbsT0Muxer):
 
 	def _project(self, doc, projection):
 
-		out: Dict[str, Any] = {}
+		out: dict[str, Any] = {}
 		for key, spec in projection.items():
 
 			if key not in doc:

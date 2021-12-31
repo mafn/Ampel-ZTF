@@ -9,7 +9,8 @@
 import backoff, requests # type: ignore[import]
 from base64 import b64decode
 from requests_toolbelt.sessions import BaseUrlSession
-from typing import Iterable, Literal, Optional, Dict
+from typing import Literal, Optional
+from collections.abc import Iterable
 
 from ampel.view.T3Store import T3Store
 from ampel.base.AmpelBaseModel import AmpelBaseModel
@@ -46,7 +47,7 @@ class ZTFCutoutImages(AbsBufferComplement):
         giveup=lambda e: e.response.status_code not in {503, 504, 429, 408},
         max_time=60,
     )
-    def get_cutout(self, candid: int) -> Optional[Dict[str, bytes]]:
+    def get_cutout(self, candid: int) -> Optional[dict[str, bytes]]:
         response = self.session.get(f"cutouts/{candid}")
         if response.status_code == 404:
             return None
