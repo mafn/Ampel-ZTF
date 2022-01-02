@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : Ampel-ZTF/ampel/ztf/t3/complement/ZTFCutoutImages.py
-# Author            : Jakob van Santen <jakob.van.santen@desy.de>
-# Date              : 18.09.2020
-# Last Modified Date: 18.09.2020
-# Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
+# File:                Ampel-ZTF/ampel/ztf/t3/complement/ZTFCutoutImages.py
+# Author:              Jakob van Santen <jakob.van.santen@desy.de>
+# Date:                18.09.2020
+# Last Modified Date:  18.09.2020
+# Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 import backoff, requests # type: ignore[import]
 from base64 import b64decode

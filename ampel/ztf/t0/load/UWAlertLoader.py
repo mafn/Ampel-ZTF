@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/ztf/pipeline/t0/load/UWAlertLoader.py
-# License           : BSD-3-Clause
-# Author            : Jakob van Santen <jakob.van.santen@desy.de>
-# Date              : Unspecified
-# Last Modified Date: 25.03.2021
-# Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
+# File:                ampel/ztf/pipeline/t0/load/UWAlertLoader.py
+# License:             BSD-3-Clause
+# Author:              Jakob van Santen <jakob.van.santen@desy.de>
+# Date:                Unspecified
+# Last Modified Date:  25.03.2021
+# Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 import io
 import itertools

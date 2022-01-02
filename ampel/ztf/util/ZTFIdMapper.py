@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : Ampel-ZTF/ampel/ztf/util/ZTFIdMapper.py
-# License           : BSD-3-Clause
-# Author            : vb <vbrinnel@physik.hu-berlin.de>
-# Date              : 07.06.2018
-# Last Modified Date: 12.02.2021
-# Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
+# File:                Ampel-ZTF/ampel/ztf/util/ZTFIdMapper.py
+# License:             BSD-3-Clause
+# Author:              valery brinnel <firstname.lastname@gmail.com>
+# Date:                07.06.2018
+# Last Modified Date:  12.02.2021
+# Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
 from typing import List, Union, Iterable, overload, cast
 from ampel.types import StrictIterable, StockId

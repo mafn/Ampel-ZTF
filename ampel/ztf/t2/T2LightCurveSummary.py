@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : Ampel-ZTF/ampel/ztf/t2/T2LightCurveSummary.py
-# License           : BSD-3-Clause
-# Author            : Jakob van Santen <jakob.van.santen@desy.de>
-# Date              : 16.12.2020
-# Last Modified Date: 16.12.2020
-# Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
+# File:                Ampel-ZTF/ampel/ztf/t2/T2LightCurveSummary.py
+# License:             BSD-3-Clause
+# Author:              Jakob van Santen <jakob.van.santen@desy.de>
+# Date:                16.12.2020
+# Last Modified Date:  16.12.2020
+# Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 from typing import Any, Dict, List, Union
 from ampel.types import UBson

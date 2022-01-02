@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : Ampel-ZTF/ampel/ztf/base/CatalogMatchUnit.py
-# License           : BSD-3-Clause
-# Author            : Jakob van Santen <jakob.van.santen@desy.de>
-# Date              : 10.03.2021
-# Last Modified Date: 10.03.2021
-# Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
+# File:                Ampel-ZTF/ampel/ztf/base/CatalogMatchUnit.py
+# License:             BSD-3-Clause
+# Author:              Jakob van Santen <jakob.van.santen@desy.de>
+# Date:                10.03.2021
+# Last Modified Date:  10.03.2021
+# Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 from functools import cached_property
 from typing import (

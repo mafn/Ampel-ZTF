@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : Ampel-ZTF/ampel/ztf/base/CatalogMatchFilter.py
-# License           : BSD-3-Clause
-# Author            : Jakob van Santen <jakob.van.santen@desy.de>
-# Date              : 19.03.2021
-# Last Modified Date: 24.11.2021
-# Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
+# File:                Ampel-ZTF/ampel/ztf/base/CatalogMatchFilter.py
+# License:             BSD-3-Clause
+# Author:              Jakob van Santen <jakob.van.santen@desy.de>
+# Date:                19.03.2021
+# Last Modified Date:  24.11.2021
+# Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 from typing import Literal, Dict, Any, Union, Optional, cast
 

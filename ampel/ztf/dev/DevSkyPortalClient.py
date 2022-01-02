@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : Ampel-ZTF/ampel/ztf/dev/DevSkyPortalClient.py
-# Author            : Jakob van Santen <jakob.van.santen@desy.de>
-# Date              : 16.09.2020
-# Last Modified Date: 16.09.2020
-# Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
+# File:                Ampel-ZTF/ampel/ztf/dev/DevSkyPortalClient.py
+# Author:              Jakob van Santen <jakob.van.santen@desy.de>
+# Date:                16.09.2020
+# Last Modified Date:  16.09.2020
+# Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 import gzip
 import io

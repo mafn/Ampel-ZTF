@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : Ampel-ZTF/ampel/ztf/dev/DevAlertConsumer.py
-# License           : BSD-3-Clause
-# Author            : vb <vbrinnel@physik.hu-berlin.de>
-# Date              : 07.06.2018
-# Last Modified Date: 30.07.2020
-# Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
+# File:                Ampel-ZTF/ampel/ztf/dev/DevAlertConsumer.py
+# License:             BSD-3-Clause
+# Author:              valery brinnel <firstname.lastname@gmail.com>
+# Date:                07.06.2018
+# Last Modified Date:  30.07.2020
+# Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
 
 import logging, time, sys, fastavro, tarfile # type: ignore[import]

@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : Ampel-ZTF/ampel/ztf/t2/T2LightCurveFeatures.py
-# License           : BSD-3-Clause
-# Author            : Jakob van Santen <jakob.van.santen@desy.de>
-# Date              : 15.04.2021
-# Last Modified Date: 15.04.2021
-# Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
+# File:                Ampel-ZTF/ampel/ztf/t2/T2LightCurveFeatures.py
+# License:             BSD-3-Clause
+# Author:              Jakob van Santen <jakob.van.santen@desy.de>
+# Date:                15.04.2021
+# Last Modified Date:  15.04.2021
+# Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 from typing import Any, Optional
 import numpy as np

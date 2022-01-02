@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : Ampel-ZTF/setup.py
-# License           : BSD-3-Clause
-# Author            : vb <vbrinnel@physik.hu-berlin.de>
-# Date              : Unspecified
-# Last Modified Date: 19.03.2021
-# Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
+# File:                Ampel-ZTF/setup.py
+# License:             BSD-3-Clause
+# Author:              valery brinnel <firstname.lastname@gmail.com>
+# Date:                Unspecified
+# Last Modified Date:  19.03.2021
+# Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
 from setuptools import setup, find_namespace_packages
 

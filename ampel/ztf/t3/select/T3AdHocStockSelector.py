@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : Ampel-ZTF/ampel/ztf/t3/select/T3AdHocStockSelector.py
-# License           : BSD-3-Clause
-# Author            : Jakob van Santen <jakob.van.santen@desy.de>
-# Date              : 17.09.2020
-# Last Modified Date: 17.09.2020
-# Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
+# File:                Ampel-ZTF/ampel/ztf/t3/select/T3AdHocStockSelector.py
+# License:             BSD-3-Clause
+# Author:              Jakob van Santen <jakob.van.santen@desy.de>
+# Date:                17.09.2020
+# Last Modified Date:  17.09.2020
+# Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 from typing import Optional, List
 

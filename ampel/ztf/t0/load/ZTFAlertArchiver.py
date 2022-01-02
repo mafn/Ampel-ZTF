@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/ztf/t0/load/ZTFAlertArchiver.py
-# License           : BSD-3-Clause
-# Author            : Jakob van Santen <jakob.van.santen@desy.de>
-# Date              : 14.04.2021
-# Last Modified Date: 14.04.2021
-# Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
+# File:                ampel/ztf/t0/load/ZTFAlertArchiver.py
+# License:             BSD-3-Clause
+# Author:              Jakob van Santen <jakob.van.santen@desy.de>
+# Date:                14.04.2021
+# Last Modified Date:  14.04.2021
+# Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 
 import io

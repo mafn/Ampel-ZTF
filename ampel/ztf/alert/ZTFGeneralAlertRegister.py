@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : Ampel-ZTF/ampel/ztf/alert/ZTFGeneralAlertRegister.py
-# License           : BSD-3-Clause
-# Author            : vb <vbrinnel@physik.hu-berlin.de>
-# Date              : 26.05.2020
-# Last Modified Date: 24.11.2021
-# Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
+# File:                Ampel-ZTF/ampel/ztf/alert/ZTFGeneralAlertRegister.py
+# License:             BSD-3-Clause
+# Author:              valery brinnel <firstname.lastname@gmail.com>
+# Date:                26.05.2020
+# Last Modified Date:  24.11.2021
+# Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
 from struct import pack
 from typing import Optional, ClassVar, Tuple, Literal, Union, BinaryIO, List, Generator

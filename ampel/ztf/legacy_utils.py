@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : Ampel-ZTF/ampel/ztf/legacy_utils.py
-# License           : BSD-3-Clause
-# Author            : vb <vbrinnel@physik.hu-berlin.de>
-# Date              : 07.06.2018
-# Last Modified Date: 19.03.2020
-# Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
+# File:                Ampel-ZTF/ampel/ztf/legacy_utils.py
+# License:             BSD-3-Clause
+# Author:              valery brinnel <firstname.lastname@gmail.com>
+# Date:                07.06.2018
+# Last Modified Date:  19.03.2020
+# Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
 from typing import overload, List, Union, Tuple
 

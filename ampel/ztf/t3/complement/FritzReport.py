@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/ztf/t3/complement/FritzReport.py
-# License           : BSD-3-Clause
-# Author            : Jakob van Santen <jakob.van.santen@desy.de>
-# Date              : 03.11.2020
-# Date              : 03.11.2020
-# Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
+# File:                ampel/ztf/t3/complement/FritzReport.py
+# License:             BSD-3-Clause
+# Author:              Jakob van Santen <jakob.van.santen@desy.de>
+# Date:                03.11.2020
+# Date:                03.11.2020
+# Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 import asyncio, nest_asyncio
 from pydantic.tools import parse_obj_as

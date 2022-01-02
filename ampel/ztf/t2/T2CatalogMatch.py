@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : Ampel-ZTF/ampel/ztf/t2/T2CatalogMatch.py
-# License           : BSD-3-Clause
-# Author            : matteo.giomi@desy.de
-# Date              : 24.08.2018
-# Last Modified Date: 29.01.2021
-# Last Modified By  : Jakob van Santen <jakob.van.santen@desy.de>
+# File:                Ampel-ZTF/ampel/ztf/t2/T2CatalogMatch.py
+# License:             BSD-3-Clause
+# Author:              matteo.giomi@desy.de
+# Date:                24.08.2018
+# Last Modified Date:  29.01.2021
+# Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 from pydantic import Field
 from typing import Any, Dict, Literal, Optional, Sequence, Union, ClassVar
