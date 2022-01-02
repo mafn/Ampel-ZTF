@@ -36,7 +36,7 @@ include = [
 
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.10"
+python = ">=3.10,<3.11"
 astropy = "^5.0"
 matplotlib = "^3.3.4"
 aiohttp = "^3.7.3"
@@ -48,17 +48,17 @@ requests = "^2.25.1"
 requests-toolbelt = "^0.9.1"
 light-curve-python = {version = ">=0.2.5,<0.4.1", optional = true}
 ampel-ztf-archive = {optional = true, version = "^0.8.0-alpha.0"}
-ampel-interface = "^0.8.1-alpha.11"
-ampel-core = "^0.8.2-alpha.4"
-ampel-photometry = "^0.8.1-alpha.3"
-ampel-alerts = "^0.8.1-alpha.3"
+ampel-interface = "^0.8.3-alpha.1"
+ampel-core = "^0.8.3-alpha.1"
+ampel-photometry = "^0.8.3-alpha.1"
+ampel-alerts = "^0.8.3-alpha.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
 pytest-cov = "^3.0.0"
 pytest-mock = "^3.6.1"
 mongomock = "^3.23.0"
-mypy = "^0.910"
+mypy = "^0.930"
 pytest-timeout = "^1.4.2"
 pytest-asyncio = "^0.15.1"
 types-requests = "^2.25.9"
