@@ -8,7 +8,7 @@
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
 from struct import pack
-from typing import Optional, ClassVar, Literal, Union, BinaryIO
+from typing import ClassVar, Literal, BinaryIO
 from collections.abc import Generator
 from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
 from ampel.alert.reject.BaseAlertRegister import BaseAlertRegister
@@ -28,13 +28,13 @@ class ZTFGeneralAlertRegister(BaseAlertRegister):
 	struct: Literal['<QB5s'] = '<QB5s'
 
 
-	def file(self, alert: AmpelAlertProtocol, filter_res: Optional[int] = None) -> None:
+	def file(self, alert: AmpelAlertProtocol, filter_res: None | int = None) -> None:
 		self._write(pack('<QBQ', alert.id, filter_res or 0, alert.stock)[:-3])
 
 
 	@classmethod
 	def iter(cls,
-		f: Union[BinaryIO, str], multiplier: int = 100000, verbose: bool = True
+		f: BinaryIO | str, multiplier: int = 100000, verbose: bool = True
 	) -> Generator[tuple[int, ...], None, None]:
 		for el in reg_iter(f, multiplier, verbose):
 			yield el[0], el[1], int.from_bytes(el[2], 'little') # type: ignore[arg-type]
@@ -42,8 +42,8 @@ class ZTFGeneralAlertRegister(BaseAlertRegister):
 
 	@classmethod
 	def find_alert(cls, # type: ignore[override]
-		f: Union[BinaryIO, str], alert_id: Union[int, list[int]], **kwargs
-	) -> Optional[list[tuple[int, ...]]]:
+		f: BinaryIO | str, alert_id: int | list[int], **kwargs
+	) -> None | list[tuple[int, ...]]:
 		if ret := super().find_alert(f, alert_id=alert_id, **kwargs):
 			return [(el[0], el[1], int.from_bytes(el[2], 'little')) for el in ret] # type: ignore[arg-type]
 		return None
@@ -51,8 +51,8 @@ class ZTFGeneralAlertRegister(BaseAlertRegister):
 
 	@classmethod
 	def find_stock(cls, # type: ignore[override]
-		f: Union[BinaryIO, str], stock_id: Union[int, list[int]], **kwargs
-	) -> Optional[list[tuple[int, ...]]]:
+		f: BinaryIO | str, stock_id: int | list[int], **kwargs
+	) -> None | list[tuple[int, ...]]:
 		if ret := super().find_stock(f, stock_id=stock_id, stock_offset=9, stock_bytes_len=5, **kwargs):
 			return [(el[0], el[1], int.from_bytes(el[2], 'little')) for el in ret] # type: ignore[arg-type]
 		return None

@@ -9,7 +9,7 @@
 
 
 import logging, time, sys, fastavro, tarfile # type: ignore[import]
-from typing import Any, Optional
+from typing import Any
 from ampel.alert.AmpelAlert import AmpelAlert
 
 
@@ -107,7 +107,7 @@ class DevAlertConsumer:
 		return iter_count - iter_offset
 
 
-	def _unpack(self, tar_info) -> Optional[AmpelAlert]:
+	def _unpack(self, tar_info) -> None | AmpelAlert:
 
 		# Reach end of archive
 		if tar_info is None:

@@ -7,7 +7,7 @@
 # Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 import asyncio, nest_asyncio
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from collections.abc import Generator
 
 from ampel.abstract.AbsPhotoT3Unit import AbsPhotoT3Unit
@@ -23,14 +23,14 @@ if TYPE_CHECKING:
 class SkyPortalPublisher(BaseSkyPortalPublisher, AbsPhotoT3Unit):
 
     #: Save sources to these groups
-    groups: Optional[list[str]] = None
-    filters: Optional[list[str]] = None
+    groups: None | list[str] = None
+    filters: None | list[str] = None
     #: Post T2 results as annotations instead of comments
     annotate: bool = False
 
     def process(self,
         tviews: Generator["TransientView", JournalAttributes, None],
-        t3s: Optional["T3Store"] = None
+        t3s: 'None | T3Store' = None
     ) -> None:
         """Pass each view to :meth:`post_candidate`."""
         # Patch event loop to be reentrant if it is already running, e.g.

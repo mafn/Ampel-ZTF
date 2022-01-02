@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import Any, Union, Optional
+from typing import Any
 from collections.abc import Sequence
 
 import backoff, requests # type: ignore
@@ -33,7 +33,7 @@ class ZiArchiveMuxer(AbsT0Muxer):
     #: t0 collection
     history_days: int
 
-    shaper: Union[UnitModel, str] = "ZiDataPointShaper"
+    shaper: UnitModel | str = "ZiDataPointShaper"
     archive_token: NamedSecret[str] = NamedSecret(label="ztf/archive/token")
 
     # Standard projection used when checking DB for existing PPS/ULS
@@ -128,8 +128,8 @@ class ZiArchiveMuxer(AbsT0Muxer):
         return response.json()
 
     def process(
-        self, dps: list[DataPoint], stock_id: Optional[StockId] = None
-    ) -> tuple[Optional[list[DataPoint]], Optional[list[DataPoint]]]:
+        self, dps: list[DataPoint], stock_id: None | StockId = None
+    ) -> tuple[None | list[DataPoint], None | list[DataPoint]]:
         """
         :param dps: datapoints from alert
         :param stock_id: stock id from alert

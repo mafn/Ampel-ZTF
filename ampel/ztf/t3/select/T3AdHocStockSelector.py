@@ -7,7 +7,6 @@
 # Last Modified Date:  17.09.2020
 # Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
-from typing import Optional
 
 from pymongo.cursor import Cursor
 
@@ -33,7 +32,7 @@ class T3AdHocStockSelector(AbsT3Selector):
         super().__init__(**kwargs)
 
     # Override/Implement
-    def fetch(self) -> Optional[Cursor]:
+    def fetch(self) -> None | Cursor:
         """ The returned Iterator is a pymongo Cursor """
 
         cursor = (

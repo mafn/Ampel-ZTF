@@ -8,7 +8,7 @@
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
 from struct import pack
-from typing import Optional, ClassVar, Union, BinaryIO, Any
+from typing import ClassVar, BinaryIO, Any
 from collections.abc import Sequence
 from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
 from ampel.ztf.alert.ZTFGeneralAlertRegister import ZTFGeneralAlertRegister
@@ -27,7 +27,7 @@ class ZTFGeneralActiveAlertRegister(ZTFGeneralAlertRegister):
 	__slots__: ClassVar[tuple[str, ...]] = '_write', 'alert_max', 'alert_min', 'stock_max', 'stock_min' # type: ignore
 	_slot_defaults = {'alert_max': 0, 'alert_min': 2**64, 'stock_max': 0, 'stock_min': 2**64, 'ztf_years': set()}
 
-	new_header_size: Union[int, str] = "+4096"
+	new_header_size: int | str = "+4096"
 	header_hints: ClassVar[Sequence[str]] = ('alert', 'stock') # type: ignore
 	alert_min: int
 	alert_max: int
@@ -44,7 +44,7 @@ class ZTFGeneralActiveAlertRegister(ZTFGeneralAlertRegister):
 			self.ztf_years = set(hdr['ztf_years'])
 
 
-	def file(self, alert: AmpelAlertProtocol, filter_res: Optional[int] = None) -> None:
+	def file(self, alert: AmpelAlertProtocol, filter_res: None | int = None) -> None:
 
 		alid = alert.id
 		if alid > self.alert_max:
@@ -76,15 +76,15 @@ class ZTFGeneralActiveAlertRegister(ZTFGeneralAlertRegister):
 
 	@classmethod
 	def find_stock(cls, # type: ignore[override]
-		f: Union[BinaryIO, str], stock_id: Union[int, list[int]], **kwargs
-	) -> Optional[list[tuple[int, ...]]]:
+		f: BinaryIO | str, stock_id: int | list[int], **kwargs
+	) -> None | list[tuple[int, ...]]:
 		return super().find_stock(f, stock_id, header_hint_callback=cls._match_ztf_years, **kwargs)
 
 
 	@staticmethod
 	def _match_ztf_years(
-		header: dict[str, Any], stock_id: Union[int, list[int]], logger: Optional[AmpelLogger] = None
-	) -> Optional[Union[int, list[int]]]:
+		header: dict[str, Any], stock_id: int | list[int], logger: None | AmpelLogger = None
+	) -> None | int | list[int]:
 
 		if 'ztf_years' in header:
 			zy = header['ztf_years']

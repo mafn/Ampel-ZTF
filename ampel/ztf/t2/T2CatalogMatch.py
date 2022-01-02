@@ -8,7 +8,7 @@
 # Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 from pydantic import Field
-from typing import Any, Literal, Optional, Union, ClassVar
+from typing import Any, Literal, ClassVar
 from collections.abc import Sequence
 from ampel.types import UBson
 from ampel.abstract.AbsPointT2Unit import AbsPointT2Unit
@@ -59,9 +59,9 @@ class CatalogModel(AmpelBaseModel):
     use: Literal["extcats", "catsHTM"]
     rs_arcsec: float
     catq_kwargs: dict[str, Any] = Field({}, deprecated=True)
-    keys_to_append: Optional[Sequence[str]]
-    pre_filter: Optional[dict[str, Any]]
-    post_filter: Optional[dict[str, Any]]
+    keys_to_append: None | Sequence[str]
+    pre_filter: None | dict[str, Any]
+    post_filter: None | dict[str, Any]
 
 
 class T2CatalogMatch(CatalogMatchUnit, AbsPointT2Unit):
@@ -76,7 +76,7 @@ class T2CatalogMatch(CatalogMatchUnit, AbsPointT2Unit):
     catalogs: dict[str, CatalogModel]
 
 
-    def process(self, datapoint: DataPoint) -> Union[UBson, UnitResult]:
+    def process(self, datapoint: DataPoint) -> UBson | UnitResult:
         """
         :returns: example of a match in SDSS but not in NED:
 

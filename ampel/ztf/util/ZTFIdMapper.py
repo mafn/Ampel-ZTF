@@ -7,7 +7,7 @@
 # Last Modified Date:  12.02.2021
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
-from typing import Union, overload, cast
+from typing import overload, cast
 from collections.abc import Iterable
 from ampel.types import StrictIterable, StockId
 from ampel.abstract.AbsIdMapper import AbsIdMapper
@@ -34,7 +34,7 @@ class ZTFIdMapper(AbsIdMapper):
 		...
 
 	@classmethod
-	def to_ampel_id(cls, ztf_id: Union[str, StrictIterable[str]]) -> Union[int, list[int]]: # type: ignore[override]
+	def to_ampel_id(cls, ztf_id: str | StrictIterable[str]) -> int | list[int]: # type: ignore[override]
 		"""
 		:returns: ampel id (positive integer).
 
@@ -119,7 +119,7 @@ class ZTFIdMapper(AbsIdMapper):
 		...
 
 	@classmethod
-	def to_ext_id(cls, ampel_id: Union[StockId, StrictIterable[StockId]]) -> Union[str, list[str]]: # type: ignore[override]
+	def to_ext_id(cls, ampel_id: StockId | StrictIterable[StockId]) -> str | list[str]: # type: ignore[override]
 		"""
 		%timeit to_ext_id(274878346346)
 		1.54 µs ± 77.9 ns per loop (mean ± std. dev. of 7 runs, 1000000 loops each)

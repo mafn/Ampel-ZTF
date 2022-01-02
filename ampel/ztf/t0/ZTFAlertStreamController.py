@@ -9,7 +9,7 @@
 
 import asyncio, copy, logging
 from collections import Counter
-from typing import Any, Optional
+from typing import Any
 from collections.abc import Sequence
 
 from ampel.abstract.AbsProcessController import AbsProcessController
@@ -32,12 +32,12 @@ class ZTFAlertStreamController(AbsProcessController):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-        self._scale_event: Optional[asyncio.Event] = None
+        self._scale_event: None | asyncio.Event = None
         self.update(self.config, self.vault, self.processes)
 
     def update(self,
         config: AmpelConfig,
-        secrets: Optional[AmpelVault],
+        secrets: None | AmpelVault,
         processes: Sequence[ProcessModel],
     ) -> None:
         self.config = config
@@ -76,7 +76,7 @@ class ZTFAlertStreamController(AbsProcessController):
 
         return process
 
-    def stop(self, name: Optional[str] = None) -> None:
+    def stop(self, name: None | str = None) -> None:
         """Stop scheduling new processes."""
         assert name is None
         self._process.active = False
@@ -84,7 +84,7 @@ class ZTFAlertStreamController(AbsProcessController):
         if self._scale_event:
             self._scale_event.set()
 
-    def scale(self, name: Optional[str] = None, multiplier: int = 1) -> None:
+    def scale(self, name: None | str = None, multiplier: int = 1) -> None:
         if multiplier < 1:
             raise ValueError("multiplier must be nonnegative")
         assert self._scale_event
@@ -162,7 +162,7 @@ class ZTFAlertStreamController(AbsProcessController):
     @concurrent.process(timeout=60)
     def run_mp_process(
         config: dict[str, Any],
-        secrets: Optional[AmpelVault],
+        secrets: None | AmpelVault,
         p: dict[str, Any],
     ) -> bool:
 

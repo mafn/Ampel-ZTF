@@ -7,7 +7,7 @@
 # Last Modified Date:  10.05.2021
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
-from typing import Any, Optional
+from typing import Any
 from collections.abc import Iterable
 from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.types import StockId
@@ -119,6 +119,6 @@ class ZiDataPointShaperBase(AmpelBaseModel):
 
 class ZiDataPointShaper(ZiDataPointShaperBase, AbsT0Unit):
 	
-	def process(self, arg: Any, stock: Optional[StockId] = None) -> list[DataPoint]:
+	def process(self, arg: Any, stock: None | StockId = None) -> list[DataPoint]:
 		assert stock is not None
 		return super().process(arg, stock)

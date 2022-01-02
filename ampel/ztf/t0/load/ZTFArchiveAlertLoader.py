@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Union, Optional
+from typing import Any
 
 import backoff
 import requests
@@ -13,8 +13,8 @@ log = logging.getLogger(__name__)
 class ObjectSource(AmpelBaseModel):
     #: A ZTF name
     ztf_name: str
-    jd_start: Optional[float] = None
-    jd_end: Optional[float] = None
+    jd_start: None | float = None
+    jd_end: None | float = None
     with_history: bool = True
     archive_token: str
 
@@ -23,7 +23,7 @@ class ZTFArchiveAlertLoader(AmpelBaseModel):
     #: Base URL of archive service
     archive: str = "https://ampel.zeuthen.desy.de/api/ztf/archive/v2"
     #: A stream identifier, created via POST /api/ztf/archive/streams/, or a query
-    stream: Union[str, ObjectSource]
+    stream: str | ObjectSource
 
     def __iter__(self):
         return self.get_alerts()

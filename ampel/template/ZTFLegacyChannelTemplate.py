@@ -7,7 +7,7 @@
 # Last Modified Date:  30.05.2021
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
-from typing import Any, ClassVar, Optional, Union
+from typing import Any, ClassVar
 from ampel.model.UnitModel import UnitModel
 from pydantic import validator
 from ampel.log.AmpelLogger import AmpelLogger
@@ -42,7 +42,7 @@ class ZTFLegacyChannelTemplate(AbsEasyChannelTemplate):
 	#: include all previously ingested photopoints in emitted states
 	live_history: bool = True
 	#: include X days of archival datapoints in emitted states
-	archive_history: Optional[int] = None
+	archive_history: None | int = None
 
 	# Mandatory implementation
 	def get_channel(self, logger: AmpelLogger) -> dict[str, Any]:
@@ -78,7 +78,7 @@ class ZTFLegacyChannelTemplate(AbsEasyChannelTemplate):
 			else None
 		)
 		if mongo_muxer and archive_muxer:
-			muxer: Optional[dict[str,Any]] = {
+			muxer: None | dict[str,Any] = {
 				"unit": "ChainedT0Muxer",
 				"config": {"muxers": [mongo_muxer, archive_muxer]},
 			}

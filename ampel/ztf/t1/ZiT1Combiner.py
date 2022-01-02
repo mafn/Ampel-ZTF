@@ -17,7 +17,7 @@ from ampel.t1.T1SimpleCombiner import T1SimpleCombiner
 
 class ZiT1Combiner(T1SimpleCombiner):
 
-	def combine(self, datapoints: Iterable[DataPoint]) -> Union[list[DataPointId], T1CombineResult]: # type: ignore[override]
+	def combine(self, datapoints: Iterable[DataPoint]) -> list[DataPointId] | T1CombineResult: # type: ignore[override]
 		"""
 		:param datapoints: dict instances representing datapoints
 		"""

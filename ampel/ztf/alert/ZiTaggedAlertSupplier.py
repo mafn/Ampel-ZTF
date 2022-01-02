@@ -8,7 +8,7 @@
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
 from os.path import basename
-from typing import Literal, Union
+from typing import Literal
 
 from ampel.abstract.AbsAlertLoader import AbsAlertLoader
 from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
@@ -33,7 +33,7 @@ class ZiTaggedAlertSupplier(BaseAlertSupplier):
 	"""
 
 	# Override default
-	deserialize: Union[None, Literal["avro", "json"]] = "avro"
+	deserialize: None | Literal["avro", "json"] = "avro"
 	binary_mode: bool = True
 
 

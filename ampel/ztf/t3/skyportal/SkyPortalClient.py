@@ -16,7 +16,7 @@ from astropy.io import fits
 from matplotlib.colors import Normalize
 from matplotlib.figure import Figure
 from pydantic import AnyHttpUrl
-from typing import Any, TypedDict, Optional, overload, TYPE_CHECKING, Union
+from typing import Any, TypedDict, overload, TYPE_CHECKING
 from collections.abc import Sequence, Generator, Iterable
 
 from ampel.base.AmpelBaseModel import AmpelBaseModel
@@ -98,7 +98,7 @@ def decode_t2_body(blob: str) -> dict[str, Any]:
     return {"ts": int(datetime.fromisoformat(doc.pop("timestamp")).timestamp()), **doc}
 
 
-def get_t2_result(t2: "T2DocView") -> Union[tuple[None, None], tuple[datetime, dict[str, Any]]]:
+def get_t2_result(t2: "T2DocView") -> tuple[None, None] | tuple[datetime, dict[str, Any]]:
     assert t2.body is not None
     for meta, record in zip(reversed(t2.meta), reversed(t2.body)):
         if meta.get("code", DocumentCode.OK) == DocumentCode.OK:
@@ -182,8 +182,8 @@ class SkyPortalClient(AmpelBaseModel):
             "headers": {"Authorization": f"token {self.token.get()}"}
         }
         self._ids: dict[str, dict[str, int]] = {}
-        self._session: Optional[aiohttp.ClientSession] = None
-        self._semaphore: Optional[asyncio.Semaphore] = None
+        self._session: None | aiohttp.ClientSession = None
+        self._semaphore: None | asyncio.Semaphore = None
 
     @asynccontextmanager
     async def session(self, limit_per_host=0):
@@ -232,9 +232,9 @@ class SkyPortalClient(AmpelBaseModel):
         verb: str,
         endpoint: str,
         raise_exc: bool = True,
-        _decode_json: Optional[bool] = True,
+        _decode_json: None | bool = True,
         **kwargs: dict[str, Any],
-    ) -> Union[aiohttp.ClientResponse, dict[str, Any]]:
+    ) -> aiohttp.ClientResponse | dict[str, Any]:
         if self._session is None or self._semaphore is None:
             raise ValueError(
                 "call operations within an `async with self.session()` block"
@@ -341,7 +341,7 @@ class FilterGroupProvisioner(SkyPortalClient):
         return await self.get_by_name("filters", name)
 
     async def create_filters(
-        self, config: "AmpelConfig", group: str, stream: Optional[str] = None
+        self, config: "AmpelConfig", group: str, stream: None | str = None
     ) -> None:
         """
         Create a dummy SkyPortal filter for each Ampel filter
@@ -432,9 +432,9 @@ async def provision_seed_data(client: SkyPortalClient):
 class PostReport(TypedDict):
     new: bool  #: is this a new source?
     candidates: list[int]  #: new candidates created
-    save_error: Optional[str]  #: error raised while saving source
+    save_error: None | str  #: error raised while saving source
     photometry_count: int  #: size of posted photometry
-    photometry_error: Optional[str]  #: error raised while posting photometry
+    photometry_error: None | str  #: error raised while posting photometry
     thumbnail_count: int  #: number of thumbnails posted
     comments: int  #: number of comments posted
     comment_errors: list[str]  #: errors raised while posting comments
@@ -485,7 +485,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
                 content[k].append(v)
         return dict(content)
 
-    async def _find_instrument(self, tags: Sequence[Union[int, str]]) -> int:
+    async def _find_instrument(self, tags: Sequence[int | str]) -> int:
         for tag in tags:
             try:
                 return await self.get_by_name("instrument", tag)
@@ -497,7 +497,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         self,
         name: str,
         t2_views: Iterable["T2DocView"],
-        object_record: Optional[dict[str, Any]],
+        object_record: None | dict[str, Any],
         ret: PostReport,
     ):
         previous_annotations = object_record["annotations"] if object_record else []
@@ -547,7 +547,7 @@ class BaseSkyPortalPublisher(SkyPortalClient):
         self,
         name: str,
         t2_views: Iterable["T2DocView"],
-        object_record: Optional[dict[str, Any]],
+        object_record: None | dict[str, Any],
         ret: PostReport,
     ):
         previous_comments = object_record["comments"] if object_record else []
@@ -600,9 +600,9 @@ class BaseSkyPortalPublisher(SkyPortalClient):
     async def post_candidate(
         self,
         view: "TransientView",
-        filters: Optional[list[str]] = None,
-        groups: Optional[list[str]] = None,
-        instrument: Optional[str] = None,
+        filters: None | list[str] = None,
+        groups: None | list[str] = None,
+        instrument: None | str = None,
         annotate: bool = False,
     ) -> PostReport:
         """

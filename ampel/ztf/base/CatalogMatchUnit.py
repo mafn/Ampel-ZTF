@@ -69,9 +69,9 @@ class BaseConeSearchRequest(TypedDict):
 
 
 class ConeSearchRequest(BaseConeSearchRequest, total=False):
-    keys_to_append: Optional[Sequence[str]]
-    pre_filter: Optional[dict[str, Any]]
-    post_filter: Optional[dict[str, Any]]
+    keys_to_append: None | Sequence[str]
+    pre_filter: None | dict[str, Any]
+    post_filter: None | dict[str, Any]
 
 
 class CatalogItem(TypedDict):
@@ -108,7 +108,7 @@ class CatalogMatchUnitBase:
         ra: float,
         dec: float,
         catalogs: Sequence[ConeSearchRequest],
-    ) -> list[Optional[CatalogItem]]:
+    ) -> list[None | CatalogItem]:
         ...
 
     @overload
@@ -118,7 +118,7 @@ class CatalogMatchUnitBase:
         ra: float,
         dec: float,
         catalogs: Sequence[ConeSearchRequest],
-    ) -> list[Optional[list[CatalogItem]]]:
+    ) -> list[None | list[CatalogItem]]:
         ...
 
     @backoff.on_exception(
@@ -139,9 +139,7 @@ class CatalogMatchUnitBase:
         ra: float,
         dec: float,
         catalogs: Sequence[ConeSearchRequest],
-    ) -> Union[
-        list[bool], list[Optional[CatalogItem]], list[Optional[list[CatalogItem]]]
-    ]:
+    ) -> list[bool] | list[None | CatalogItem] | list[None | list[CatalogItem]]:
         response = self.session.post(
             f"cone_search/{method}",
             json={
@@ -160,12 +158,12 @@ class CatalogMatchUnitBase:
 
     def cone_search_nearest(
         self, ra: float, dec: float, catalogs: Sequence[ConeSearchRequest]
-    ) -> list[Optional[CatalogItem]]:
+    ) -> list[None | CatalogItem]:
         return self._cone_search("nearest", ra, dec, catalogs)
 
     def cone_search_all(
         self, ra: float, dec: float, catalogs: Sequence[ConeSearchRequest]
-    ) -> list[Optional[list[CatalogItem]]]:
+    ) -> list[None | list[CatalogItem]]:
         return self._cone_search("all", ra, dec, catalogs)
 
 

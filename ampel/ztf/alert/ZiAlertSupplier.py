@@ -7,7 +7,7 @@
 # Last Modified Date:  24.11.2021
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
-from typing import Literal, Union, Any, Optional
+from typing import Literal, Any
 from ampel.types import Tag
 from ampel.ztf.util.ZTFIdMapper import to_ampel_id
 from ampel.view.ReadOnlyDict import ReadOnlyDict
@@ -21,7 +21,7 @@ class ZiAlertSupplier(BaseAlertSupplier):
 	"""
 
 	# Override default
-	deserialize: Optional[Literal["avro", "json"]] = "avro"
+	deserialize: None | Literal["avro", "json"] = "avro"
 
 
 	def __next__(self) -> AmpelAlert:
@@ -39,7 +39,7 @@ class ZiAlertSupplier(BaseAlertSupplier):
 	@staticmethod
 	def shape_alert_dict(
 		d: dict[str, Any],
-		tag: Optional[Union[Tag, list[Tag]]] = None
+		tag: None | Tag | list[Tag] = None
 	) -> AmpelAlert:
 
 		if d['prv_candidates']:

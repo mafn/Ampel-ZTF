@@ -12,7 +12,6 @@ import json
 import sys
 import time
 import uuid
-from typing import Optional
 
 import confluent_kafka
 
@@ -149,7 +148,7 @@ class AllConsumingConsumer:
     def __iter__(self):
         return self
 
-    def consume(self) -> Optional[confluent_kafka.Message]:
+    def consume(self) -> None | confluent_kafka.Message:
         """
         Block until one message has arrived, and return it.
         

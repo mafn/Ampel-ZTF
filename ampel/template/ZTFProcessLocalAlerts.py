@@ -7,7 +7,7 @@
 # Last Modified Date:  24.11.2021
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal
 from ampel.types import ChannelId
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.model.UnitModel import UnitModel
@@ -27,9 +27,9 @@ class ZTFProcessLocalAlerts(AbsProcessorTemplate):
 
 	#: Note: if a UnitModel is provided as supplier config entries of keys
 	#: 'deserialize' and 'loader' will be overriden
-	supplier: Union[str, UnitModel] = 'ZiAlertSupplier'
+	supplier: str | UnitModel = 'ZiAlertSupplier'
 	loader: str = 'DirAlertLoader'
-	binary_mode: Optional[bool] = True
+	binary_mode: None | bool = True
 
  	#: T2 units to trigger when transient is updated. Dependencies of tied
 	#: units will be added automatically.

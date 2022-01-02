@@ -9,7 +9,7 @@
 
 import random, fastavro
 from ampel.model.UnitModel import UnitModel
-from typing import Any, Optional
+from typing import Any
 from ampel.view.LightCurve import LightCurve
 from ampel.view.TransientView import TransientView
 from ampel.content.DataPoint import DataPoint
@@ -48,7 +48,7 @@ class ZTFAlert:
 		)
 
 	@classmethod
-	def to_lightcurve(cls, file_path: Optional[str] = None, pal: Optional[AmpelAlert] = None) -> LightCurve:
+	def to_lightcurve(cls, file_path: None | str = None, pal: None | AmpelAlert = None) -> LightCurve:
 		"""
 		Creates and returns an instance of ampel.view.LightCurve using a ZTF IPAC alert.
 		This is either created from an already existing ampel.alert.PhotoAlert or
@@ -75,10 +75,10 @@ class ZTFAlert:
 	# TODO: incomplete/meaningless/quick'n'dirty method, to improve if need be
 	@classmethod
 	def to_transientview(cls,
-		file_path: Optional[str] = None,
-		alert: Optional[AmpelAlert] = None,
-		content: Optional[dict] = None,
-		t2_docs: Optional[list[T2Document]] = None
+		file_path: None | str = None,
+		alert: None | AmpelAlert = None,
+		content: None | dict = None,
+		t2_docs: None | list[T2Document] = None
 	) -> TransientView:
 		"""
 		Note: incomplete/meaningless//quick'n'dirty method, to improve if need be.
@@ -108,7 +108,7 @@ class ZTFAlert:
 
 
 	@classmethod
-	def _load_alert(cls, file_path: str) -> Optional[dict]:
+	def _load_alert(cls, file_path: str) -> None | dict:
 		""" """
 		with open(file_path, 'rb') as f:
 			content = cls._deserialize(f)
@@ -116,7 +116,7 @@ class ZTFAlert:
 
 
 	@staticmethod
-	def _deserialize(f) -> Optional[dict]:
+	def _deserialize(f) -> None | dict:
 		""" """
 		reader = fastavro.reader(f)
 		return next(reader, None)

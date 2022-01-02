@@ -7,7 +7,7 @@
 # Last Modified Date:  25.05.2021
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
-from typing import Any, Optional, Tuple
+from typing import Any, Tuple
 from bisect import bisect_right
 from pymongo import UpdateOne
 from ampel.types import DataPointId, StockId
@@ -65,8 +65,8 @@ class ZiMongoMuxer(AbsT0Muxer):
 
 	def process(self,
 		dps: list[DataPoint],
-		stock_id: Optional[StockId] = None
-	) -> tuple[Optional[list[DataPoint]], Optional[list[DataPoint]]]:
+		stock_id: None | StockId = None
+	) -> tuple[None | list[DataPoint], None | list[DataPoint]]:
 		"""
 		:param dps: datapoints from alert
 		:param stock_id: stock id from alert
@@ -86,13 +86,13 @@ class ZiMongoMuxer(AbsT0Muxer):
 
 
 	# NB: this 1-liner is a separate method to provide a patch point for race condition testing
-	def _get_dps(self, stock_id: Optional[StockId]) -> list[DataPoint]:
+	def _get_dps(self, stock_id: None | StockId) -> list[DataPoint]:
 		return list(self._photo_col.find({'stock': stock_id}, self.projection))
 
 	def _process(self,
 		dps: list[DataPoint],
-		stock_id: Optional[StockId] = None
-	) -> tuple[Optional[list[DataPoint]], Optional[list[DataPoint]]]:
+		stock_id: None | StockId = None
+	) -> tuple[None | list[DataPoint], None | list[DataPoint]]:
 		"""
 		:param dps: datapoints from alert
 		:param stock_id: stock id from alert

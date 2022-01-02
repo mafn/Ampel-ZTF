@@ -7,7 +7,6 @@
 # Last Modified Date:  14.08.2020
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
-from typing import Optional
 from ampel.types import StockId
 from ampel.content.JournalRecord import JournalRecord
 from ampel.t3.supply.complement.T3ExtJournalAppender import T3ExtJournalAppender
@@ -19,7 +18,7 @@ class T3LegacyExtJournalAppender(T3ExtJournalAppender):
 	""" Allows to import journal entries from a v0.6.x ampel DB """
 
 
-	def get_ext_journal(self, stock_id: StockId) -> Optional[list[JournalRecord]]:
+	def get_ext_journal(self, stock_id: StockId) -> None | list[JournalRecord]:
 		"""
 		Particularities:
 		- converts stock id into the old encoding to perform DB search

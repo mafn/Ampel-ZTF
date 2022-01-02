@@ -12,7 +12,7 @@ import itertools
 import logging
 import uuid
 from collections import defaultdict
-from typing import DefaultDict, Literal, Optional
+from typing import DefaultDict, Literal
 from collections.abc import Iterator
 
 import fastavro
@@ -50,13 +50,13 @@ class UWAlertLoader(AmpelBaseModel):
             self.bootstrap, timeout=self.timeout, topics=topics, **config
         )
 
-    def alerts(self, limit: Optional[int]=None) -> Iterator[io.BytesIO]:
+    def alerts(self, limit: None | int=None) -> Iterator[io.BytesIO]:
         """
         Generate alerts until timeout is reached
         :returns: dict instance of the alert content
         :raises StopIteration: when next(fastavro.reader) has dried out
         """
-        topic_stats: Defaultdict[str, list[float]] = defaultdict(lambda: [float("inf"), -float("inf"), 0])
+        topic_stats: defaultdict[str, list[float]] = defaultdict(lambda: [float("inf"), -float("inf"), 0])
         for message in itertools.islice(self._consumer, limit):
             reader = fastavro.reader(io.BytesIO(message.value()))
             alert = next(reader)  # raise StopIteration

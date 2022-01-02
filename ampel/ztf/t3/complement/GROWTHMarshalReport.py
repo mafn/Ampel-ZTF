@@ -8,7 +8,7 @@
 # Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 import backoff, requests # type: ignore[import]
-from typing import Any, Optional
+from typing import Any
 from collections.abc import Sequence, Iterable
 
 from ampel.types import StockId
@@ -43,14 +43,14 @@ class GROWTHMarshalReport(CatalogMatchContextUnit, AbsBufferComplement):
         giveup=lambda e: e.response.status_code not in {503, 429},
         max_time=60,
     )
-    def _lookup(self, name) -> Optional[dict[str, Any]]:
+    def _lookup(self, name) -> None | dict[str, Any]:
         response = self.session.get(f"catalogs/GROWTHMarshal/{name}")
         if response.status_code == 404:
             return None
         response.raise_for_status()
         return response.json()
 
-    def get_catalog_item(self, names: Sequence[StockId]) -> Optional[dict[str, Any]]:
+    def get_catalog_item(self, names: Sequence[StockId]) -> None | dict[str, Any]:
         """Get catalog entry associated with the stock name"""
         for name in names:
             if (

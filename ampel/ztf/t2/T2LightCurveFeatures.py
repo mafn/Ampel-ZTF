@@ -7,7 +7,7 @@
 # Last Modified Date:  15.04.2021
 # Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
-from typing import Any, Optional
+from typing import Any
 import numpy as np
 import light_curve
 
@@ -24,7 +24,7 @@ class T2LightCurveFeatures(AbsLightCurveT2Unit):
 
     #: Features to extract from the light curve.
     #: See: https://docs.rs/light-curve-feature/0.2.2/light_curve_feature/features/index.html
-    features: dict[str, Optional[dict[str, Any]]] = {
+    features: dict[str, None | dict[str, Any]] = {
         "InterPercentileRange": {"quantile": 0.25},
         "LinearFit": None,
         "StetsonK": None,

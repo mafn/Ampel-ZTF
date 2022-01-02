@@ -8,7 +8,7 @@
 # Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
 import numpy as np
-from typing import Optional, Union, Any
+from typing import Any
 from astropy.table import Table
 from astropy.coordinates import SkyCoord
 
@@ -236,7 +236,7 @@ class DecentFilter(CatalogMatchUnit, AbsAlertFilter):
         return False
 
     # Override
-    def process(self, alert: AmpelAlertProtocol) -> Optional[Union[bool, int]]:
+    def process(self, alert: AmpelAlertProtocol) -> None | bool | int:
         """
         Mandatory implementation.
         To exclude the alert, return *None*

@@ -9,7 +9,7 @@
 
 import asyncio, nest_asyncio
 from pydantic.tools import parse_obj_as
-from typing import Any, Optional, Tuple
+from typing import Any, Tuple
 from collections.abc import Iterable
 
 from ampel.view.T3Store import T3Store
@@ -31,7 +31,7 @@ class FritzReport(SkyPortalClient, AbsBufferComplement):
 
     async def get_catalog_item(
         self, names: tuple[str, ...]
-    ) -> Optional[dict[str, Any]]:
+    ) -> None | dict[str, Any]:
         """Get catalog entry associated with the stock name"""
         for name in names:
             if name.startswith("ZTF"):

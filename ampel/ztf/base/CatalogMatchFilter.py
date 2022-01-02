@@ -7,7 +7,7 @@
 # Last Modified Date:  24.11.2021
 # Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
-from typing import Literal, Any, Union, Optional, cast
+from typing import Literal, Any, cast
 
 from ampel.abstract.AbsAlertFilter import AbsAlertFilter
 from ampel.ztf.base.CatalogMatchUnit import CatalogMatchUnit, ConeSearchRequest
@@ -25,11 +25,11 @@ class BaseCatalogMatchRequest(AmpelBaseModel):
 
 class ExtcatsMatchRequest(BaseCatalogMatchRequest):
     use: Literal["extcats"]
-    pre_filter: Optional[dict[str, Any]]
-    post_filter: Optional[dict[str, Any]]
+    pre_filter: None | dict[str, Any]
+    post_filter: None | dict[str, Any]
 
 
-CatalogMatchRequest = Union[BaseCatalogMatchRequest, ExtcatsMatchRequest]
+CatalogMatchRequest = BaseCatalogMatchRequest | ExtcatsMatchRequest
 
 
 class CatalogMatchFilter(CatalogMatchUnit, AbsAlertFilter):
@@ -42,26 +42,15 @@ class CatalogMatchFilter(CatalogMatchUnit, AbsAlertFilter):
     """
 
     min_ndet: int
-
-    accept: Optional[
-        Union[
-            CatalogMatchRequest, AnyOf[CatalogMatchRequest], AllOf[CatalogMatchRequest]
-        ]
-    ]
-    reject: Optional[
-        Union[
-            CatalogMatchRequest, AnyOf[CatalogMatchRequest], AllOf[CatalogMatchRequest]
-        ]
-    ]
+    accept: None | CatalogMatchRequest | AnyOf[CatalogMatchRequest] | AllOf[CatalogMatchRequest]
+    reject: None | CatalogMatchRequest | AnyOf[CatalogMatchRequest] | AllOf[CatalogMatchRequest]
 
     # TODO: cache catalog lookups if deeply nested models ever become a thing
     def _evaluate_match(
         self,
         ra: float,
         dec: float,
-        selection: Union[
-            CatalogMatchRequest, AnyOf[CatalogMatchRequest], AllOf[CatalogMatchRequest]
-        ],
+        selection: CatalogMatchRequest | AnyOf[CatalogMatchRequest] | AllOf[CatalogMatchRequest],
     ) -> bool:
         if isinstance(selection, AllOf):
             return all(

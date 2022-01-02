@@ -10,7 +10,7 @@
 
 import io
 import time
-from typing import Any, Optional
+from typing import Any
 
 import fastavro
 
@@ -53,7 +53,7 @@ class ZTFAlertArchiver(AbsOpsUnit):
             **{"group.id": self.group_name},
         )
 
-    def run(self, beacon: Optional[dict[str, Any]] = None) -> Optional[dict[str, Any]]:
+    def run(self, beacon: None | dict[str, Any] = None) -> None | dict[str, Any]:
 
         try:
             for message in self.consumer:
