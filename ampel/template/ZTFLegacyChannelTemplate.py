@@ -107,7 +107,7 @@ class ZTFLegacyChannelTemplate(AbsEasyChannelTemplate):
 				supplier=supplier,
 				shaper="ZiDataPointShaper",
 				muxer=muxer,
-				combiner="ZiT1Combiner",
+				combiner={"unit": "ZiT1Combiner", "config": {"access": self.access, "policy": self.policy}},
 			),
 		)
 
