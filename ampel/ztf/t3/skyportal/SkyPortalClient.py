@@ -6,7 +6,7 @@
 # Last Modified Date:  16.09.2020
 # Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
-import asyncio, base64, gzip, io, json, math, time, aiohttp, backoff, pydantic.errors
+import asyncio, base64, gzip, io, json, math, time, aiohttp, backoff
 import numpy as np
 
 from collections import defaultdict
@@ -15,9 +15,9 @@ from datetime import datetime
 from astropy.io import fits
 from matplotlib.colors import Normalize
 from matplotlib.figure import Figure
-from pydantic import AnyHttpUrl
 from typing import Any, TypedDict, overload, TYPE_CHECKING
 from collections.abc import Sequence, Generator, Iterable
+from urllib.parse import urlparse
 
 from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.log.AmpelLogger import AmpelLogger
@@ -29,10 +29,6 @@ from ampel.util.collections import ampel_iter
 from ampel.util.mappings import flatten_dict
 
 if TYPE_CHECKING:
-    from pydantic import AnyUrl
-    from pydantic.fields import ModelField
-    from pydantic.main import BaseConfig
-
     from ampel.config.AmpelConfig import AmpelConfig
     from ampel.content.DataPoint import DataPoint
     from ampel.view.TransientView import TransientView
@@ -143,37 +139,23 @@ class SkyPortalAPIError(IOError):
     ...
 
 
-class UrlPathError(pydantic.errors.UrlError):
-    code = "url.path"
-    msg_template = "URL path must be empty, not {path!r}"
-
-
-class BaseHttpUrl(AnyHttpUrl):
-    """An http(s) URL with path unset"""
-
-    @classmethod
-    def validate(
-        cls, value: Any, field: "ModelField", config: "BaseConfig"
-    ) -> "AnyUrl":
-        url = super().validate(value, field, config)
-        if url.path is not None:
-            raise UrlPathError(path=url.path)
-        return url
-
-    # @classmethod
-    # def validate_parts(cls, parts: dict[str, str]) -> dict[str, str]:
-    #     parts["path"] = None
-    #     return super().validate_parts(parts)
-
-
 class SkyPortalClient(AmpelBaseModel):
 
     #: Base URL of SkyPortal server
-    base_url: BaseHttpUrl
+    base_url: str
     #: API token
     token: NamedSecret[str]
     #: Maximum number of in-flight requests
     max_parallel_connections: int = 1
+
+    @classmethod
+    def validate(cls, value: dict, _omit_traceless: bool = True) -> Any:
+        super().validate(value, _omit_traceless=_omit_traceless)
+        url = urlparse(value["base_url"])
+        if url.scheme not in ("http", "https"):
+            raise ValueError("base_url must be http(s)")
+        if value["base_url"].endswith("/"):
+            raise ValueError("base_url may not have a path set")
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)

@@ -16,7 +16,6 @@ from typing import DefaultDict, Literal
 from collections.abc import Iterator
 
 import fastavro
-from pydantic import Field
 
 from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.ztf.t0.load.AllConsumingConsumer import AllConsumingConsumer

@@ -59,7 +59,7 @@ class CatalogMatchFilter(CatalogMatchUnit, AbsAlertFilter):
         elif isinstance(selection, AnyOf):
             # recurse into OR conditions
             if isinstance(selection.any_of, AllOf):
-                return all(self._evaluate_match(selection.any_of))
+                return all(self._evaluate_match(ra, dec, clause) for clause in selection.any_of.all_of)
             else:
                 return any(
                     self.cone_search_any(ra, dec, [cast(ConeSearchRequest, r.dict()) for r in selection.any_of])

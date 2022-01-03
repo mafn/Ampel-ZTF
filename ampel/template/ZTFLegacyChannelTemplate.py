@@ -8,12 +8,9 @@
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
 from typing import Any, ClassVar
-from ampel.model.UnitModel import UnitModel
-from pydantic import validator
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.config.builder.FirstPassConfig import FirstPassConfig
 from ampel.template.AbsEasyChannelTemplate import AbsEasyChannelTemplate
-from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.model.ingest.T2Compute import T2Compute
 
 
@@ -110,7 +107,7 @@ class ZTFLegacyChannelTemplate(AbsEasyChannelTemplate):
 				supplier=supplier,
 				shaper="ZiDataPointShaper",
 				muxer=muxer,
-				combiner="ZiT1Combiner",
+				combiner={"unit": "ZiT1Combiner", "config": {"access": self.access, "policy": self.policy}},
 			),
 		)
 
