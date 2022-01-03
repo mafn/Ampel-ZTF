@@ -68,7 +68,7 @@ docs = ["Sphinx (>=3.5.1,<5.0.0)", "sphinx-press-theme (>=0.5.1,<0.9.0)", "sphin
 
 [[package]]
 name = "ampel-interface"
-version = "0.8.3a2"
+version = "0.8.3a3"
 description = "Base classes for the Ampel analysis platform"
 category = "main"
 optional = false
@@ -115,11 +115,11 @@ server = ["fastapi (>=0.63.0,<0.64.0)"]
 
 [[package]]
 name = "argcomplete"
-version = "1.12.3"
+version = "2.0.0"
 description = "Bash tab completion for argparse"
 category = "main"
 optional = false
-python-versions = "*"
+python-versions = ">=3.6"
 
 [package.extras]
 test = ["coverage", "flake8", "pexpect", "wheel"]
@@ -892,7 +892,7 @@ light-curve = ["light-curve-python"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10,<3.11"
-content-hash = "1f2096db7af89725c25ef2ec128a6220e16b98401ea7e9bba7025a8d5784d361"
+content-hash = "fb2fcfb7dae614552d0d5ab622c16274bf67e78353dc4cc98c2cb2302e28e908"
 
 [metadata.files]
 aiohttp = [
@@ -982,8 +982,8 @@ ampel-core = [
     {file = "ampel_core-0.8.3a2-py3-none-any.whl", hash = "sha256:95df56d857d7a46940eaa5b5d0521a51998b804308b8ed3f8684049604e4ac38"},
 ]
 ampel-interface = [
-    {file = "ampel-interface-0.8.3a2.tar.gz", hash = "sha256:9eca051332fb40eb86783baea0998ed5a6933ef67c1b54e2b72a48ab9db101a7"},
-    {file = "ampel_interface-0.8.3a2-py3-none-any.whl", hash = "sha256:ecdea0c3233e4dd462e456b4b73f1dedf84a23bcd1235f2c5bc0bac1fc4f6100"},
+    {file = "ampel-interface-0.8.3a3.tar.gz", hash = "sha256:e37a63bfaa56e680a2d1ed51f659b16488bfe8670e31e15bb44c16c95d40ae1d"},
+    {file = "ampel_interface-0.8.3a3-py3-none-any.whl", hash = "sha256:66c0cdb0a7362301743eceb3174d0a5afd7cdb04beb216db88c9fa987dcccd67"},
 ]
 ampel-photometry = [
     {file = "ampel-photometry-0.8.3a1.tar.gz", hash = "sha256:bcb876698b034a05f3a589062ac5e89cb487201d0f538fffd0c540a3e62684c2"},
@@ -994,8 +994,8 @@ ampel-ztf-archive = [
     {file = "ampel_ztf_archive-0.8.0a0-py3-none-any.whl", hash = "sha256:0e188d0a31a601de8e1e681efa5262dc40b3aed853a11767516d326dd3c8b44d"},
 ]
 argcomplete = [
-    {file = "argcomplete-1.12.3-py2.py3-none-any.whl", hash = "sha256:291f0beca7fd49ce285d2f10e4c1c77e9460cf823eef2de54df0c0fec88b0d81"},
-    {file = "argcomplete-1.12.3.tar.gz", hash = "sha256:2c7dbffd8c045ea534921e63b0be6fe65e88599990d8dc408ac8c542b72a5445"},
+    {file = "argcomplete-2.0.0-py2.py3-none-any.whl", hash = "sha256:cffa11ea77999bb0dd27bb25ff6dc142a6796142f68d45b1a26b11f58724561e"},
+    {file = "argcomplete-2.0.0.tar.gz", hash = "sha256:6372ad78c89d662035101418ae253668445b391755cfe94ea52f1b9d22425b20"},
 ]
 astropy = [
     {file = "astropy-5.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:ff8ecc820029b4487e96d273be6f54e17bc81311b98c9a09f40c6ea4eeb7db45"},
