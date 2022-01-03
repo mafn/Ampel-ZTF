@@ -30,7 +30,7 @@ class T2LightCurveFeatures(AbsLightCurveT2Unit):
         "StetsonK": None,
     }
     #: Bandpasses to use
-    bands: dict[int, str] = {1: "g", 2: "r", 3: "i"}
+    bands: dict[str, int] = {"g": 1, "r": 2, "i": 3}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -40,7 +40,7 @@ class T2LightCurveFeatures(AbsLightCurveT2Unit):
 
     def process(self, lightcurve: LightCurve) -> UBson:
         result = {}
-        for fid, band in self.bands.items():
+        for band, fid in self.bands.items():
             if (
                 in_band := lightcurve.get_ntuples(
                     ["jd", "magpsf", "sigmapsf"],
