@@ -17,6 +17,7 @@ from matplotlib.colors import Normalize
 from matplotlib.figure import Figure
 from typing import Any, TypedDict, overload, TYPE_CHECKING
 from collections.abc import Sequence, Generator, Iterable
+from urllib.parse import urlparse
 
 from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.log.AmpelLogger import AmpelLogger
@@ -146,6 +147,15 @@ class SkyPortalClient(AmpelBaseModel):
     token: NamedSecret[str]
     #: Maximum number of in-flight requests
     max_parallel_connections: int = 1
+
+    @classmethod
+    def validate(cls, value: dict, _omit_traceless: bool = True) -> Any:
+        super().validate(value, _omit_traceless=_omit_traceless)
+        url = urlparse(value["base_url"])
+        if url.scheme not in ("http", "https"):
+            raise ValueError("base_url must be http(s)")
+        if value["base_url"].endswith("/"):
+            raise ValueError("base_url may not have a path set")
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
