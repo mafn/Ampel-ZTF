@@ -11,7 +11,6 @@
 from typing import Any
 from collections.abc import Iterable
 
-from pydantic import Field
 from ampel.struct.AmpelBuffer import AmpelBuffer
 from ampel.abstract.AbsBufferComplement import AbsBufferComplement
 from ampel.ztf.base.CatalogMatchUnit import CatalogMatchContextUnit
@@ -24,7 +23,8 @@ class TNSNames(CatalogMatchContextUnit, AbsBufferComplement):
     Add TNS names to transients.
     """
 
-    search_radius: float = Field(3, description="Matching radius in arcsec")
+    #: Matching radius in arcsec
+    search_radius: float = 3.
     include_report: bool = False
 
     def complement(self, records: Iterable[AmpelBuffer], t3s: T3Store) -> None:

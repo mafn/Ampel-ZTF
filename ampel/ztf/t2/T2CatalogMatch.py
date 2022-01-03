@@ -7,7 +7,6 @@
 # Last Modified Date:  29.01.2021
 # Last Modified By:    Jakob van Santen <jakob.van.santen@desy.de>
 
-from pydantic import Field
 from typing import Any, Literal, ClassVar
 from collections.abc import Sequence
 from ampel.types import UBson
@@ -58,7 +57,6 @@ class CatalogModel(AmpelBaseModel):
 
     use: Literal["extcats", "catsHTM"]
     rs_arcsec: float
-    catq_kwargs: dict[str, Any] = Field({}, deprecated=True)
     keys_to_append: None | Sequence[str]
     pre_filter: None | dict[str, Any]
     post_filter: None | dict[str, Any]
