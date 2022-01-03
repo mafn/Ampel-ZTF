@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : Ampel-ZTF/ampel/ztf/dev/ZTFAlert.py
-# License           : BSD-3-Clause
-# Author            : vb <vbrinnel@physik.hu-berlin.de>
-# Date              : 24.06.2018
-# Last Modified Date: 31.07.2020
-# Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
+# File:                Ampel-ZTF/ampel/ztf/dev/ZTFAlert.py
+# License:             BSD-3-Clause
+# Author:              valery brinnel <firstname.lastname@gmail.com>
+# Date:                24.06.2018
+# Last Modified Date:  31.07.2020
+# Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
 import random, fastavro
 from ampel.model.UnitModel import UnitModel
-from typing import Any, Dict, Optional, List
+from typing import Any
 from ampel.view.LightCurve import LightCurve
 from ampel.view.TransientView import TransientView
 from ampel.content.DataPoint import DataPoint
@@ -38,7 +38,7 @@ class ZTFAlert:
 		return alert
 
 	@staticmethod
-	def _upper_limit_id(el: Dict[str, Any]) -> int:
+	def _upper_limit_id(el: dict[str, Any]) -> int:
 		return int(
 			"%i%s%i" % (
 				(2457754.5 - el['jd']) * 1000000,
@@ -48,7 +48,7 @@ class ZTFAlert:
 		)
 
 	@classmethod
-	def to_lightcurve(cls, file_path: Optional[str] = None, pal: Optional[AmpelAlert] = None) -> LightCurve:
+	def to_lightcurve(cls, file_path: None | str = None, pal: None | AmpelAlert = None) -> LightCurve:
 		"""
 		Creates and returns an instance of ampel.view.LightCurve using a ZTF IPAC alert.
 		This is either created from an already existing ampel.alert.PhotoAlert or
@@ -75,10 +75,10 @@ class ZTFAlert:
 	# TODO: incomplete/meaningless/quick'n'dirty method, to improve if need be
 	@classmethod
 	def to_transientview(cls,
-		file_path: Optional[str] = None,
-		alert: Optional[AmpelAlert] = None,
-		content: Optional[Dict] = None,
-		t2_docs: Optional[List[T2Document]] = None
+		file_path: None | str = None,
+		alert: None | AmpelAlert = None,
+		content: None | dict = None,
+		t2_docs: None | list[T2Document] = None
 	) -> TransientView:
 		"""
 		Note: incomplete/meaningless//quick'n'dirty method, to improve if need be.
@@ -91,7 +91,7 @@ class ZTFAlert:
 		assert alert is not None
 		lc = cls.to_lightcurve(pal=alert)
 
-		datapoints: List[DataPoint] = []
+		datapoints: list[DataPoint] = []
 		if lc.photopoints:
 			datapoints += list(lc.photopoints)
 		if lc.upperlimits:
@@ -108,7 +108,7 @@ class ZTFAlert:
 
 
 	@classmethod
-	def _load_alert(cls, file_path: str) -> Optional[Dict]:
+	def _load_alert(cls, file_path: str) -> None | dict:
 		""" """
 		with open(file_path, 'rb') as f:
 			content = cls._deserialize(f)
@@ -116,7 +116,7 @@ class ZTFAlert:
 
 
 	@staticmethod
-	def _deserialize(f) -> Optional[Dict]:
+	def _deserialize(f) -> None | dict:
 		""" """
 		reader = fastavro.reader(f)
 		return next(reader, None)

@@ -1,20 +1,20 @@
 import logging
-from typing import Dict, Any, Union, Optional
+from typing import Any
 
 import backoff
 import requests
 
 from ampel.base.AmpelBaseModel import AmpelBaseModel
-from ampel.model.StrictModel import StrictModel
+from ampel.base.AmpelBaseModel import AmpelBaseModel
 
 log = logging.getLogger(__name__)
 
 
-class ObjectSource(StrictModel):
+class ObjectSource(AmpelBaseModel):
     #: A ZTF name
     ztf_name: str
-    jd_start: Optional[float] = None
-    jd_end: Optional[float] = None
+    jd_start: None | float = None
+    jd_end: None | float = None
     with_history: bool = True
     archive_token: str
 
@@ -23,7 +23,7 @@ class ZTFArchiveAlertLoader(AmpelBaseModel):
     #: Base URL of archive service
     archive: str = "https://ampel.zeuthen.desy.de/api/ztf/archive/v2"
     #: A stream identifier, created via POST /api/ztf/archive/streams/, or a query
-    stream: Union[str, ObjectSource]
+    stream: str | ObjectSource
 
     def __iter__(self):
         return self.get_alerts()
@@ -52,7 +52,7 @@ class ZTFArchiveAlertLoader(AmpelBaseModel):
         giveup=lambda e: e.response.status_code not in {503, 504, 429, 408},
         max_time=600,
     )
-    def _get_chunk(self, session: requests.Session) -> Dict[str, Any]:
+    def _get_chunk(self, session: requests.Session) -> dict[str, Any]:
         if isinstance(self.stream, ObjectSource):
             response = session.get(
                 f"{self.archive}/object/{self.stream.ztf_name}/alerts",

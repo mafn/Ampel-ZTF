@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : Ampel-ZTF/ampel/ztf/ingest/ZiDataPointShaper.py
-# License           : BSD-3-Clause
-# Author            : vb <vbrinnel@physik.hu-berlin.de>
-# Date              : 14.12.2017
-# Last Modified Date: 10.05.2021
-# Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
+# File:                Ampel-ZTF/ampel/ztf/ingest/ZiDataPointShaper.py
+# License:             BSD-3-Clause
+# Author:              valery brinnel <firstname.lastname@gmail.com>
+# Date:                14.12.2017
+# Last Modified Date:  10.05.2021
+# Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
-from typing import Dict, List, Any, Iterable, Optional, Sequence
+from typing import Any, Iterable, Sequence
 from bson import encode
 from ampel.util.hash import hash_payload
 from ampel.base.AmpelBaseModel import AmpelBaseModel
@@ -28,7 +28,7 @@ class ZiDataPointShaperBase(AmpelBaseModel):
 	digest_size: int = 8
 
 	# Mandatory implementation
-	def process(self, arg: Iterable[Dict[str, Any]], stock: StockId) -> List[DataPoint]: # type: ignore[override]
+	def process(self, arg: Iterable[dict[str, Any]], stock: StockId) -> list[DataPoint]: # type: ignore[override]
 		"""
 		:param arg: sequence of unshaped pps
 		IMPORTANT:
@@ -37,7 +37,7 @@ class ZiDataPointShaperBase(AmpelBaseModel):
 		2) 'stock' is not set here on purpose since it will conflict with the $addToSet operation
 		"""
 
-		ret_list: List[DataPoint] = []
+		ret_list: list[DataPoint] = []
 		setitem = dict.__setitem__
 		popitem = dict.pop
 
@@ -112,6 +112,6 @@ class ZiDataPointShaperBase(AmpelBaseModel):
 
 class ZiDataPointShaper(ZiDataPointShaperBase, AbsT0Unit):
 	
-	def process(self, arg: Any, stock: Optional[StockId] = None) -> List[DataPoint]:
+	def process(self, arg: Any, stock: None | StockId = None) -> list[DataPoint]:
 		assert stock is not None
 		return super().process(arg, stock)

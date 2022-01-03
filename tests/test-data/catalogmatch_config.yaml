@@ -48,9 +48,6 @@ catalogs:
       - ExcessNoiseSig
   CRTS_DR1:
     use: extcats
-    catq_kwargs:
-      ra_key: RA
-      dec_key: Dec
     rs_arcsec: 3
     keys_to_append:
       - VarType

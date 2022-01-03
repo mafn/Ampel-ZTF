@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : Ampel-ZTF/ampel/ztf/alert/ZTFIPACForcedPhotometryAlertSupplier.py
-# License           : BSD-3-Clause
-# Author            : vb <vbrinnel@physik.hu-berlin.de>
-# Date              : 25.10.2021
-# Last Modified Date: 24.11.2021
-# Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
+# File:                Ampel-ZTF/ampel/ztf/alert/ZTFIPACForcedPhotometryAlertSupplier.py
+# License:             BSD-3-Clause
+# Author:              valery brinnel <firstname.lastname@gmail.com>
+# Date:                25.10.2021
+# Last Modified Date:  24.11.2021
+# Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
 import sys
 import pandas as pd

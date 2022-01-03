@@ -1,22 +1,17 @@
 from functools import cached_property
-from typing import Any, Dict, List, Sequence, Set, Tuple, Type, Union, Optional
-from ampel.abstract.AbsAlertSupplier import AbsAlertSupplier
+from typing import Any
+from collections.abc import Sequence
 
-import backoff
-import requests
+import backoff, requests # type: ignore
 from requests_toolbelt.sessions import BaseUrlSession
 
+from ampel.types import StockId
 from ampel.abstract.AbsT0Muxer import AbsT0Muxer
 from ampel.abstract.AbsT0Unit import AbsT0Unit
-from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
 from ampel.content.DataPoint import DataPoint
-from ampel.core.UnitLoader import CT
-from ampel.secret.Secret import Secret
 from ampel.secret.NamedSecret import NamedSecret
 from ampel.model.UnitModel import UnitModel
-from ampel.types import ChannelId, StockId
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
-from ampel.ztf.ingest.ZiDataPointShaper import ZiDataPointShaper
 from ampel.ztf.util.ZTFIdMapper import to_ztf_id
 
 
@@ -38,11 +33,11 @@ class ZiArchiveMuxer(AbsT0Muxer):
     #: t0 collection
     history_days: int
 
-    shaper: Union[UnitModel, str] = "ZiDataPointShaper"
+    shaper: UnitModel | str = "ZiDataPointShaper"
     archive_token: NamedSecret[str] = NamedSecret(label="ztf/archive/token")
 
     # Standard projection used when checking DB for existing PPS/ULS
-    projection: Dict[str, int] = {
+    projection: dict[str, int] = {
         "_id": 1,
         "tag": 1,
         "excl": 1,
@@ -132,8 +127,8 @@ class ZiArchiveMuxer(AbsT0Muxer):
         return response.json()
 
     def process(
-        self, dps: List[DataPoint], stock_id: Optional[StockId] = None
-    ) -> Tuple[Optional[List[DataPoint]], Optional[List[DataPoint]]]:
+        self, dps: list[DataPoint], stock_id: None | StockId = None
+    ) -> tuple[None | list[DataPoint], None | list[DataPoint]]:
         """
         :param dps: datapoints from alert
         :param stock_id: stock id from alert
