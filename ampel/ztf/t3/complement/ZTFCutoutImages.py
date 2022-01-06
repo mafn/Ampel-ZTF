@@ -13,7 +13,6 @@ from typing import Literal
 from collections.abc import Iterable
 
 from ampel.view.T3Store import T3Store
-from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.struct.AmpelBuffer import AmpelBuffer
 from ampel.core.AmpelContext import AmpelContext
 from ampel.abstract.AbsBufferComplement import AbsBufferComplement
@@ -29,7 +28,7 @@ class ZTFCutoutImages(AbsBufferComplement):
 
     def __init__(self, context: AmpelContext, **kwargs) -> None:
 
-        AmpelBaseModel.__init__(self, **kwargs)
+        super().__init__(**kwargs)
 
         self.session = BaseUrlSession(
             base_url=context.config.get("resource.ampel-ztf/archive", str, raise_exc=True)
