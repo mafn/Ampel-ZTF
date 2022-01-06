@@ -17,13 +17,13 @@ from collections.abc import Iterator
 
 import fastavro
 
-from ampel.base.AmpelBaseModel import AmpelBaseModel
+from ampel.base.AmpelUnit import AmpelUnit
 from ampel.ztf.t0.load.AllConsumingConsumer import AllConsumingConsumer
 
 log = logging.getLogger(__name__)
 
 
-class UWAlertLoader(AmpelBaseModel):
+class UWAlertLoader(AmpelUnit):
     """
     Iterable class that loads avro alerts from the Kafka stream 
     provided by University of Washington (UW) 

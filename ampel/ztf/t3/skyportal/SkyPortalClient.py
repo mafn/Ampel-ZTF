@@ -19,7 +19,7 @@ from typing import Any, TypedDict, overload, TYPE_CHECKING
 from collections.abc import Sequence, Generator, Iterable
 from urllib.parse import urlparse
 
-from ampel.base.AmpelBaseModel import AmpelBaseModel
+from ampel.base.AmpelUnit import AmpelUnit
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.metrics.AmpelMetricsRegistry import AmpelMetricsRegistry
 from ampel.secret.NamedSecret import NamedSecret
@@ -139,7 +139,7 @@ class SkyPortalAPIError(IOError):
     ...
 
 
-class SkyPortalClient(AmpelBaseModel):
+class SkyPortalClient(AmpelUnit):
 
     #: Base URL of SkyPortal server
     base_url: str
@@ -149,8 +149,8 @@ class SkyPortalClient(AmpelBaseModel):
     max_parallel_connections: int = 1
 
     @classmethod
-    def validate(cls, value: dict, _omit_traceless: bool = True) -> Any:
-        super().validate(value, _omit_traceless=_omit_traceless)
+    def validate(cls, value: dict) -> Any:
+        super().validate(value)
         url = urlparse(value["base_url"])
         if url.scheme not in ("http", "https"):
             raise ValueError("base_url must be http(s)")

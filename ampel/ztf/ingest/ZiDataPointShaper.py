@@ -9,14 +9,14 @@
 
 from typing import Any
 from collections.abc import Iterable
-from ampel.base.AmpelBaseModel import AmpelBaseModel
+from ampel.base.AmpelUnit import AmpelUnit
 from ampel.types import StockId
 from ampel.abstract.AbsT0Unit import AbsT0Unit
 from ampel.content.DataPoint import DataPoint
 from ampel.ztf.ingest.tags import tags
 
 
-class ZiDataPointShaperBase(AmpelBaseModel):
+class ZiDataPointShaperBase(AmpelUnit):
 	"""
 	This class 'shapes' datapoints in a format suitable
 	to be saved into the ampel database
