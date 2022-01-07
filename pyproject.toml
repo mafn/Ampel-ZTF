@@ -48,10 +48,10 @@ requests = "^2.25.1"
 requests-toolbelt = "^0.9.1"
 light-curve-python = {version = ">=0.2.5,<0.4.1", optional = true}
 ampel-ztf-archive = {optional = true, version = "^0.8.0-alpha.0"}
-ampel-interface = ">=0.8.2-alpha.6,<0.8.3"
-ampel-core = ">=0.8.2-alpha.6,<0.8.3"
+ampel-interface = ">=0.8.2-alpha.7,<0.8.3"
+ampel-core = ">=0.8.2-alpha.7,<0.8.3"
 ampel-photometry = ">=0.8.2-alpha.3,<0.8.3"
-ampel-alerts = ">=0.8.2-alpha.3,<0.8.3"
+ampel-alerts = ">=0.8.2-alpha.4,<0.8.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
