@@ -18,6 +18,7 @@ from matplotlib.figure import Figure
 from pydantic import AnyHttpUrl
 from typing import Any, TypedDict, Generator, Iterable, Optional, overload, Sequence, TYPE_CHECKING, Union
 
+from ampel.types import Traceless
 from ampel.base.AmpelBaseModel import AmpelBaseModel
 from ampel.log.AmpelLogger import AmpelLogger
 from ampel.metrics.AmpelMetricsRegistry import AmpelMetricsRegistry
@@ -442,7 +443,7 @@ class PostReport(TypedDict):
 
 class BaseSkyPortalPublisher(SkyPortalClient):
 
-    logger: LoggerProtocol
+    logger: Traceless[LoggerProtocol]
 
     def __init__(self, **kwargs):
         if "logger" not in kwargs:
