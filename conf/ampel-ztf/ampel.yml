@@ -29,6 +29,7 @@ unit:
 
 # Aux units
 - ampel.ztf.alert.ZiAlertSupplier
+- ampel.ztf.alert.ZiTaggedAlertSupplier
 - ampel.ztf.alert.ZTFForcedPhotometryAlertSupplier
 - ampel.ztf.t0.load.UWAlertLoader
 - ampel.ztf.t0.load.ZTFArchiveAlertLoader
