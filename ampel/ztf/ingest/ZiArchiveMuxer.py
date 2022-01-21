@@ -1,35 +1,19 @@
-from functools import cached_property
-from typing import Any, Dict, List, Sequence, Set, Tuple, Type, Union, Optional
-from ampel.abstract.AbsAlertSupplier import AbsAlertSupplier
+from typing import Any, Dict, List, Sequence, Tuple, Union, Optional
 
 import backoff
 import requests
-from requests_toolbelt.sessions import BaseUrlSession
 
 from ampel.abstract.AbsT0Muxer import AbsT0Muxer
 from ampel.abstract.AbsT0Unit import AbsT0Unit
-from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
 from ampel.content.DataPoint import DataPoint
-from ampel.core.UnitLoader import CT
-from ampel.secret.Secret import Secret
-from ampel.secret.NamedSecret import NamedSecret
 from ampel.model.UnitModel import UnitModel
-from ampel.types import ChannelId, StockId
+from ampel.types import StockId
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
-from ampel.ztf.ingest.ZiDataPointShaper import ZiDataPointShaper
+from ampel.ztf.base.ArchiveUnit import ArchiveUnit
 from ampel.ztf.util.ZTFIdMapper import to_ztf_id
 
 
-class BearerAuth(requests.auth.AuthBase):
-    def __init__(self, token: str) -> None:
-        self.token = token
-
-    def __call__(self, req: requests.PreparedRequest) -> requests.PreparedRequest:
-        req.headers["authorization"] = f"bearer {self.token}"
-        return req
-
-
-class ZiArchiveMuxer(AbsT0Muxer):
+class ZiArchiveMuxer(AbsT0Muxer, ArchiveUnit):
     """
     Add datapoints from archived ZTF-IPAC alerts.
     """
@@ -44,7 +28,6 @@ class ZiArchiveMuxer(AbsT0Muxer):
 
 
     shaper: Union[UnitModel, str] = "ZiDataPointShaper"
-    archive_token: NamedSecret[str] = NamedSecret(label="ztf/archive/token")
 
     # Standard projection used when checking DB for existing PPS/ULS
     projection: Dict[str, int] = {
@@ -68,23 +51,6 @@ class ZiArchiveMuxer(AbsT0Muxer):
         )
 
         self._t0_col = self.context.db.get_collection("t0", "w")
-
-    # NB: init lazily, as Secret properties are not resolved until after __init__()
-    @cached_property
-    def session(self) -> BaseUrlSession:
-        session = BaseUrlSession(
-            base_url=(
-                url
-                if (
-                    url := self.context.config.get(
-                        "resource.ampel-ztf/archive", str, raise_exc=True
-                    )
-                ).endswith("/")
-                else url + "/"
-            )
-        )
-        session.auth = BearerAuth(self.archive_token.get())
-        return session
 
     def get_earliest_jd(
         self, stock_id: StockId, datapoints: Sequence[DataPoint]
