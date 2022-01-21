@@ -27,6 +27,9 @@ unit:
 - ampel.ztf.t2.T2LightCurveFeatures
 - ampel.ztf.t3.skyportal.SkyPortalPublisher
 
+# Ops units
+- ampel.ztf.t0.load.ZTFAlertArchiverV3
+
 # Aux units
 - ampel.ztf.alert.ZiAlertSupplier
 - ampel.ztf.alert.ZTFForcedPhotometryAlertSupplier

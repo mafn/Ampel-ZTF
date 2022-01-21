@@ -101,7 +101,7 @@ class AllConsumingConsumer:
     Consume messages on all topics beginning with 'ztf_'.
     """
 
-    def __init__(self, broker, timeout=None, topics=["^ztf_.*"], **consumer_config):
+    def __init__(self, broker, timeout=None, topics=["^ztf_.*"], auto_commit=True, **consumer_config):
         """ """
 
         self._metrics = KafkaMetrics.instance()
@@ -132,6 +132,7 @@ class AllConsumingConsumer:
         self._timeout = timeout
 
         self._last_message = None
+        self._auto_commit = auto_commit
 
     def __del__(self):
         # NB: have to explicitly call close() here to prevent
@@ -149,6 +150,11 @@ class AllConsumingConsumer:
     def __iter__(self):
         return self
 
+    def commit(self):
+        if self._last_message is not None:
+            self._consumer.store_offsets(self._last_message)
+            self._last_message = None
+
     def consume(self) -> Optional[confluent_kafka.Message]:
         """
         Block until one message has arrived, and return it.
@@ -157,9 +163,8 @@ class AllConsumingConsumer:
         upon the _next_ call to consume().
         """
         # mark the last emitted message for committal
-        if self._last_message is not None:
-            self._consumer.store_offsets(self._last_message)
-        self._last_message = None
+        if self._auto_commit:
+            self.commit()
 
         message = None
         for _ in range(self._poll_attempts):
