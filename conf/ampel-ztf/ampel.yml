@@ -58,7 +58,7 @@ template:
   ztf_local_alerts: ampel.template.ZTFProcessLocalAlerts
 
 resource:
-  archive: https://ampel.zeuthen.desy.de/api/ztf/archive/v2/
+  archive: https://ampel.zeuthen.desy.de/api/ztf/archive/v3/
   catalogmatch: https://ampel.zeuthen.desy.de/api/catalogmatch/
   kafka:
     bootstrap: partnership.alerts.ztf.uw.edu:9092
