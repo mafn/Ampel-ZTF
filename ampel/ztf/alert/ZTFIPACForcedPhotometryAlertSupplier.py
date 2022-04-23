@@ -21,7 +21,7 @@ from ampel.view.ReadOnlyDict import ReadOnlyDict
 from ampel.alert.AmpelAlert import AmpelAlert
 from ampel.alert.BaseAlertSupplier import BaseAlertSupplier
 from ampel.model.PlotProperties import PlotProperties
-from ampel.plot.create import mplfig_to_svg_dict1
+from ampel.plot.create import create_plot_record
 
 dcast = {
 	'field': int,
@@ -203,7 +203,7 @@ class ZTFIPACForcedPhotometryAlertSupplier(BaseAlertSupplier):
 					'name': sn_name,
 					'stock': {
 						'ret': d,
-						'plot': mplfig_to_svg_dict1(
+						'plot': create_plot_record(
 							fig, self.plot_props,
 							logger = self.logger,
 							extra={"sn_name": sn_name}
