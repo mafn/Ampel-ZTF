@@ -52,6 +52,7 @@ ampel-interface = ">=0.8.2-alpha.7,<0.8.3"
 ampel-core = ">=0.8.2-alpha.9,<0.8.3"
 ampel-photometry = ">=0.8.2-alpha.3,<0.8.3"
 ampel-alerts = ">=0.8.2-alpha.4,<0.8.3"
+healpy = "^1.15.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
