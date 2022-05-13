@@ -56,7 +56,7 @@ class ZiTaggedAlertSupplier(BaseAlertSupplier):
 		fpath = next(self.alert_loader)
 
 		# basename("/usr/local/auth.AAA.BBB.py").split(".")[1:-1] -> ['AAA', 'BBB']
-		base = basename(next(self.alert_loader)).split(".")
+		base = basename(fpath).split(".")
 
 		with open(fpath, self.open_mode) as alert_file:
 			return ZiAlertSupplier.shape_alert_dict(
