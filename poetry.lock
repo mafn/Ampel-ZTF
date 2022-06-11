@@ -177,11 +177,11 @@ tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>
 
 [[package]]
 name = "backoff"
-version = "1.11.1"
+version = "2.1.2"
 description = "Function decoration for backoff and retry"
 category = "main"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+python-versions = ">=3.7,<4.0"
 
 [[package]]
 name = "before-after"
@@ -901,7 +901,7 @@ light-curve = ["light-curve"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10,<3.11"
-content-hash = "35e57196b2b0ef2d892fe1c06128c240d64fc3ea49a30455b5ebb01f1c85fba0"
+content-hash = "d4c0bc1314b13b197376860a6fbb4b1ecc4d4338a4f1e1108b59f638ff5bf2c0"
 
 [metadata.files]
 aiohttp = [
@@ -1039,8 +1039,8 @@ attrs = [
     {file = "attrs-21.4.0.tar.gz", hash = "sha256:626ba8234211db98e869df76230a137c4c40a12d72445c45d5f5b716f076e2fd"},
 ]
 backoff = [
-    {file = "backoff-1.11.1-py2.py3-none-any.whl", hash = "sha256:61928f8fa48d52e4faa81875eecf308eccfb1016b018bb6bd21e05b5d90a96c5"},
-    {file = "backoff-1.11.1.tar.gz", hash = "sha256:ccb962a2378418c667b3c979b504fdeb7d9e0d29c0579e3b13b86467177728cb"},
+    {file = "backoff-2.1.2-py3-none-any.whl", hash = "sha256:b135e6d7c7513ba2bfd6895bc32bc8c66c6f3b0279b4c6cd866053cfd7d3126b"},
+    {file = "backoff-2.1.2.tar.gz", hash = "sha256:407f1bc0f22723648a8880821b935ce5df8475cf04f7b6b5017ae264d30f6069"},
 ]
 before-after = [
     {file = "before_after-1.0.1.tar.gz", hash = "sha256:c7d4f9b8b8bb52095da14c4b9c59ea6b3f5b9ea9fdce8a7bfc72ecae0f5a3f85"},
