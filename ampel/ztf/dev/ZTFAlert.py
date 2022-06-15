@@ -8,13 +8,15 @@
 # Last Modified By:    valery brinnel <firstname.lastname@gmail.com>
 
 import random, fastavro
-from ampel.model.UnitModel import UnitModel
 from typing import Any
+from collections.abc import Sequence
+
+from ampel.model.UnitModel import UnitModel
+from ampel.view.T2DocView import T2DocView
 from ampel.view.LightCurve import LightCurve
 from ampel.view.TransientView import TransientView
 from ampel.content.DataPoint import DataPoint
 from ampel.content.T2Document import T2Document
-from ampel.protocol.AmpelAlertProtocol import AmpelAlertProtocol
 from ampel.alert.AmpelAlert import AmpelAlert
 from ampel.ztf.alert.ZiAlertSupplier import ZiAlertSupplier
 from ampel.ztf.ingest.ZiDataPointShaper import ZiDataPointShaperBase
@@ -37,6 +39,7 @@ class ZTFAlert:
 		assert isinstance(alert, AmpelAlert)
 		return alert
 
+
 	@staticmethod
 	def _upper_limit_id(el: dict[str, Any]) -> int:
 		return int(
@@ -46,6 +49,7 @@ class ZTFAlert:
 				round(abs(el['diffmaglim']) * 1000)
 			)
 		)
+
 
 	@classmethod
 	def to_lightcurve(cls, file_path: None | str = None, pal: None | AmpelAlert = None) -> LightCurve:
@@ -72,13 +76,13 @@ class ZTFAlert:
 		)
 
 
-	# TODO: incomplete/meaningless/quick'n'dirty method, to improve if need be
+	# TODO: incomplete/quick'n'dirty method, to improve if need be
 	@classmethod
 	def to_transientview(cls,
 		file_path: None | str = None,
 		alert: None | AmpelAlert = None,
 		content: None | dict = None,
-		t2_docs: None | list[T2Document] = None
+		t2_docs: None | Sequence[T2Document] = None
 	) -> TransientView:
 		"""
 		Note: incomplete/meaningless//quick'n'dirty method, to improve if need be.
@@ -100,7 +104,7 @@ class ZTFAlert:
 		return TransientView(
 			id = alert.stock,
 			t0 = datapoints,
-			t2 = t2_docs,
+			t2 = [T2DocView.of(t2d) for t2d in t2_docs] if t2_docs else None,
 			extra = {
 				'names': [alert.extra.get('name') if alert.extra else None]
 			}
