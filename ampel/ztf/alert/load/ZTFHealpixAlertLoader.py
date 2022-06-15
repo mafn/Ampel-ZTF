@@ -119,8 +119,8 @@ class ZTFHealpixAlertLoader(AbsAlertLoader[dict[str, Any]]):
 
     @backoff.on_exception(
         backoff.expo,
-        requests.HTTPError,
-        giveup=lambda e: e.response.status_code
+        requests.exceptions.HTTPError,
+        giveup=lambda e: e.response.status_code  # type: ignore[attr-defined]
         not in {500, 502, 503, 504, 429, 408},
         max_time=600,
     )

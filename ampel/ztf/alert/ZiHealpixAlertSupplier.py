@@ -28,7 +28,7 @@ class ZiHealpixAlertSupplier(BaseAlertSupplier):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         if self.source:
-            self.alert_loader.source = self.source
+            self.alert_loader.source = self.source  # type: ignore[attr-defined]
 
     def set_healpix(
         self,
